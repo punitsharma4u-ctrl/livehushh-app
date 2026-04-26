@@ -1,0 +1,45 @@
+{
+  "name": "LiveHushh",
+  "short_name": "LiveHushh",
+  "description": "Restaurant live-streaming platform — browse, order & join waitlists",
+  "start_url": "/index.html",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#06061A",
+  "theme_color": "#E8540A",
+  "icons": [
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "form_factor": "narrow"
+    }
+  ],
+  "categories": ["food", "lifestyle", "entertainment"],
+  "shortcuts": [
+    {
+      "name": "Browse Restaurants",
+      "url": "/customer-app.html",
+      "description": "Browse live restaurants"
+    },
+    {
+      "name": "Owner Dashboard",
+      "url": "/owner-dashboard.html",
+      "description": "Manage your restaurant"
+    }
+  ]
+}

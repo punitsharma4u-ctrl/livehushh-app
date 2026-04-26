@@ -1,0 +1,71 @@
+# LiveHushh — Codemagic CI/CD
+# Builds iOS (on Mac cloud) and Android (on Linux cloud) from Windows
+# Sign up free at: https://codemagic.io
+# Connect your GitHub/GitLab repo, then this file auto-configures everything
+
+workflows:
+
+  # ── iOS build → TestFlight ────────────────────────────────────────────────
+  ios-release:
+    name: iOS Release (TestFlight)
+    max_build_duration: 60
+    instance_type: mac_mini_m1        # Mac in the cloud — you don't need one
+    environment:
+      node: 18.17.0
+      xcode: latest
+      cocoapods: default
+      vars:
+        BUNDLE_ID: com.livehushh.app  # must match your Apple Developer account
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: com.livehushh.app
+    scripts:
+      - name: Install Capacitor deps
+        script: npm ci
+      - name: Sync Capacitor
+        script: npx cap sync ios
+      - name: Build iOS
+        script: |
+          xcode-project use-profiles
+          xcode-project build-ipa \
+            --workspace ios/App/App.xcworkspace \
+            --scheme App
+    artifacts:
+      - build/ios/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log
+    publishing:
+      app_store_connect:
+        auth: integration              # connect App Store Connect in Codemagic UI
+        submit_to_testflight: true
+        beta_groups:
+          - External Testers
+
+  # ── Android build → Google Play ───────────────────────────────────────────
+  android-release:
+    name: Android Release (Play Store)
+    max_build_duration: 60
+    instance_type: linux_x2
+    environment:
+      node: 18.17.0
+      java: 17
+      vars:
+        PACKAGE_NAME: com.livehushh.app
+      android_signing:
+        - livehushh_keystore           # upload your keystore in Codemagic UI → Code Signing
+    scripts:
+      - name: Install deps
+        script: npm ci
+      - name: Sync Capacitor
+        script: npx cap sync android
+      - name: Build Android AAB
+        script: |
+          cd android
+          ./gradlew bundleRelease
+    artifacts:
+      - android/app/build/outputs/**/*.aab
+      - android/app/build/outputs/**/mapping.txt
+    publishing:
+      google_play:
+        credentials: $GCLOUD_SERVICE_ACCOUNT_CREDENTIALS  # set in Codemagic env vars
+        track: internal                # internal → alpha → beta → production
+        submit_as_draft: false

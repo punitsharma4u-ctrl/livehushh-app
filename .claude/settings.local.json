@@ -1,0 +1,29 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:www.livehushh.com)",
+      "WebSearch",
+      "WebFetch(domain:livehushh.com)",
+      "WebFetch(domain:web.archive.org)",
+      "mcp__Claude_in_Chrome__tabs_context_mcp",
+      "mcp__Claude_Preview__preview_start",
+      "Bash(amplify --version)",
+      "Bash(npm --version)",
+      "Bash(amplify push *)",
+      "Bash(copy /Y \"C:\\\\Users\\\\punit\\\\OneDrive\\\\Desktop\\\\LH\\\\lambda\\\\api\\\\index.js\" \"C:\\\\Users\\\\punit\\\\OneDrive\\\\Desktop\\\\LH\\\\amplify\\\\backend\\\\function\\\\livehushhapi\\\\src\\\\index.js\")",
+      "Bash(amplify publish *)",
+      "Bash(aws apigateway *)",
+      "Bash(curl -sv \"https://j76uxpya68.execute-api.us-east-1.amazonaws.com/prod/\")",
+      "Bash(curl -sv \"https://j76uxpya68.execute-api.us-east-1.amazonaws.com/prod/restaurants\")",
+      "Bash(curl -s \"https://j76uxpya68.execute-api.us-east-1.amazonaws.com/prod/orders\")",
+      "Bash(curl -s \"https://j76uxpya68.execute-api.us-east-1.amazonaws.com/prod/waitlist\")",
+      "Bash(curl -s \"https://j76uxpya68.execute-api.us-east-1.amazonaws.com/prod/restaurants\")",
+      "Bash(python3 -m json.tool)",
+      "Bash(npm install *)",
+      "Bash(node -e ' *)",
+      "Bash(npm show *)",
+      "Bash(node -e \"const v=require\\('fs'\\).readFileSync\\('/dev/stdin','utf8'\\);const arr=JSON.parse\\(v\\);console.log\\('latest:',arr[arr.length-1]\\);console.log\\('v5 latest:',arr.filter\\(x=>x.startsWith\\('5.'\\)\\).pop\\(\\)\\)\")",
+      "Bash(npx cap *)"
+    ]
+  }
+}

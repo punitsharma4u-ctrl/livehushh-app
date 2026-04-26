@@ -1,0 +1,18 @@
+{
+  "whyContinueWithGen1": "Prefer not to answer",
+  "projectName": "livehushh",
+  "version": "3.1",
+  "frontend": "javascript",
+  "javascript": {
+    "framework": "none",
+    "config": {
+      "SourceDir": ".",
+      "DistributionDir": ".",
+      "BuildCommand": "echo no-build",
+      "StartCommand": "npx serve . -l 3000"
+    }
+  },
+  "providers": [
+    "awscloudformation"
+  ]
+}

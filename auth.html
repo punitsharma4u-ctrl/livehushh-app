@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Sign In / Sign Up — LiveHushh</title>
+<link rel="stylesheet" href="css/styles.css?v=3">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{height:100vh;display:grid;grid-template-columns:1fr 1fr;background:var(--bg);font-family:'Inter',sans-serif;color:var(--text);overflow:hidden}
+
+/* Left panel */
+.auth-left{position:relative;overflow:hidden;display:flex;flex-direction:column;justify-content:space-between;padding:40px;background:#FFFFFF}
+.auth-left-bg{position:absolute;inset:0;z-index:0}
+.auth-left-content{position:relative;z-index:1;height:100%;display:flex;flex-direction:column;justify-content:space-between}
+.auth-logo{display:flex;align-items:center;gap:10px;font-family:'Inter',system-ui,sans-serif;font-size:1.25rem;font-weight:800}
+.auth-logo-mark{width:34px;height:34px;border-radius:10px;background:var(--grad);display:flex;align-items:center;justify-content:center;box-shadow:0 4px 14px rgba(232,84,10,0.5)}
+.auth-hero-text{flex:1;display:flex;flex-direction:column;justify-content:center;max-width:420px}
+.auth-hero-title{font-family:'Inter',system-ui,sans-serif;font-size:clamp(2rem,3.5vw,2.8rem);font-weight:800;line-height:1.1;letter-spacing:-.03em;margin-bottom:20px;color:#0F172A}
+.auth-hero-desc{font-size:1rem;color:#475569;line-height:1.7;margin-bottom:36px}
+.auth-features{display:flex;flex-direction:column;gap:14px}
+.auth-feature{display:flex;align-items:center;gap:12px;font-size:.875rem;color:#334155}
+.auth-feature-icon{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;background:#F1F5F9;border:1px solid #E2E8F0}
+.auth-stats{display:flex;gap:32px;padding-top:32px;border-top:1px solid #E2E8F0}
+.auth-stat-num{font-family:'Inter',system-ui,sans-serif;font-size:1.4rem;font-weight:800;background:var(--grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.auth-stat-label{font-size:.75rem;color:#94A3B8;margin-top:2px}
+
+/* Right panel */
+.auth-right{height:100vh;overflow-y:auto;display:flex;align-items:flex-start;justify-content:center;padding:48px 40px;background:var(--bg)}
+.auth-form-wrap{width:100%;max-width:420px}
+.auth-tabs{display:flex;background:rgba(255,255,255,0.04);border:1px solid var(--border2);border-radius:var(--r-full);padding:4px;margin-bottom:32px}
+.auth-tab{flex:1;text-align:center;padding:10px;border-radius:var(--r-full);font-size:.875rem;font-weight:600;cursor:pointer;transition:all .2s;color:var(--text2)}
+.auth-tab.active{background:var(--grad);color:#fff;box-shadow:0 4px 14px rgba(232,84,10,0.35)}
+.auth-title{font-family:'Inter',system-ui,sans-serif;font-size:1.6rem;font-weight:800;margin-bottom:6px}
+.auth-subtitle{font-size:.875rem;color:var(--text2);margin-bottom:28px}
+.role-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:24px}
+.role-card{border:1.5px solid var(--border2);border-radius:var(--r);padding:14px 10px;text-align:center;cursor:pointer;transition:all .2s;background:var(--bg-card)}
+.role-card.active{border-color:var(--purple);background:rgba(232,84,10,0.1)}
+.role-card:hover:not(.active){border-color:var(--border3);background:var(--bg-card-h)}
+.role-icon{width:36px;height:36px;border-radius:10px;margin:0 auto 8px;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,0.06)}
+.role-name{font-size:.78rem;font-weight:600}
+.role-desc{font-size:.68rem;color:var(--text2);margin-top:2px}
+.social-btns{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px}
+.social-btn-auth{background:var(--bg-card);border:1.5px solid var(--border2);border-radius:var(--r);padding:12px;display:flex;align-items:center;justify-content:center;gap:8px;font-size:.85rem;font-weight:500;cursor:pointer;transition:all .2s;color:var(--text)}
+.social-btn-auth:hover{background:var(--bg-card-h);border-color:var(--border3);transform:translateY(-1px)}
+.divider{display:flex;align-items:center;gap:12px;margin:16px 0;color:var(--text3);font-size:.78rem}
+.divider::before,.divider::after{content:'';flex:1;height:1px;background:var(--border2)}
+.auth-form{display:flex;flex-direction:column;gap:14px}
+.auth-footer-text{text-align:center;font-size:.82rem;color:var(--text2);margin-top:20px}
+.auth-footer-text a{color:var(--purple-l);font-weight:500}
+
+/* Mobile top bar (shown only on small screens) */
+.auth-mobile-bar{display:none;align-items:center;justify-content:space-between;padding:14px 20px;background:rgba(6,6,26,0.95);border-bottom:1px solid rgba(255,255,255,0.08);position:sticky;top:0;z-index:100;backdrop-filter:blur(16px)}
+.auth-mobile-bar .lh-logo{font-size:1.1rem}
+
+@media(max-width:768px){
+  body{grid-template-columns:1fr;height:auto;overflow:auto}
+  .auth-left{display:none}
+  /* Let the body scroll; auth-right should not be an independent scroll container */
+  .auth-right{height:auto;min-height:0;overflow-y:visible;padding:28px 20px 48px}
+  .auth-mobile-bar{display:flex}
+}
+</style>
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#E8540A">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="LiveHushh">
+  <link rel="apple-touch-icon" href="/icons/icon-192.png">
+</head>
+<body>
+
+<!-- MOBILE TOP BAR (hidden on desktop) -->
+<div class="auth-mobile-bar">
+  <a href="index.html" class="lh-logo" style="text-decoration:none">
+    <span class="lh-logo-live" style="color:#F8FAFC">live</span><span class="lh-logo-hushh">hushh.</span>
+  </a>
+  <a href="index.html" class="btn btn-ghost btn-sm">← Home</a>
+</div>
+
+<!-- LEFT PANEL -->
+<div class="auth-left">
+  <div class="auth-left-bg">
+    <div class="orb" style="width:500px;height:500px;background:radial-gradient(circle,rgba(232,84,10,0.08),transparent 70%);top:-150px;right:-150px;animation:orbFloat 8s ease-in-out infinite"></div>
+    <div class="orb" style="width:350px;height:350px;background:radial-gradient(circle,rgba(245,158,11,0.07),transparent 70%);bottom:-100px;left:-100px;animation:orbFloat 10s ease-in-out infinite;animation-delay:-4s"></div>
+  </div>
+  <div class="auth-left-content">
+    <a href="index.html" class="auth-logo">
+      <span class="lh-logo"><span class="lh-logo-live" style="color:#1E1E1E">live</span><span class="lh-logo-hushh">hushh.</span></span>
+    </a>
+
+    <div class="auth-hero-text">
+      <!-- SVG Illustration -->
+      <div style="margin-bottom:36px">
+        <svg viewBox="0 0 400 280" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:400px">
+          <defs>
+            <linearGradient id="ag1" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stop-color="#E8540A"/>
+              <stop offset="100%" stop-color="#F59E0B"/>
+            </linearGradient>
+            <linearGradient id="ag2" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stop-color="#F59E0B"/>
+              <stop offset="100%" stop-color="#F59E0B"/>
+            </linearGradient>
+          </defs>
+          <!-- Main screen -->
+          <rect x="60" y="20" width="280" height="200" rx="20" fill="rgba(255,255,255,0.05)" stroke="url(#ag1)" stroke-width="1.5"/>
+          <!-- Video feed -->
+          <rect x="75" y="35" width="250" height="130" rx="12" fill="rgba(232,84,10,0.08)"/>
+          <!-- Silhouettes -->
+          <ellipse cx="155" cy="100" rx="25" ry="32" fill="rgba(255,255,255,0.07)"/>
+          <ellipse cx="200" cy="95" rx="22" ry="28" fill="rgba(255,255,255,0.05)"/>
+          <ellipse cx="248" cy="105" rx="20" ry="26" fill="rgba(255,255,255,0.06)"/>
+          <!-- Face blur overlays -->
+          <rect x="139" y="72" width="32" height="32" rx="16" fill="rgba(200,220,255,0.1)"/>
+          <rect x="182" y="68" width="28" height="28" rx="14" fill="rgba(200,220,255,0.08)"/>
+          <!-- LIVE badge -->
+          <rect x="83" y="43" width="42" height="16" rx="8" fill="rgba(239,68,68,0.9)"/>
+          <circle cx="92" cy="51" r="3" fill="#fff" opacity="0.85"/>
+          <text x="97" y="55" font-family="Inter,sans-serif" font-size="8" fill="#fff" font-weight="700">LIVE</text>
+          <!-- Viewers -->
+          <rect x="270" y="43" width="50" height="16" rx="8" fill="rgba(0,0,0,0.5)"/>
+          <text x="280" y="55" font-family="Inter,sans-serif" font-size="8" fill="#F8FAFC">&#128065; 1.2k</text>
+          <!-- Bottom overlay -->
+          <rect x="75" y="135" width="250" height="30" rx="0" fill="rgba(6,6,26,0.7)"/>
+          <text x="85" y="155" font-family="Syne,sans-serif" font-size="12" font-weight="800" fill="#F8FAFC">The Spice Route, Mumbai</text>
+          <!-- Menu strip -->
+          <rect x="75" y="178" width="250" height="40" rx="0" fill="rgba(255,255,255,0.03)" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+          <text x="85" y="195" font-family="Inter,sans-serif" font-size="9" fill="#94A3B8">Today's Special</text>
+          <text x="85" y="210" font-family="Syne,sans-serif" font-size="11" font-weight="700" fill="#F8FAFC">Butter Chicken + Naan</text>
+          <rect x="270" y="185" width="48" height="22" rx="6" fill="url(#ag1)"/>
+          <text x="280" y="200" font-family="Inter,sans-serif" font-size="9" fill="#fff" font-weight="600">Order</text>
+          <!-- Floating stats -->
+          <rect x="10" y="80" width="100" height="50" rx="10" fill="rgba(11,11,40,0.9)" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+          <text x="22" y="100" font-family="Syne,sans-serif" font-size="18" font-weight="800" fill="#F4844A">342</text>
+          <text x="22" y="118" font-family="Inter,sans-serif" font-size="8.5" fill="#94A3B8">watching now</text>
+          <rect x="295" y="140" width="95" height="50" rx="10" fill="rgba(11,11,40,0.9)" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+          <text x="308" y="160" font-family="Syne,sans-serif" font-size="16" font-weight="800" fill="#10B981">+38%</text>
+          <text x="308" y="178" font-family="Inter,sans-serif" font-size="8.5" fill="#94A3B8">revenue up</text>
+          <!-- Waitlist card -->
+          <rect x="60" y="232" width="280" height="40" rx="10" fill="rgba(11,11,40,0.85)" stroke="rgba(232,84,10,0.25)" stroke-width="1"/>
+          <circle cx="84" cy="252" r="10" fill="rgba(232,84,10,0.2)"/>
+          <text x="78" y="256" font-family="Inter,sans-serif" font-size="10" fill="#F4844A">3</text>
+          <text x="100" y="248" font-family="Inter,sans-serif" font-size="9" fill="#94A3B8">Waitlist position</text>
+          <text x="100" y="262" font-family="Syne,sans-serif" font-size="11" font-weight="700" fill="#F8FAFC">&#126; 15 min wait</text>
+          <rect x="300" y="240" width="28" height="24" rx="6" fill="url(#ag1)" opacity="0.9"/>
+          <text x="306" y="256" font-family="Inter,sans-serif" font-size="9" fill="#fff">&#10003;</text>
+        </svg>
+      </div>
+
+      <h2 class="auth-hero-title">The future of <span style="background:var(--grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">dining discovery</span></h2>
+      <p class="auth-hero-desc">See restaurants live before you visit. Browse menus, join waitlists, and order ahead — all in one place.</p>
+      <div class="auth-features">
+        <div class="auth-feature">
+          <div class="auth-feature-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#EF4444" stroke-width="2"><circle cx="12" cy="12" r="10"/><polygon points="10,8 16,12 10,16" fill="#EF4444"/></svg></div>
+          Live streams with automatic face blurring
+        </div>
+        <div class="auth-feature">
+          <div class="auth-feature-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg></div>
+          Smart waitlist — join from anywhere
+        </div>
+        <div class="auth-feature">
+          <div class="auth-feature-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#F59E0B" stroke-width="2"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/></svg></div>
+          Pre-order from the menu before you arrive
+        </div>
+      </div>
+    </div>
+
+    <div class="auth-stats">
+      <div>
+        <div class="auth-stat-num">50+</div>
+        <div class="auth-stat-label">Restaurants Onboarding</div>
+      </div>
+      <div>
+        <div class="auth-stat-num" style="background:var(--grad-gold);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">1,200+</div>
+        <div class="auth-stat-label">Early Access Users</div>
+      </div>
+      <div>
+        <div class="auth-stat-num" style="background:var(--grad-cyan);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">Free</div>
+        <div class="auth-stat-label">Always for Diners</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- RIGHT PANEL -->
+<div class="auth-right">
+  <div class="auth-form-wrap">
+    <div class="auth-tabs">
+      <div class="auth-tab active" id="tab-login" onclick="switchTab('login')">Sign In</div>
+      <div class="auth-tab" id="tab-signup" onclick="switchTab('signup')">Create Account</div>
+    </div>
+
+    <!-- LOGIN -->
+    <div id="loginForm">
+      <div class="auth-title">Welcome back</div>
+      <div class="auth-subtitle">Sign in to your LiveHushh account</div>
+
+      <!-- Role selector -->
+      <div class="role-grid">
+        <div class="role-card active" id="role-customer" onclick="selectRole('customer')">
+          <div class="role-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#F4844A" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg></div>
+          <div class="role-name">Customer</div>
+          <div class="role-desc">Browse & order</div>
+        </div>
+        <div class="role-card" id="role-owner" onclick="selectRole('owner')">
+          <div class="role-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#F59E0B" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></div>
+          <div class="role-name">Owner</div>
+          <div class="role-desc">Manage restaurant</div>
+        </div>
+        <div class="role-card" id="role-admin" onclick="selectRole('admin')">
+          <div class="role-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#22D3EE" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
+          <div class="role-name">Admin</div>
+          <div class="role-desc">Platform ops</div>
+        </div>
+      </div>
+
+      <div class="social-btns">
+        <button class="social-btn-auth" style="opacity:.55;cursor:not-allowed" title="Coming soon">
+          <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+          Google <span style="font-size:.7rem;color:var(--text3)">(soon)</span>
+        </button>
+        <button class="social-btn-auth" style="opacity:.55;cursor:not-allowed" title="Coming soon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+          GitHub <span style="font-size:.7rem;color:var(--text3)">(soon)</span>
+        </button>
+      </div>
+      <div class="divider">or continue with email</div>
+
+      <form class="auth-form" onsubmit="handleLogin(event)">
+        <div class="form-group">
+          <label class="form-label">Email Address</label>
+          <input class="input" type="email" id="loginEmail" placeholder="you@example.com" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Password</label>
+          <input class="input" type="password" id="loginPassword" placeholder="••••••••" required>
+        </div>
+        <div id="loginError" style="display:none;background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.25);border-radius:var(--r);padding:10px 14px;font-size:.82rem;color:#EF4444"></div>
+        <button type="submit" class="btn btn-primary w-full" style="margin-top:4px">Sign In</button>
+      </form>
+
+      <p class="auth-footer-text">Don't have an account? <a href="#" onclick="switchTab('signup');return false">Create one free →</a></p>
+    </div>
+
+    <!-- SIGNUP -->
+    <div id="signupForm" style="display:none">
+      <div class="auth-title">Create account</div>
+      <div class="auth-subtitle">Join 1.2M+ diners and restaurant owners</div>
+
+      <div class="role-grid">
+        <div class="role-card active" id="srole-customer" onclick="selectSignupRole('customer')">
+          <div class="role-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#F4844A" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg></div>
+          <div class="role-name">Customer</div>
+          <div class="role-desc">Browse & order</div>
+        </div>
+        <div class="role-card" id="srole-owner" onclick="selectSignupRole('owner')">
+          <div class="role-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#F59E0B" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></div>
+          <div class="role-name">Owner</div>
+          <div class="role-desc">List restaurant</div>
+        </div>
+        <div class="role-card" id="srole-admin" onclick="selectSignupRole('admin')">
+          <div class="role-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#22D3EE" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
+          <div class="role-name">Admin</div>
+          <div class="role-desc">Platform ops</div>
+        </div>
+      </div>
+
+      <form class="auth-form" onsubmit="handleSignup(event)">
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">First Name</label>
+            <input class="input" type="text" id="su_fname" placeholder="James" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Last Name</label>
+            <input class="input" type="text" id="su_lname" placeholder="Carter" required>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Email Address</label>
+          <input class="input" type="email" id="su_email" placeholder="you@example.com" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Password</label>
+          <input class="input" type="password" id="su_pass" placeholder="Min 8 chars, uppercase, number, symbol" required>
+          <p style="font-size:.72rem;color:var(--text3);margin-top:4px">Must contain: uppercase, lowercase, number &amp; symbol (e.g. Test@1234)</p>
+        </div>
+        <div id="restaurantField" style="display:none" class="form-group">
+          <label class="form-label">Restaurant Name</label>
+          <input class="input" type="text" id="su_rname" placeholder="Your restaurant name">
+        </div>
+        <button type="submit" class="btn btn-primary w-full">Create Free Account</button>
+        <p style="font-size:.75rem;color:var(--text3);text-align:center">By signing up you agree to our <a href="contact.html" style="color:var(--purple-l)">Terms</a> &amp; <a href="contact.html" style="color:var(--purple-l)">Privacy Policy</a></p>
+      </form>
+      <p class="auth-footer-text">Already have an account? <a href="#" onclick="switchTab('login');return false">Sign in →</a></p>
+    </div>
+
+    <!-- VERIFY EMAIL -->
+    <div id="verifyForm" style="display:none">
+      <div class="auth-title">Check your email</div>
+      <div class="auth-subtitle" id="verifySubtitle">We sent a 6-digit code to your email</div>
+      <form class="auth-form" onsubmit="handleVerify(event)" style="margin-top:24px">
+        <div class="form-group">
+          <label class="form-label">Verification Code</label>
+          <input class="input" type="text" id="verifyCode" placeholder="123456" maxlength="6" required style="letter-spacing:.2em;font-size:1.2rem;text-align:center">
+        </div>
+        <div id="verifyError" style="display:none;background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.25);border-radius:var(--r);padding:10px 14px;font-size:.82rem;color:#EF4444"></div>
+        <button type="submit" class="btn btn-primary w-full" id="verifyBtn">Verify & Sign In</button>
+        <p style="text-align:center;font-size:.82rem;color:var(--text2);margin-top:8px">
+          Didn't get it? Check your <strong>spam/junk</strong> folder first, then <a href="#" onclick="resendCode();return false" style="color:var(--purple-l)">Resend code</a>
+        </p>
+      </form>
+    </div>
+
+  </div>
+</div>
+
+<script src="js/aws-config.js"></script>
+<!-- amazon-cognito-identity-js UMD build (no bundler required) -->
+<script src="https://unpkg.com/amazon-cognito-identity-js@6/dist/amazon-cognito-identity.min.js"></script>
+<script src="js/data.js?v=2"></script>
+<script>
+/* ══════════════════════════════════════════════════════
+   LiveHushh Auth
+   — Uses AWS Cognito when LH_CONFIG is filled in
+   — Falls back to localStorage while still in dev/setup
+   ══════════════════════════════════════════════════════ */
+
+const CFG        = window.LH_CONFIG || {};
+const COG        = CFG.cognito || {};
+const API_BASE   = (CFG.api || {}).baseUrl || '';
+const SHEETS_URL = CFG.sheetsUrl || '';
+
+// True once the user fills in real Cognito values in js/aws-config.js
+const COGNITO_READY =
+  COG.userPoolId && !COG.userPoolId.startsWith('REPLACE') &&
+  COG.clientId   && !COG.clientId.startsWith('REPLACE');
+
+// ── Cognito UserPool ──────────────────────────────────
+let userPool = null;
+if (COGNITO_READY) {
+  userPool = new AmazonCognitoIdentity.CognitoUserPool({
+    UserPoolId: COG.userPoolId,
+    ClientId:   COG.clientId,
+  });
+}
+
+// ── Local user store (dev fallback) ──────────────────
+const USERS_KEY = 'lh_users';
+function getUsers() {
+  try { return JSON.parse(localStorage.getItem(USERS_KEY) || '[]'); } catch(e) { return []; }
+}
+function saveUsers(u) { localStorage.setItem(USERS_KEY, JSON.stringify(u)); }
+function findUser(email, pass) {
+  return getUsers().find(u => u.email.toLowerCase() === email.toLowerCase() && u.password === pass);
+}
+
+// ── Google Sheets logger (fire-and-forget) ────────────
+function logToSheets(data) {
+  if (!SHEETS_URL) return;
+  fetch(SHEETS_URL, {
+    method: 'POST', mode: 'no-cors',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data)
+  }).catch(e => console.warn('Sheets log:', e));
+}
+
+// ── Save profile to API (after Cognito sign-up) ───────
+async function saveProfileToApi(token, profile) {
+  if (!API_BASE || API_BASE.startsWith('REPLACE')) return;
+  try {
+    await fetch(API_BASE + '/auth/profile', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': token },
+      body: JSON.stringify(profile)
+    });
+  } catch(e) { console.warn('Profile save failed:', e); }
+}
+
+let currentRole = 'customer';
+let signupRole  = 'customer';
+
+let _pendingCognitoUser = null;   // holds CognitoUser awaiting confirmation
+let _pendingEmail        = '';
+let _pendingPass         = '';
+let _pendingRole         = '';
+
+function switchTab(tab) {
+  const isLogin = tab === 'login';
+  document.getElementById('loginForm').style.display  = isLogin ? 'block' : 'none';
+  document.getElementById('signupForm').style.display = isLogin ? 'none'  : 'block';
+  document.getElementById('verifyForm').style.display = 'none';
+  document.getElementById('tab-login').classList.toggle('active',  isLogin);
+  document.getElementById('tab-signup').classList.toggle('active', !isLogin);
+  document.getElementById('loginError').style.display = 'none';
+}
+
+function _showVerify(email) {
+  document.getElementById('loginForm').style.display  = 'none';
+  document.getElementById('signupForm').style.display = 'none';
+  document.getElementById('verifyForm').style.display = 'block';
+  document.getElementById('verifySubtitle').textContent = `We sent a 6-digit code to ${email}`;
+  document.getElementById('verifyCode').value = '';
+  document.getElementById('verifyError').style.display = 'none';
+}
+
+function handleVerify(e) {
+  e.preventDefault();
+  const code  = document.getElementById('verifyCode').value.trim();
+  const errEl = document.getElementById('verifyError');
+  const btn   = document.getElementById('verifyBtn');
+  errEl.style.display = 'none';
+  btn.disabled = true;
+  btn.textContent = 'Verifying…';
+
+  if (!_pendingCognitoUser) {
+    errEl.textContent = 'Session expired. Please sign up again.';
+    errEl.style.display = 'block';
+    btn.disabled = false; btn.textContent = 'Verify & Sign In';
+    return;
+  }
+
+  _pendingCognitoUser.confirmRegistration(code, true, async (err) => {
+    if (err) {
+      errEl.textContent = err.message || 'Invalid code. Please try again.';
+      errEl.style.display = 'block';
+      btn.disabled = false; btn.textContent = 'Verify & Sign In';
+      return;
+    }
+    // Auto sign-in after verification
+    _pendingCognitoUser.authenticateUser(
+      new AmazonCognitoIdentity.AuthenticationDetails({ Username: _pendingEmail, Password: _pendingPass }),
+      {
+        async onSuccess(authResult) {
+          const idToken = authResult.getIdToken().getJwtToken();
+          const payload = authResult.getIdToken().decodePayload();
+          const name = payload.name || _pendingEmail;
+          const session = { name, firstName: name.split(' ')[0], email: _pendingEmail, role: _pendingRole, idToken, joinedAt: new Date().toISOString() };
+          localStorage.setItem('lh_session', JSON.stringify(session));
+          // Save role to MongoDB now that we have a valid JWT
+          await saveProfileToApi(idToken, { name, restaurant: '', role: _pendingRole });
+          _sendWelcomeEmail(name, _pendingEmail, _pendingRole);
+          APP.showToast('Email verified! Welcome, ' + session.firstName + '!', 'success');
+          setTimeout(() => _redirect(_pendingRole, true), 900);  // new signup → onboarding
+        },
+        onFailure() {
+          APP.showToast('Verified! Please sign in.', 'success');
+          setTimeout(() => switchTab('login'), 1000);
+        }
+      }
+    );
+  });
+}
+
+function resendCode() {
+  if (!_pendingCognitoUser) { APP.showToast('Session expired. Please sign up again.', 'error'); return; }
+  _pendingCognitoUser.resendConfirmationCode((err) => {
+    if (err) { APP.showToast(err.message || 'Could not resend code.', 'error'); return; }
+    APP.showToast('Code resent — check your email!', 'success');
+  });
+}
+
+function selectRole(role) {
+  currentRole = role;
+  ['customer','owner','admin'].forEach(r =>
+    document.getElementById('role-'+r).classList.toggle('active', r === role));
+}
+
+function selectSignupRole(role) {
+  signupRole = role;
+  ['customer','owner','admin'].forEach(r => {
+    const el = document.getElementById('srole-'+r);
+    if (el) el.classList.toggle('active', r === role);
+  });
+  document.getElementById('restaurantField').style.display = role === 'owner' ? 'block' : 'none';
+}
+
+/* ── SIGN IN ──────────────────────────────────────────── */
+function handleLogin(e) {
+  e.preventDefault();
+  const email  = document.getElementById('loginEmail').value.trim();
+  const pass   = document.getElementById('loginPassword').value;
+  const errEl  = document.getElementById('loginError');
+  errEl.style.display = 'none';
+
+  // Admin shortcut (always local)
+  if (currentRole === 'admin' && email === 'admin@livehushh.com' && pass === 'Admin@LH2025') {
+    localStorage.setItem('lh_session', JSON.stringify({ name:'Admin', role:'admin', email }));
+    APP.showToast('Welcome, Admin!', 'success');
+    setTimeout(() => location.href = 'admin-dashboard.html', 700);
+    return;
+  }
+
+  if (COGNITO_READY) {
+    _cognitoSignIn(email, pass, currentRole, errEl);
+  } else {
+    _localSignIn(email, pass, currentRole, errEl);
+  }
+}
+
+function _localSignIn(email, pass, role, errEl) {
+  const user = findUser(email, pass);
+  if (!user) {
+    errEl.textContent = 'No account found. Check your details or create an account.';
+    errEl.style.display = 'block';
+    return;
+  }
+  if (user.role !== role) {
+    errEl.textContent = `This account is registered as "${user.role}". Please select the correct role.`;
+    errEl.style.display = 'block';
+    return;
+  }
+  localStorage.setItem('lh_session', JSON.stringify(user));
+  APP.showToast('Welcome back, ' + (user.firstName || user.name) + '!', 'success');
+  setTimeout(() => _redirect(user.role), 700);
+}
+
+function _cognitoSignIn(email, pass, role, errEl) {
+  const cognitoUser = new AmazonCognitoIdentity.CognitoUser({ Username: email, Pool: userPool });
+  cognitoUser.authenticateUser(
+    new AmazonCognitoIdentity.AuthenticationDetails({ Username: email, Password: pass }),
+    {
+      async onSuccess(result) {
+        const idToken  = result.getIdToken();
+        const payload  = idToken.decodePayload();
+        const jwtToken = idToken.getJwtToken();
+
+        // Always trust the role the user selected on the UI.
+        // We cannot verify from the Cognito JWT (custom:role was never added to the
+        // User Pool schema). Save/update the role in MongoDB so future queries work.
+        const userRole = role;
+
+        // Fire-and-forget: save profile with selected role (fixes stale records too)
+        if (API_BASE && !API_BASE.startsWith('REPLACE')) {
+          saveProfileToApi(jwtToken, {
+            name: payload.name || email,
+            restaurant: '',
+            role: userRole
+          }).catch(e => console.warn('Profile update skipped:', e));
+        }
+
+        const session = {
+          name: payload.name || email,
+          firstName: (payload.name || email).split(' ')[0],
+          email, role: userRole,
+          restaurant: '',
+          idToken: jwtToken,
+        };
+        localStorage.setItem('lh_session', JSON.stringify(session));
+        APP.showToast('Welcome back, ' + (session.firstName || email) + '!', 'success');
+        setTimeout(() => _redirect(userRole), 700);
+      },
+      onFailure(err) {
+        errEl.textContent = err.message || 'Sign-in failed. Check your credentials.';
+        errEl.style.display = 'block';
+      },
+    }
+  );
+}
+
+/* ── SIGN UP ──────────────────────────────────────────── */
+async function handleSignup(e) {
+  e.preventDefault();
+  const firstName = document.getElementById('su_fname').value.trim();
+  const lastName  = document.getElementById('su_lname').value.trim();
+  const email     = document.getElementById('su_email').value.trim().toLowerCase();
+  const pass      = document.getElementById('su_pass').value;
+  const rname     = (document.getElementById('su_rname') || {}).value || '';
+
+  const passOk = pass.length >= 8 && /[A-Z]/.test(pass) && /[a-z]/.test(pass) && /[0-9]/.test(pass) && /[^A-Za-z0-9]/.test(pass);
+  if (!passOk) {
+    APP.showToast('Password needs 8+ chars, uppercase, lowercase, number & symbol. Try: Test@1234', 'error'); return;
+  }
+
+  const btn = e.target.querySelector('button[type="submit"]');
+  btn.innerHTML = '✨ Creating account…';
+  btn.disabled  = true;
+
+  if (COGNITO_READY) {
+    await _cognitoSignUp(firstName, lastName, email, pass, rname, btn);
+  } else {
+    await _localSignUp(firstName, lastName, email, pass, rname, btn);
+  }
+}
+
+async function _localSignUp(firstName, lastName, email, pass, rname, btn) {
+  const users = getUsers();
+  if (users.find(u => u.email === email)) {
+    APP.showToast('An account with this email already exists — please sign in.', 'error');
+    btn.innerHTML = 'Create Account'; btn.disabled = false; return;
+  }
+  const newUser = {
+    id: 'u_' + Date.now(),
+    firstName, lastName,
+    name: (firstName + ' ' + lastName).trim(),
+    email, password: pass,
+    role: signupRole,
+    restaurant: rname.trim(),
+    joinedAt: new Date().toISOString()
+  };
+  users.push(newUser);
+  saveUsers(users);
+  localStorage.setItem('lh_session', JSON.stringify(newUser));
+  logToSheets({
+    tab: signupRole === 'owner' ? 'Owners' : 'Customers',
+    name: newUser.name, email, role: signupRole,
+    restaurant: rname || 'N/A', joinedAt: newUser.joinedAt
+  });
+  _notifyAdmin(newUser.name, email, signupRole, rname);
+  _sendWelcomeEmail(newUser.name, email, signupRole);
+  APP.showToast('Account created! Welcome, ' + firstName + '!', 'success');
+  setTimeout(() => _redirect(signupRole, true), 900);  // new signup → onboarding
+}
+
+function _cognitoSignUp(firstName, lastName, email, pass, rname, btn) {
+  return new Promise((resolve) => {
+    const name  = (firstName + ' ' + lastName).trim();
+    const attrs = [
+      new AmazonCognitoIdentity.CognitoUserAttribute({ Name: 'email', Value: email }),
+      new AmazonCognitoIdentity.CognitoUserAttribute({ Name: 'name',  Value: name }),
+    ];
+    userPool.signUp(email, pass, attrs, null, async (err, result) => {
+      if (err) {
+        APP.showToast(err.message || 'Sign-up failed.', 'error');
+        btn.innerHTML = 'Create Account'; btn.disabled = false;
+        return resolve();
+      }
+
+      // Store pending state for verification step
+      _pendingCognitoUser = result.user;
+      _pendingEmail       = email;
+      _pendingPass        = pass;
+      _pendingRole        = signupRole;
+
+      // Log to Sheets & notify admin immediately (no email needed)
+      logToSheets({ tab: signupRole === 'owner' ? 'Owners' : 'Customers', name, email, role: signupRole, restaurant: rname || 'N/A', joinedAt: new Date().toISOString() });
+      _notifyAdmin(name, email, signupRole, rname);
+
+      if (result.userConfirmed) {
+        // Auto-confirmed (email verification disabled in Cognito)
+        result.user.authenticateUser(
+          new AmazonCognitoIdentity.AuthenticationDetails({ Username: email, Password: pass }),
+          {
+            async onSuccess(authResult) {
+              const idToken = authResult.getIdToken().getJwtToken();
+              const session = { name, firstName, email, role: signupRole, restaurant: rname, joinedAt: new Date().toISOString(), idToken };
+              localStorage.setItem('lh_session', JSON.stringify(session));
+              await saveProfileToApi(idToken, { name, restaurant: rname, role: signupRole });
+              APP.showToast('Account created! Welcome, ' + firstName + '!', 'success');
+              setTimeout(() => _redirect(signupRole, true), 900);  // new signup → onboarding
+              resolve();
+            },
+            onFailure() { switchTab('login'); resolve(); }
+          }
+        );
+      } else {
+        // Email verification required — show code entry screen
+        btn.innerHTML = 'Create Account'; btn.disabled = false;
+        _showVerify(email);
+        resolve();
+      }
+    });
+  });
+}
+
+async function _notifyAdmin(name, email, role, restaurant) {
+  try {
+    await fetch('https://formspree.io/f/xpqkbbgw', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      body: JSON.stringify({ subject: `New ${role} — ${name}`, name, email, role, restaurant: restaurant || 'N/A', _replyto: email })
+    });
+  } catch(e) { console.warn('Admin notification failed:', e); }
+}
+
+async function _sendWelcomeEmail(name, email, role) {
+  // Sends a welcome email to the new user via Formspree
+  try {
+    await fetch('https://formspree.io/f/xpqkbbgw', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      body: JSON.stringify({
+        subject: `Welcome to LiveHushh, ${name.split(' ')[0]}!`,
+        _replyto: 'info@mydineview.com',
+        to: email,
+        message: `Hi ${name.split(' ')[0]},\n\nWelcome to LiveHushh! Your account is ready.\n\nYou signed up as: ${role}\n\nVisit us at https://www.livehushh.com\n\nThe LiveHushh Team`
+      })
+    });
+  } catch(e) { console.warn('Welcome email failed:', e); }
+}
+
+function _redirect(role, isNewSignup) {
+  if (role === 'admin')      { location.href = 'admin-dashboard.html'; return; }
+  if (role === 'customer')   { location.href = 'customer-app.html';    return; }
+  // Owner: new signups always go to onboarding; returning go to dashboard
+  if (isNewSignup)           { location.href = 'owner-onboarding.html'; return; }
+  location.href = 'owner-dashboard.html';
+}
+</script>
+<script src="js/theme.js"></script>
+<script>if("serviceWorker"in navigator){navigator.serviceWorker.register("/service-worker.js").then(()=>console.log("SW registered")).catch(e=>console.warn("SW error",e));}</script>
+</body>
+</html>

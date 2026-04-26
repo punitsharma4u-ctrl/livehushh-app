@@ -1,0 +1,836 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>LiveHushh — Experience Restaurants Before You Visit</title>
+<meta name="description" content="Watch restaurants live before you dine. Browse menus, join waitlists, and discover the vibe — all from your phone.">
+<link rel="stylesheet" href="css/styles.css?v=3">
+<style>
+.hero-split{display:grid;grid-template-columns:1.1fr 0.9fr;gap:64px;align-items:center}
+.hero-split>*{min-width:0}
+.hero-text h1{font-size:clamp(1.9rem,3.6vw,3rem);line-height:1.12}
+.hero-actions{display:flex;gap:14px;flex-wrap:wrap;margin-top:40px}
+.hero-social-proof{display:flex;align-items:center;gap:14px;margin-top:28px;padding-top:28px;border-top:1px solid var(--border2)}
+.avatar-stack{display:flex}
+.avatar-ring{width:34px;height:34px;border-radius:50%;border:2.5px solid var(--bg);margin-left:-10px;display:flex;align-items:center;justify-content:center;font-size:.65rem;font-weight:700;color:#fff;overflow:hidden}
+.avatar-stack .avatar-ring:first-child{margin-left:0}
+.sp-text{font-size:.85rem;color:var(--text2)}
+.sp-text strong{color:var(--text)}
+
+/* Phone mockup */
+.phone-frame{position:relative;width:280px;margin:0 auto}
+.phone-frame svg{width:100%;height:auto;filter:drop-shadow(0 40px 80px rgba(232,84,10,0.45))}
+.phone-glow{position:absolute;inset:-20%;background:radial-gradient(ellipse,rgba(232,84,10,0.25) 0%,transparent 70%);z-index:-1;border-radius:50%;filter:blur(20px)}
+.floating-card{position:absolute;background:rgba(6,6,26,0.85);backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,0.12);border-radius:14px;padding:10px 16px;display:flex;align-items:center;gap:10px;white-space:nowrap;animation:floatCard 5s ease-in-out infinite}
+.floating-card:nth-child(2){animation-delay:-2s}
+.floating-card:nth-child(3){animation-delay:-4s}
+@keyframes floatCard{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+.fc-icon{width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.fc-label{font-size:.7rem;color:var(--text2)}
+.fc-value{font-size:.9rem;font-weight:700;color:var(--text);line-height:1.2}
+
+/* Stats row */
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);border:1px solid var(--border2);border-radius:var(--r-xl);overflow:hidden;background:var(--bg-card)}
+.stat+.stat{border-left:1px solid var(--border2)}
+
+/* How it works */
+.hiw-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:32px;position:relative}
+.hiw-connector{position:absolute;top:36px;left:calc(33.33% - 10px);width:calc(33.33% + 20px);height:2px;background:linear-gradient(90deg,var(--purple),var(--pink));opacity:0.3}
+.hiw-connector-2{left:calc(66.66% - 10px)}
+.hiw-card{text-align:center;padding:36px 28px}
+.hiw-icon-wrap{width:72px;height:72px;border-radius:20px;margin:0 auto 24px;display:flex;align-items:center;justify-content:center;background:var(--grad-subtle);border:1px solid var(--border)}
+
+/* Features */
+.features-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px}
+.feat-card{background:var(--bg-card);border:1px solid var(--border2);border-radius:var(--r-xl);padding:32px;transition:all .3s var(--ease);position:relative;overflow:hidden}
+.feat-card::before{content:'';position:absolute;inset:0;background:var(--grad-subtle);opacity:0;transition:opacity .3s}
+.feat-card:hover::before{opacity:1}
+.feat-card:hover{border-color:var(--border);transform:translateY(-6px);box-shadow:var(--shadow-lg)}
+.feat-card-inner{position:relative;z-index:1}
+.feat-title{font-size:1.1rem;font-weight:700;margin:16px 0 8px}
+.feat-desc{font-size:.9rem;color:var(--text2);line-height:1.65}
+
+/* Audience split */
+.audience-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px}
+/* Default (dark theme) audience cards */
+.audience-card{border-radius:var(--r-2xl);padding:52px 48px;position:relative;overflow:hidden;min-height:460px;display:flex;flex-direction:column;justify-content:flex-end;background:linear-gradient(140deg,rgba(232,84,10,0.18) 0%,rgba(6,6,26,0.97) 60%);border:1px solid rgba(232,84,10,0.18)}
+.audience-card:last-child{background:linear-gradient(140deg,rgba(245,158,11,0.16) 0%,rgba(6,6,26,0.97) 60%);border:1px solid rgba(245,158,11,0.16)}
+.audience-card-bg{display:none}
+.audience-card::after{display:none}
+.audience-card-content{position:relative;z-index:1}
+.audience-card-title{font-family:'Syne',sans-serif;font-size:2rem;font-weight:800;letter-spacing:-.03em;margin-bottom:12px;color:#F8FAFC}
+.audience-card-desc{font-size:1rem;color:rgba(255,255,255,0.75);margin-bottom:28px;line-height:1.7}
+.audience-bullets{display:flex;flex-direction:column;gap:10px;margin-bottom:32px}
+.audience-bullet{display:flex;align-items:center;gap:10px;font-size:.9rem;color:rgba(255,255,255,0.85)}
+.audience-card-title{font-family:'Syne',sans-serif;font-size:2rem;font-weight:800;letter-spacing:-.03em;margin-bottom:12px}
+.audience-card-desc{font-size:1rem;color:rgba(255,255,255,0.75);margin-bottom:28px;line-height:1.7}
+.audience-bullets{display:flex;flex-direction:column;gap:10px;margin-bottom:32px}
+.audience-bullet{display:flex;align-items:center;gap:10px;font-size:.9rem;color:rgba(255,255,255,0.85)}
+
+/* Testimonials */
+.testi-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px}
+.testi-card{background:var(--bg-card);border:1px solid var(--border2);border-radius:var(--r-xl);padding:32px;transition:all .3s var(--ease)}
+.testi-card:hover{border-color:var(--border);transform:translateY(-4px);box-shadow:var(--shadow-lg)}
+.testi-stars{display:flex;gap:4px;margin-bottom:20px}
+.testi-text{font-size:.95rem;line-height:1.75;color:var(--text2);margin-bottom:24px;font-style:italic}
+.testi-author{display:flex;align-items:center;gap:12px}
+.testi-avatar{width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.9rem;color:#fff;flex-shrink:0}
+.testi-name{font-weight:600;font-size:.9rem}
+.testi-role{font-size:.78rem;color:var(--text2)}
+
+/* CTA */
+.cta-box{background:var(--grad-subtle);border:1px solid var(--border);border-radius:var(--r-2xl);padding:80px 60px;position:relative;overflow:hidden;text-align:center}
+.cta-box::before{content:'';position:absolute;inset:-1px;background:var(--grad);border-radius:inherit;z-index:-1;opacity:0.15}
+.cta-orb{position:absolute;width:500px;height:500px;border-radius:50%;background:radial-gradient(circle,rgba(232,84,10,0.2),transparent 70%);top:-200px;left:50%;transform:translateX(-50%);filter:blur(40px);pointer-events:none}
+.cta-actions{display:flex;gap:16px;justify-content:center;flex-wrap:wrap;margin-top:40px}
+
+/* Footer */
+.footer{border-top:1px solid var(--border2);padding:80px 0 40px;position:relative}
+.footer-grid{display:grid;grid-template-columns:2fr 1fr 1fr 1fr 1fr;gap:48px;margin-bottom:60px}
+.footer-brand p{font-size:.9rem;color:var(--text2);line-height:1.7;margin-top:16px;max-width:280px}
+.footer-col-title{font-size:.75rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--purple-l);margin-bottom:20px}
+.footer-links{display:flex;flex-direction:column;gap:11px}
+.footer-link{font-size:.875rem;color:var(--text2);transition:color .2s}
+.footer-link:hover{color:var(--text)}
+.footer-bottom{display:flex;justify-content:space-between;align-items:center;padding-top:32px;border-top:1px solid var(--border2);font-size:.82rem;color:var(--text3)}
+.social-links{display:flex;gap:10px}
+.social-btn{width:36px;height:36px;border-radius:10px;background:var(--bg-card);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;transition:all .2s;color:var(--text2)}
+.social-btn:hover{background:var(--bg-card-h);border-color:var(--border);color:var(--text);transform:translateY(-2px)}
+
+/* Scroll reveal */
+.reveal{opacity:0;transform:translateY(28px);transition:opacity .6s var(--ease),transform .6s var(--ease)}
+.reveal.visible{opacity:1;transform:translateY(0)}
+
+@media(max-width:900px){
+  .hero-split{grid-template-columns:1fr;text-align:center}
+  .phone-frame{max-width:240px;margin:40px auto 0}
+  .hero-social-proof{justify-content:center}
+  .hero-actions{justify-content:center}
+  .features-grid,.hiw-grid,.testi-grid{grid-template-columns:1fr}
+  .audience-grid{grid-template-columns:1fr}
+  .stats-row{grid-template-columns:1fr 1fr}
+  .footer-grid{grid-template-columns:1fr 1fr}
+  .footer-bottom{flex-direction:column;gap:16px;text-align:center}
+  .hiw-connector,.hiw-connector-2{display:none}
+}
+@media(max-width:600px){
+  .stats-row{grid-template-columns:1fr}
+  .stat+.stat{border-left:none;border-top:1px solid var(--border2)}
+  .audience-card{padding:36px 28px;min-height:360px}
+  .cta-box{padding:52px 28px}
+  .footer-grid{grid-template-columns:1fr}
+}
+</style>
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#E8540A">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="LiveHushh">
+  <link rel="apple-touch-icon" href="/icons/icon-192.png">
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="nav" id="nav">
+  <div class="nav-inner">
+    <a href="index.html" class="nav-logo">
+      <span class="lh-logo"><span class="lh-logo-live">live</span><span class="lh-logo-hushh">hushh.</span></span>
+    </a>
+    <div class="nav-links">
+      <a href="for-restaurants.html" class="nav-link">For Restaurants</a>
+      <a href="for-customers.html" class="nav-link">For Customers</a>
+      <a href="demo.html" class="nav-link">Request Demo</a>
+      <a href="contact.html" class="nav-link">Help</a>
+    </div>
+    <div class="nav-actions">
+      <a href="auth.html" class="btn btn-ghost btn-sm">Log in</a>
+      <a href="auth.html" class="btn btn-primary btn-sm">Get Started</a>
+    </div>
+    <button class="hamburger" id="hamburgerBtn" onclick="toggleMobileMenu()">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-bg">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+    <div class="hero-grid-lines"></div>
+  </div>
+  <div class="container hero-content">
+    <div class="hero-split">
+      <!-- Left: copy -->
+      <div class="hero-text">
+        <div class="hero-eyebrow">
+          <span class="live-badge">Live Now</span>
+          <span class="pill pill-purple">
+            <svg width="10" height="10" viewBox="0 0 10 10"><circle cx="5" cy="5" r="4" fill="#F4844A"/></svg>
+            Early access — restaurants onboarding now
+          </span>
+        </div>
+        <h1 class="display">Experience Restaurants<br><em class="g-text" style="font-style:normal">Before You Visit</em></h1>
+        <p class="body-lg mt-6" style="max-width:500px">Watch live streams, browse real menus, join the waitlist, and place orders — all before you even step out the door.</p>
+        <div class="hero-actions">
+          <a href="auth.html" class="btn btn-primary btn-lg">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polygon points="10,8 16,12 10,16" fill="white"/></svg>
+            Start Exploring Free
+          </a>
+          <a href="demo.html" class="btn btn-secondary btn-lg">Request Demo</a>
+        </div>
+        <div class="hero-social-proof">
+          <div class="avatar-stack">
+            <div class="avatar-ring" style="background:linear-gradient(135deg,#E8540A,#F59E0B)">J</div>
+            <div class="avatar-ring" style="background:linear-gradient(135deg,#F59E0B,#F59E0B)">E</div>
+            <div class="avatar-ring" style="background:linear-gradient(135deg,#22D3EE,#E8540A)">R</div>
+            <div class="avatar-ring" style="background:linear-gradient(135deg,#10B981,#22D3EE)">K</div>
+          </div>
+          <span class="sp-text">Early access users already <strong>loving it</strong></span>
+        </div>
+      </div>
+
+      <!-- Right: phone mockup -->
+      <div style="position:relative;display:flex;align-items:center;justify-content:center;padding:20px 0">
+        <div class="phone-glow"></div>
+
+        <div class="floating-card" style="position:absolute;top:8%;left:-5%;z-index:10">
+          <div class="fc-icon" style="background:rgba(239,68,68,0.15)">
+            <svg width="18" height="18" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="rgba(239,68,68,0.2)"/><polygon points="10,8 16,12 10,16" fill="#EF4444"/></svg>
+          </div>
+          <div>
+            <div class="fc-label">Now Streaming</div>
+            <div class="fc-value">The Spice Route</div>
+          </div>
+        </div>
+
+        <div class="floating-card" style="position:absolute;bottom:22%;right:-8%;z-index:10">
+          <div class="fc-icon" style="background:rgba(16,185,129,0.15)">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/></svg>
+          </div>
+          <div>
+            <div class="fc-label">Waitlist</div>
+            <div class="fc-value">3 ahead of you</div>
+          </div>
+        </div>
+
+        <div class="floating-card" style="position:absolute;bottom:8%;left:0%;z-index:10">
+          <div class="fc-icon" style="background:rgba(245,158,11,0.15)">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#F59E0B" stroke-width="2"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+          </div>
+          <div>
+            <div class="fc-label">Order placed</div>
+            <div class="fc-value">$47 · 18 min</div>
+          </div>
+        </div>
+
+        <!-- SVG Phone illustration -->
+        <div class="phone-frame">
+          <svg viewBox="0 0 280 560" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <linearGradient id="phoneGrad" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stop-color="#E8540A"/>
+                <stop offset="100%" stop-color="#F59E0B"/>
+              </linearGradient>
+              <linearGradient id="vidGrad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#1a2a5e"/>
+                <stop offset="100%" stop-color="#0e1832"/>
+              </linearGradient>
+              <linearGradient id="overlayGrad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="rgba(0,0,0,0)"/>
+                <stop offset="100%" stop-color="rgba(6,6,26,0.95)"/>
+              </linearGradient>
+            </defs>
+            <!-- Phone shell -->
+            <rect x="8" y="8" width="264" height="544" rx="38" fill="#1a1a3e" stroke="url(#phoneGrad)" stroke-width="2"/>
+            <rect x="14" y="14" width="252" height="532" rx="34" fill="#0e0e2a"/>
+            <!-- Buttons -->
+            <rect x="0" y="140" width="6" height="50" rx="3" fill="#2d2d5a"/>
+            <rect x="0" y="200" width="6" height="70" rx="3" fill="#2d2d5a"/>
+            <rect x="274" y="160" width="6" height="60" rx="3" fill="#2d2d5a"/>
+            <!-- Notch -->
+            <rect x="105" y="18" width="70" height="22" rx="11" fill="#0B0B28"/>
+            <!-- Status bar -->
+            <text x="24" y="58" font-family="Inter,sans-serif" font-size="9" fill="#94A3B8">9:41</text>
+            <rect x="220" y="50" width="30" height="10" rx="3" fill="none" stroke="#94A3B8" stroke-width="1"/>
+            <rect x="221" y="51" width="22" height="8" rx="2" fill="#E8540A" opacity="0.8"/>
+            <!-- Page title -->
+            <text x="24" y="84" font-family="Syne,sans-serif" font-size="14" font-weight="800" fill="#F8FAFC">Nearby Live</text>
+            <rect x="216" y="73" width="40" height="16" rx="8" fill="rgba(239,68,68,0.2)"/>
+            <circle cx="227" cy="81" r="3" fill="#EF4444"/>
+            <text x="232" y="85" font-family="Inter,sans-serif" font-size="7.5" fill="#EF4444" font-weight="700">LIVE</text>
+            <!-- Search -->
+            <rect x="18" y="92" width="244" height="28" rx="10" fill="rgba(255,255,255,0.05)" stroke="rgba(255,255,255,0.08)" stroke-width="1"/>
+            <text x="36" y="111" font-family="Inter,sans-serif" font-size="9" fill="#475569">Search restaurants...</text>
+            <!-- Filter chips -->
+            <rect x="18" y="127" width="40" height="17" rx="8.5" fill="rgba(232,84,10,0.25)" stroke="rgba(232,84,10,0.5)" stroke-width="1"/>
+            <text x="30" y="139.5" font-family="Inter,sans-serif" font-size="7.5" fill="#F4844A" font-weight="600">All</text>
+            <rect x="64" y="127" width="52" height="17" rx="8.5" fill="rgba(255,255,255,0.04)" stroke="rgba(255,255,255,0.07)" stroke-width="1"/>
+            <text x="74" y="139.5" font-family="Inter,sans-serif" font-size="7.5" fill="#94A3B8">Indian</text>
+            <rect x="122" y="127" width="54" height="17" rx="8.5" fill="rgba(255,255,255,0.04)" stroke="rgba(255,255,255,0.07)" stroke-width="1"/>
+            <text x="131" y="139.5" font-family="Inter,sans-serif" font-size="7.5" fill="#94A3B8">Chinese</text>
+            <rect x="182" y="127" width="52" height="17" rx="8.5" fill="rgba(255,255,255,0.04)" stroke="rgba(255,255,255,0.07)" stroke-width="1"/>
+            <text x="190" y="139.5" font-family="Inter,sans-serif" font-size="7.5" fill="#94A3B8">Italian</text>
+            <!-- Live card -->
+            <rect x="18" y="151" width="244" height="120" rx="14" fill="url(#vidGrad)" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+            <rect x="18" y="151" width="244" height="120" rx="14" fill="rgba(232,84,10,0.06)"/>
+            <!-- Silhouettes -->
+            <ellipse cx="100" cy="210" rx="20" ry="25" fill="rgba(255,255,255,0.06)"/>
+            <ellipse cx="142" cy="205" rx="18" ry="22" fill="rgba(255,255,255,0.04)"/>
+            <ellipse cx="180" cy="215" rx="16" ry="20" fill="rgba(255,255,255,0.05)"/>
+            <!-- Face blurs -->
+            <rect x="84" y="190" width="32" height="32" rx="16" fill="rgba(200,200,255,0.1)" style="filter:blur(4px)"/>
+            <rect x="126" y="186" width="30" height="30" rx="15" fill="rgba(200,200,255,0.08)" style="filter:blur(4px)"/>
+            <!-- LIVE badge -->
+            <rect x="28" y="160" width="36" height="14" rx="7" fill="rgba(239,68,68,0.9)"/>
+            <circle cx="35" cy="167" r="2.5" fill="#fff" opacity="0.85"/>
+            <text x="39" y="171" font-family="Inter,sans-serif" font-size="7" fill="#fff" font-weight="700">LIVE</text>
+            <!-- Viewers -->
+            <rect x="204" y="160" width="48" height="14" rx="7" fill="rgba(0,0,0,0.6)"/>
+            <text x="212" y="171" font-family="Inter,sans-serif" font-size="7.5" fill="#F8FAFC">&#128065; 342</text>
+            <!-- Overlay gradient -->
+            <rect x="18" y="231" width="244" height="40" rx="0" fill="url(#overlayGrad)"/>
+            <text x="28" y="258" font-family="Syne,sans-serif" font-size="11" font-weight="800" fill="#F8FAFC">The Spice Route</text>
+            <text x="28" y="271" font-family="Inter,sans-serif" font-size="8" fill="#94A3B8">North Indian &#183; 1.2km &#183; &#9733; 4.7</text>
+            <!-- Card 2 -->
+            <rect x="18" y="281" width="116" height="88" rx="12" fill="rgba(255,255,255,0.03)" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+            <rect x="18" y="281" width="116" height="48" rx="12" fill="rgba(34,211,238,0.06)"/>
+            <text x="28" y="316" font-family="Syne,sans-serif" font-size="9" font-weight="700" fill="#F8FAFC">Seoul Kitchen</text>
+            <text x="28" y="329" font-family="Inter,sans-serif" font-size="7.5" fill="#94A3B8">Korean &#183; 0.8km</text>
+            <rect x="28" y="339" width="32" height="12" rx="6" fill="rgba(16,185,129,0.2)" stroke="rgba(16,185,129,0.3)" stroke-width="1"/>
+            <text x="36" y="348" font-family="Inter,sans-serif" font-size="7" fill="#10B981">Open</text>
+            <text x="100" y="329" font-family="Inter,sans-serif" font-size="8" fill="#F59E0B">&#9733;4.8</text>
+            <!-- Card 3 -->
+            <rect x="144" y="281" width="118" height="88" rx="12" fill="rgba(255,255,255,0.03)" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+            <rect x="144" y="281" width="118" height="48" rx="12" fill="rgba(245,158,11,0.06)"/>
+            <rect x="152" y="289" width="32" height="12" rx="6" fill="rgba(239,68,68,0.85)"/>
+            <circle cx="159" cy="295" r="2.5" fill="#fff" opacity="0.8"/>
+            <text x="163" y="299" font-family="Inter,sans-serif" font-size="6.5" fill="#fff" font-weight="700">LIVE</text>
+            <text x="153" y="316" font-family="Syne,sans-serif" font-size="9" font-weight="700" fill="#F8FAFC">Pasta Republic</text>
+            <text x="153" y="329" font-family="Inter,sans-serif" font-size="7.5" fill="#94A3B8">Italian &#183; 2.1km</text>
+            <text x="232" y="329" font-family="Inter,sans-serif" font-size="8" fill="#F59E0B">&#9733;4.6</text>
+            <!-- Bottom nav bar -->
+            <rect x="14" y="478" width="252" height="68" fill="rgba(11,11,40,0.97)"/>
+            <rect x="14" y="478" width="252" height="1" fill="rgba(255,255,255,0.08)"/>
+            <!-- Home -->
+            <g transform="translate(36,498)">
+              <rect x="-13" y="-8" width="26" height="26" rx="7" fill="rgba(232,84,10,0.2)"/>
+              <path d="M0,0 L-7,7 L7,7 L7,14 L-7,14 L-7,7" stroke="#F4844A" stroke-width="1.5" fill="none" stroke-linejoin="round"/>
+              <text x="-10" y="28" font-family="Inter,sans-serif" font-size="7" fill="#F4844A">Home</text>
+            </g>
+            <!-- Search -->
+            <g transform="translate(92,498)">
+              <circle cx="0" cy="4" r="7" stroke="#475569" stroke-width="1.5" fill="none"/>
+              <line x1="5" y1="9" x2="10" y2="14" stroke="#475569" stroke-width="1.5" stroke-linecap="round"/>
+              <text x="-12" y="28" font-family="Inter,sans-serif" font-size="7" fill="#475569">Search</text>
+            </g>
+            <!-- Play center button -->
+            <circle cx="148" cy="506" r="17" fill="url(#phoneGrad)" opacity="0.95"/>
+            <polygon points="144,500 155,506 144,512" fill="#fff"/>
+            <!-- Orders -->
+            <g transform="translate(204,498)">
+              <path d="M-9,4 L-5,0 L-1,6 L3,-2 L9,4" stroke="#475569" stroke-width="1.5" fill="none" stroke-linejoin="round"/>
+              <text x="-11" y="28" font-family="Inter,sans-serif" font-size="7" fill="#475569">Orders</text>
+            </g>
+            <!-- Profile -->
+            <g transform="translate(256,498)">
+              <circle cx="0" cy="1" r="5" stroke="#475569" stroke-width="1.5" fill="none"/>
+              <path d="M-8,14 C-8,8 8,8 8,14" stroke="#475569" stroke-width="1.5" fill="none"/>
+              <text x="-11" y="28" font-family="Inter,sans-serif" font-size="7" fill="#475569">Profile</text>
+            </g>
+          </svg>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TICKER -->
+<div class="ticker">
+  <div class="ticker-track" id="tickerTrack">
+    <span class="ticker-item"><span class="ticker-dot"></span>Watch Before You Dine</span>
+    <span class="ticker-item"><span class="ticker-dot" style="background:var(--pink)"></span>2,400+ Restaurants Live</span>
+    <span class="ticker-item"><span class="ticker-dot" style="background:var(--gold)"></span>Join the Waitlist from Home</span>
+    <span class="ticker-item"><span class="ticker-dot" style="background:var(--cyan)"></span>Menus, Deals &amp; Live Streams</span>
+    <span class="ticker-item"><span class="ticker-dot"></span>Face Privacy Always Protected</span>
+    <span class="ticker-item"><span class="ticker-dot" style="background:var(--green)"></span>Real-Time Restaurant Ambiance</span>
+    <span class="ticker-item"><span class="ticker-dot" style="background:var(--pink)"></span>Order Before You Arrive</span>
+    <span class="ticker-item"><span class="ticker-dot"></span>Watch Before You Dine</span>
+    <span class="ticker-item"><span class="ticker-dot" style="background:var(--pink)"></span>2,400+ Restaurants Live</span>
+    <span class="ticker-item"><span class="ticker-dot" style="background:var(--gold)"></span>Join the Waitlist from Home</span>
+    <span class="ticker-item"><span class="ticker-dot" style="background:var(--cyan)"></span>Menus, Deals &amp; Live Streams</span>
+    <span class="ticker-item"><span class="ticker-dot"></span>Face Privacy Always Protected</span>
+    <span class="ticker-item"><span class="ticker-dot" style="background:var(--green)"></span>Real-Time Restaurant Ambiance</span>
+    <span class="ticker-item"><span class="ticker-dot" style="background:var(--pink)"></span>Order Before You Arrive</span>
+  </div>
+</div>
+
+<!-- STATS -->
+<section style="padding:0 0 80px">
+  <div class="container reveal">
+    <div class="stats-row">
+      <div class="stat">
+        <div class="stat-number">50+</div>
+        <div class="stat-label">Restaurants Onboarding</div>
+      </div>
+      <div class="stat">
+        <div class="stat-number" style="background:var(--grad-gold);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">1,200+</div>
+        <div class="stat-label">Early Access Users</div>
+      </div>
+      <div class="stat">
+        <div class="stat-number" style="background:var(--grad-cyan);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">8,400+</div>
+        <div class="stat-label">Live Views So Far</div>
+      </div>
+      <div class="stat">
+        <div class="stat-number" style="background:var(--grad-r);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">30%</div>
+        <div class="stat-label">Avg Wait Time Reduced</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section class="section">
+  <div class="container">
+    <div class="section-header reveal">
+      <div class="label">How It Works</div>
+      <h2 class="headline">Dining reimagined in <span class="g-text">3 simple steps</span></h2>
+      <p class="body-lg">No more dining surprises. See the vibe, plan your visit, and arrive at the perfect moment.</p>
+    </div>
+    <div class="hiw-grid">
+      <div class="hiw-connector"></div>
+      <div class="hiw-connector hiw-connector-2"></div>
+
+      <div class="card hiw-card reveal" style="transition-delay:.1s">
+        <div class="hiw-icon-wrap">
+          <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
+            <circle cx="16" cy="16" r="9" stroke="#F4844A" stroke-width="2"/>
+            <line x1="23" y1="23" x2="30" y2="30" stroke="#F59E0B" stroke-width="2.5" stroke-linecap="round"/>
+            <circle cx="16" cy="16" r="3" fill="#F4844A" opacity="0.5"/>
+          </svg>
+        </div>
+        <div class="step-number" style="margin:0 auto 16px">1</div>
+        <h3 class="subhead">Discover Nearby</h3>
+        <p class="caption mt-3">Browse restaurants in your area with smart filters — cuisine, distance, rating, veg/non-veg. See who's live right now.</p>
+      </div>
+
+      <div class="card hiw-card reveal" style="transition-delay:.2s">
+        <div class="hiw-icon-wrap">
+          <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
+            <rect x="4" y="8" width="22" height="16" rx="3" stroke="#F4844A" stroke-width="2"/>
+            <path d="M26 14l5 4-5 4V14z" fill="#F59E0B"/>
+            <rect x="9" y="30" width="12" height="3" rx="1.5" fill="#F4844A" opacity="0.5"/>
+            <line x1="15" y1="24" x2="15" y2="27" stroke="#F4844A" stroke-width="1.5"/>
+          </svg>
+        </div>
+        <div class="step-number" style="margin:0 auto 16px">2</div>
+        <h3 class="subhead">Watch Live &amp; Explore</h3>
+        <p class="caption mt-3">Tune into the live stream with automatic face blurring for privacy. Browse the real menu and today's specials simultaneously.</p>
+      </div>
+
+      <div class="card hiw-card reveal" style="transition-delay:.3s">
+        <div class="hiw-icon-wrap">
+          <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
+            <path d="M8 10 L5 6 L3 6" stroke="#F4844A" stroke-width="2" stroke-linecap="round"/>
+            <path d="M8 10 L10 22 L28 22 L31 12 L8 10z" stroke="#F4844A" stroke-width="2" stroke-linejoin="round"/>
+            <circle cx="13" cy="27" r="2.5" fill="#F59E0B"/>
+            <circle cx="25" cy="27" r="2.5" fill="#F59E0B"/>
+            <path d="M22 16 L24 18 L28 14" stroke="#10B981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <div class="step-number" style="margin:0 auto 16px">3</div>
+        <h3 class="subhead">Order &amp; Arrive Ready</h3>
+        <p class="caption mt-3">Place your order ahead, join the waitlist, and get notified when your table is ready. Walk in — sit down — enjoy.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section class="section" style="background:linear-gradient(180deg,var(--bg) 0%,var(--bg2) 50%,var(--bg) 100%)">
+  <div class="container">
+    <div class="section-header reveal">
+      <div class="label">Platform Features</div>
+      <h2 class="headline">Everything you need,<br><span class="g-text">nothing you don't</span></h2>
+      <p class="body-lg">A complete ecosystem connecting diners, restaurants, and moments.</p>
+    </div>
+    <div class="features-grid">
+      <div class="feat-card reveal" style="transition-delay:.05s">
+        <div class="feat-card-inner">
+          <div class="icon-wrap icon-red">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#EF4444" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polygon points="10,8 16,12 10,16" fill="#EF4444"/></svg>
+          </div>
+          <div class="feat-title">Live Restaurant Streams</div>
+          <p class="feat-desc">Watch the real ambiance, crowd level, and energy of any restaurant in real-time before deciding to visit.</p>
+          <div class="live-badge" style="margin-top:14px">Live</div>
+        </div>
+      </div>
+      <div class="feat-card reveal" style="transition-delay:.1s">
+        <div class="feat-card-inner">
+          <div class="icon-wrap icon-purple">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#F4844A" stroke-width="2" stroke-linecap="round"><rect x="2" y="3" width="20" height="14" rx="3"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+          </div>
+          <div class="feat-title">Privacy-First Streaming</div>
+          <p class="feat-desc">All faces are automatically blurred in every live stream. Guests and staff always remain anonymous and protected.</p>
+          <span class="pill pill-purple" style="margin-top:14px">GDPR Compliant</span>
+        </div>
+      </div>
+      <div class="feat-card reveal" style="transition-delay:.15s">
+        <div class="feat-card-inner">
+          <div class="icon-wrap icon-gold">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#F59E0B" stroke-width="2" stroke-linecap="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+          </div>
+          <div class="feat-title">Pre-Visit Ordering</div>
+          <p class="feat-desc">Browse full menus, apply deals, and place your order in advance. Your food is ready when you walk in.</p>
+        </div>
+      </div>
+      <div class="feat-card reveal" style="transition-delay:.2s">
+        <div class="feat-card-inner">
+          <div class="icon-wrap icon-green">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2" stroke-linecap="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          </div>
+          <div class="feat-title">Smart Waitlist</div>
+          <p class="feat-desc">Join the waitlist remotely. Track your position live, receive SMS when your table is nearly ready. No more standing outside.</p>
+        </div>
+      </div>
+      <div class="feat-card reveal" style="transition-delay:.25s">
+        <div class="feat-card-inner">
+          <div class="icon-wrap icon-cyan">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#22D3EE" stroke-width="2" stroke-linecap="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+          </div>
+          <div class="feat-title">Live Deals &amp; Specials</div>
+          <p class="feat-desc">Restaurants push time-sensitive deals during streams. Catch flash discounts, happy hour offers, and chef's specials.</p>
+          <span class="pill pill-gold" style="margin-top:14px">Up to 40% off</span>
+        </div>
+      </div>
+      <div class="feat-card reveal" style="transition-delay:.3s">
+        <div class="feat-card-inner">
+          <div class="icon-wrap icon-pink">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#F59E0B" stroke-width="2" stroke-linecap="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+          </div>
+          <div class="feat-title">Owner Analytics</div>
+          <p class="feat-desc">Restaurant owners get deep insights — viewer counts, peak hours, order conversion from streams, and revenue attribution.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- WHO IT'S FOR -->
+<section class="section">
+  <div class="container">
+    <div class="section-header reveal">
+      <div class="label">Who It's For</div>
+      <h2 class="headline">Built for <span class="g-text">every table</span></h2>
+    </div>
+    <div class="audience-grid">
+
+      <!-- Customers card -->
+      <div class="audience-card reveal" style="transition-delay:.1s">
+        <div class="audience-card-bg">
+          <svg width="100%" height="100%" viewBox="0 0 600 460" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice" style="position:absolute;inset:0;width:100%;height:100%">
+            <defs>
+              <linearGradient id="custGrad" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stop-color="#0f0f35"/>
+                <stop offset="100%" stop-color="#1a0a3a"/>
+              </linearGradient>
+              <radialGradient id="custGlow" cx="70%" cy="30%" r="60%">
+                <stop offset="0%" stop-color="rgba(232,84,10,0.35)"/>
+                <stop offset="100%" stop-color="transparent"/>
+              </radialGradient>
+            </defs>
+            <rect width="600" height="460" fill="url(#custGrad)"/>
+            <rect width="600" height="460" fill="url(#custGlow)"/>
+            <!-- Phone sketch -->
+            <rect x="350" y="30" width="200" height="380" rx="24" fill="rgba(255,255,255,0.04)" stroke="rgba(244,132,74,0.2)" stroke-width="1.5"/>
+            <rect x="388" y="70" width="124" height="14" rx="7" fill="rgba(255,255,255,0.07)"/>
+            <rect x="366" y="96" width="164" height="90" rx="10" fill="rgba(232,84,10,0.1)"/>
+            <rect x="374" y="104" width="38" height="14" rx="7" fill="rgba(239,68,68,0.85)"/>
+            <circle cx="382" cy="111" r="3" fill="#fff" opacity="0.8"/>
+            <text x="387" y="115" font-family="Inter,sans-serif" font-size="8" fill="#fff" font-weight="700">LIVE</text>
+            <!-- Silhouettes in card -->
+            <ellipse cx="430" cy="165" rx="16" ry="20" fill="rgba(255,255,255,0.06)"/>
+            <ellipse cx="470" cy="160" rx="14" ry="18" fill="rgba(255,255,255,0.04)"/>
+            <rect x="366" y="200" width="100" height="8" rx="4" fill="rgba(255,255,255,0.1)"/>
+            <rect x="366" y="216" width="70" height="8" rx="4" fill="rgba(255,255,255,0.06)"/>
+            <rect x="366" y="236" width="164" height="36" rx="8" fill="rgba(232,84,10,0.15)" stroke="rgba(232,84,10,0.25)" stroke-width="1"/>
+            <text x="420" y="259" font-family="Inter,sans-serif" font-size="10" fill="#F4844A" font-weight="600">Order Now</text>
+            <!-- Review card floating -->
+            <rect x="50" y="200" width="260" height="70" rx="12" fill="rgba(11,11,40,0.85)" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+            <text x="70" y="228" font-family="Inter,sans-serif" font-size="10" fill="#F59E0B">&#9733;&#9733;&#9733;&#9733;&#9733;</text>
+            <text x="70" y="252" font-family="Inter,sans-serif" font-size="9" fill="#94A3B8" font-style="italic">"Loved seeing the vibe before visiting!"</text>
+          </svg>
+        </div>
+        <div class="audience-card-content">
+          <div class="pill pill-purple" style="margin-bottom:20px">For Diners</div>
+          <div class="audience-card-title">Dine with<br>confidence</div>
+          <p class="audience-card-desc">No more dining regrets. Watch the live ambiance, check the real menu, and secure your spot — all from your couch.</p>
+          <div class="audience-bullets">
+            <div class="audience-bullet">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7" fill="rgba(232,84,10,0.3)"/><path d="M5 8l2 2 4-4" stroke="#F4844A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              Live stream any restaurant near you
+            </div>
+            <div class="audience-bullet">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7" fill="rgba(232,84,10,0.3)"/><path d="M5 8l2 2 4-4" stroke="#F4844A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              Order ahead, skip the wait
+            </div>
+            <div class="audience-bullet">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7" fill="rgba(232,84,10,0.3)"/><path d="M5 8l2 2 4-4" stroke="#F4844A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              Smart waitlist with live position tracking
+            </div>
+          </div>
+          <a href="for-customers.html" class="btn btn-primary">Explore as a Diner →</a>
+        </div>
+      </div>
+
+      <!-- Owners card -->
+      <div class="audience-card reveal" style="transition-delay:.2s">
+        <div class="audience-card-bg">
+          <svg width="100%" height="100%" viewBox="0 0 600 460" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice" style="position:absolute;inset:0;width:100%;height:100%">
+            <defs>
+              <linearGradient id="ownGrad" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stop-color="#12040e"/>
+                <stop offset="100%" stop-color="#1a0820"/>
+              </linearGradient>
+              <radialGradient id="ownGlow" cx="30%" cy="30%" r="60%">
+                <stop offset="0%" stop-color="rgba(245,158,11,0.3)"/>
+                <stop offset="100%" stop-color="transparent"/>
+              </radialGradient>
+            </defs>
+            <rect width="600" height="460" fill="url(#ownGrad)"/>
+            <rect width="600" height="460" fill="url(#ownGlow)"/>
+            <!-- Dashboard sketch -->
+            <rect x="50" y="30" width="360" height="260" rx="16" fill="rgba(255,255,255,0.03)" stroke="rgba(245,158,11,0.2)" stroke-width="1.5"/>
+            <!-- Metric cards -->
+            <rect x="70" y="55" width="130" height="64" rx="10" fill="rgba(255,255,255,0.04)" stroke="rgba(255,255,255,0.07)" stroke-width="1"/>
+            <text x="86" y="88" font-family="Syne,sans-serif" font-size="22" font-weight="800" fill="#F4844A">342</text>
+            <text x="86" y="108" font-family="Inter,sans-serif" font-size="8.5" fill="#94A3B8">Live Viewers</text>
+            <rect x="218" y="55" width="130" height="64" rx="10" fill="rgba(255,255,255,0.04)" stroke="rgba(255,255,255,0.07)" stroke-width="1"/>
+            <text x="234" y="88" font-family="Syne,sans-serif" font-size="20" font-weight="800" fill="#F59E0B">&#8377;4,280</text>
+            <text x="234" y="108" font-family="Inter,sans-serif" font-size="8.5" fill="#94A3B8">Today's Revenue</text>
+            <!-- Bar chart -->
+            <rect x="70" y="196" width="22" height="60" rx="4" fill="rgba(232,84,10,0.4)"/>
+            <rect x="100" y="176" width="22" height="80" rx="4" fill="rgba(232,84,10,0.5)"/>
+            <rect x="130" y="156" width="22" height="100" rx="4" fill="rgba(232,84,10,0.6)"/>
+            <rect x="160" y="136" width="22" height="120" rx="4" fill="rgba(245,158,11,0.6)"/>
+            <rect x="190" y="166" width="22" height="90" rx="4" fill="rgba(232,84,10,0.5)"/>
+            <rect x="220" y="146" width="22" height="110" rx="4" fill="rgba(245,158,11,0.5)"/>
+            <rect x="250" y="170" width="22" height="86" rx="4" fill="rgba(232,84,10,0.45)"/>
+            <!-- Live camera badge -->
+            <rect x="380" y="140" width="170" height="110" rx="14" fill="rgba(245,158,11,0.1)" stroke="rgba(245,158,11,0.3)" stroke-width="1.5"/>
+            <rect x="394" y="152" width="42" height="14" rx="7" fill="rgba(239,68,68,0.9)"/>
+            <circle cx="402" cy="159" r="3" fill="#fff" opacity="0.85"/>
+            <text x="407" y="163" font-family="Inter,sans-serif" font-size="7.5" fill="#fff" font-weight="700">LIVE</text>
+            <!-- Camera icon -->
+            <rect x="410" y="172" width="50" height="38" rx="6" fill="rgba(255,255,255,0.06)" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+            <circle cx="435" cy="191" r="10" fill="rgba(255,255,255,0.06)" stroke="rgba(255,255,255,0.15)" stroke-width="1.5"/>
+            <rect x="456" y="178" width="14" height="24" rx="7" fill="rgba(255,255,255,0.04)" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+            <text x="392" y="228" font-family="Inter,sans-serif" font-size="9" fill="#94A3B8">Broadcasting to 342 viewers</text>
+          </svg>
+        </div>
+        <div class="audience-card-content">
+          <div class="pill pill-gold" style="margin-bottom:20px">For Owners</div>
+          <div class="audience-card-title">Grow your<br>restaurant</div>
+          <p class="audience-card-desc">Turn your kitchen into a stage. Live stream your restaurant, push deals in real-time, and manage operations from one dashboard.</p>
+          <div class="audience-bullets">
+            <div class="audience-bullet">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7" fill="rgba(245,158,11,0.2)"/><path d="M5 8l2 2 4-4" stroke="#F59E0B" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              Go live in one tap, engage diners
+            </div>
+            <div class="audience-bullet">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7" fill="rgba(245,158,11,0.2)"/><path d="M5 8l2 2 4-4" stroke="#F59E0B" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              Push deals &amp; manage orders live
+            </div>
+            <div class="audience-bullet">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7" fill="rgba(245,158,11,0.2)"/><path d="M5 8l2 2 4-4" stroke="#F59E0B" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              Detailed analytics &amp; revenue tracking
+            </div>
+          </div>
+          <a href="for-restaurants.html" class="btn btn-gold">Grow My Restaurant →</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TESTIMONIALS -->
+<section class="section" style="background:linear-gradient(180deg,var(--bg) 0%,var(--bg2) 100%)">
+  <div class="container">
+    <div class="section-header reveal">
+      <div class="label">What People Say</div>
+      <h2 class="headline">Loved by diners &amp;<br><span class="g-text">restaurant owners alike</span></h2>
+    </div>
+    <div class="testi-grid">
+      <div class="testi-card reveal" style="transition-delay:.1s">
+        <div class="testi-stars">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="#F59E0B"><polygon points="8,1 10,6 15,6 11,9 13,15 8,11 3,15 5,9 1,6 6,6"/></svg>
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="#F59E0B"><polygon points="8,1 10,6 15,6 11,9 13,15 8,11 3,15 5,9 1,6 6,6"/></svg>
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="#F59E0B"><polygon points="8,1 10,6 15,6 11,9 13,15 8,11 3,15 5,9 1,6 6,6"/></svg>
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="#F59E0B"><polygon points="8,1 10,6 15,6 11,9 13,15 8,11 3,15 5,9 1,6 6,6"/></svg>
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="#F59E0B"><polygon points="8,1 10,6 15,6 11,9 13,15 8,11 3,15 5,9 1,6 6,6"/></svg>
+        </div>
+        <p class="testi-text">"I was debating between two restaurants on a Friday night. Watched both live for 2 minutes, picked the one with better vibes instantly. Revolutionary."</p>
+        <div class="testi-author">
+          <div class="testi-avatar" style="background:linear-gradient(135deg,#E8540A,#F59E0B)">A</div>
+          <div>
+            <div class="testi-name">James Carter</div>
+            <div class="testi-role">Food Enthusiast, Toronto</div>
+          </div>
+        </div>
+      </div>
+      <div class="testi-card reveal" style="transition-delay:.2s">
+        <div class="testi-stars">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="#F59E0B"><polygon points="8,1 10,6 15,6 11,9 13,15 8,11 3,15 5,9 1,6 6,6"/></svg>
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="#F59E0B"><polygon points="8,1 10,6 15,6 11,9 13,15 8,11 3,15 5,9 1,6 6,6"/></svg>
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="#F59E0B"><polygon points="8,1 10,6 15,6 11,9 13,15 8,11 3,15 5,9 1,6 6,6"/></svg>
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="#F59E0B"><polygon points="8,1 10,6 15,6 11,9 13,15 8,11 3,15 5,9 1,6 6,6"/></svg>
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="#F59E0B"><polygon points="8,1 10,6 15,6 11,9 13,15 8,11 3,15 5,9 1,6 6,6"/></svg>
+        </div>
+        <p class="testi-text">"Our Tuesday night revenue jumped 38% after we started streaming. Customers come in already knowing the menu and ready to order. Incredible product."</p>
+        <div class="testi-author">
+          <div class="testi-avatar" style="background:linear-gradient(135deg,#F59E0B,#F59E0B)">P</div>
+          <div>
+            <div class="testi-name">Emily Clarke</div>
+            <div class="testi-role">Owner, The Spice Garden</div>
+          </div>
+        </div>
+      </div>
+      <div class="testi-card reveal" style="transition-delay:.3s">
+        <div class="testi-stars">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="#F59E0B"><polygon points="8,1 10,6 15,6 11,9 13,15 8,11 3,15 5,9 1,6 6,6"/></svg>
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="#F59E0B"><polygon points="8,1 10,6 15,6 11,9 13,15 8,11 3,15 5,9 1,6 6,6"/></svg>
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="#F59E0B"><polygon points="8,1 10,6 15,6 11,9 13,15 8,11 3,15 5,9 1,6 6,6"/></svg>
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="#F59E0B"><polygon points="8,1 10,6 15,6 11,9 13,15 8,11 3,15 5,9 1,6 6,6"/></svg>
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="#F59E0B"><polygon points="8,1 10,6 15,6 11,9 13,15 8,11 3,15 5,9 1,6 6,6"/></svg>
+        </div>
+        <p class="testi-text">"The waitlist feature is genius. I joined the queue from 10 minutes away, walked in exactly when my table was ready. Zero waiting. 10/10."</p>
+        <div class="testi-author">
+          <div class="testi-avatar" style="background:linear-gradient(135deg,#22D3EE,#E8540A)">R</div>
+          <div>
+            <div class="testi-name">Ryan Mitchell</div>
+            <div class="testi-role">Regular Diner, Vancouver</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="section">
+  <div class="container">
+    <div class="cta-box reveal">
+      <div class="cta-orb"></div>
+      <div class="label" style="margin-bottom:16px">Start Today — Free</div>
+      <h2 class="headline" style="max-width:620px;margin:0 auto">Ready to transform<br>your dining experience?</h2>
+      <p class="body-lg mt-6" style="max-width:480px;margin:24px auto 0">Get early access and be among the first to experience the future of dining discovery. Free for customers, flexible plans for owners.</p>
+      <div class="cta-actions">
+        <a href="auth.html" class="btn btn-primary btn-xl">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polygon points="10,8 16,12 10,16" fill="white"/></svg>
+          Start Exploring Free
+        </a>
+        <a href="for-restaurants.html" class="btn btn-secondary btn-xl">List Your Restaurant</a>
+      </div>
+      <p class="caption mt-6">No credit card required &nbsp;·&nbsp; Free for diners always &nbsp;·&nbsp; 14-day trial for restaurants</p>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer class="footer">
+  <div class="container">
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <a href="index.html" class="nav-logo" style="display:inline-flex">
+          <span class="lh-logo"><span class="lh-logo-live">live</span><span class="lh-logo-hushh">hushh.</span></span>
+        </a>
+        <p>Experience the vibe of any restaurant before you visit. Real streams. Real menus. Zero surprises.</p>
+      </div>
+      <div>
+        <div class="footer-col-title">Product</div>
+        <div class="footer-links">
+          <a href="for-customers.html" class="footer-link">For Customers</a>
+          <a href="for-restaurants.html" class="footer-link">For Restaurants</a>
+          <a href="demo.html" class="footer-link">Request Demo</a>
+          <a href="auth.html" class="footer-link">Sign Up</a>
+        </div>
+      </div>
+      <div>
+        <div class="footer-col-title">Company</div>
+        <div class="footer-links">
+          <a href="contact.html" class="footer-link">About Us</a>
+          <a href="contact.html" class="footer-link">Careers</a>
+          <a href="contact.html" class="footer-link">Contact</a>
+        </div>
+      </div>
+      <div>
+        <div class="footer-col-title">Support</div>
+        <div class="footer-links">
+          <a href="contact.html" class="footer-link">Contact Us</a>
+          <a href="contact.html" class="footer-link">Help Center</a>
+          <a href="contact.html" class="footer-link">System Status</a>
+          <a href="contact.html" class="footer-link">Report Issue</a>
+        </div>
+      </div>
+      <div>
+        <div class="footer-col-title">Legal</div>
+        <div class="footer-links">
+          <a href="contact.html" class="footer-link">Privacy Policy</a>
+          <a href="contact.html" class="footer-link">Terms of Service</a>
+          <a href="contact.html" class="footer-link">Cookie Policy</a>
+          <a href="contact.html" class="footer-link">Refund Policy</a>
+        </div>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2025 LiveHushh</span>
+      <div style="display:flex;align-items:center;gap:14px">
+        <span class="pill pill-green" style="font-size:.72rem;padding:4px 12px">
+          <span style="width:5px;height:5px;border-radius:50%;background:var(--green);display:inline-block;margin-right:5px;animation:livePulse 2s infinite"></span>
+          All systems operational
+        </span>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<script src="js/data.js?v=2"></script>
+<script>
+const nav = document.getElementById('nav');
+window.addEventListener('scroll', () => nav.classList.toggle('scrolled', window.scrollY > 20), {passive:true});
+
+const obs = new IntersectionObserver((entries) => {
+  entries.forEach(e => { if(e.isIntersecting){ e.target.classList.add('visible'); obs.unobserve(e.target); } });
+}, {threshold:0.1, rootMargin:'0px 0px -50px 0px'});
+document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
+</script>
+<script src="js/theme.js"></script>
+<script>if("serviceWorker"in navigator){navigator.serviceWorker.register("/service-worker.js").then(()=>console.log("SW registered")).catch(e=>console.warn("SW error",e));}</script>
+<script>
+function toggleMobileMenu() {
+  const nav   = document.querySelector('.nav-links');
+  const btn   = document.getElementById('hamburgerBtn');
+  const open  = nav.classList.toggle('open');
+  btn.classList.toggle('open', open);
+}
+// Close menu when clicking outside
+document.addEventListener('click', function(e) {
+  const nav = document.querySelector('.nav-links');
+  const btn = document.getElementById('hamburgerBtn');
+  if (nav && nav.classList.contains('open') && !nav.contains(e.target) && !btn.contains(e.target)) {
+    nav.classList.remove('open');
+    btn.classList.remove('open');
+  }
+});
+// Close menu when a link is clicked
+document.querySelectorAll('.nav-links .nav-link').forEach(link => {
+  link.addEventListener('click', () => {
+    document.querySelector('.nav-links').classList.remove('open');
+    document.getElementById('hamburgerBtn').classList.remove('open');
+  });
+});
+</script>
+</body>
+</html>

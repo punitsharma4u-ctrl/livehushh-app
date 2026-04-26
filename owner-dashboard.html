@@ -1,0 +1,1589 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Owner Dashboard — LiveHushh</title>
+<link rel="manifest" href="/manifest.webmanifest">
+<meta name="theme-color" content="#06061A">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="LiveHushh">
+<link rel="apple-touch-icon" href="/icons/icon-192.png">
+<link rel="stylesheet" href="css/styles.css?v=3">
+<style>
+body{background:var(--bg);display:flex;min-height:100vh;overflow-x:hidden}
+
+/* Sidebar */
+.sidebar{width:var(--sidebar-w);background:rgba(11,11,40,0.95);border-right:1px solid var(--border2);display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;z-index:50;backdrop-filter:blur(20px)}
+.sidebar-logo{padding:24px 20px;border-bottom:1px solid var(--border2);display:flex;align-items:center;gap:10px;font-family:'Inter',system-ui,sans-serif;font-size:1.1rem;font-weight:800}
+.sidebar-logo-mark{width:30px;height:30px;border-radius:9px;background:var(--grad);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.sidebar-owner{padding:16px 20px;border-bottom:1px solid var(--border2);display:flex;align-items:center;gap:10px}
+.owner-avatar{width:36px;height:36px;border-radius:50%;background:var(--grad-gold);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.85rem;flex-shrink:0}
+.owner-name{font-size:.82rem;font-weight:600}
+.owner-plan{font-size:.7rem;color:var(--text2)}
+.sidebar-nav{flex:1;padding:12px 10px;overflow-y:auto;display:flex;flex-direction:column;gap:2px}
+.nav-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:var(--r);font-size:.85rem;font-weight:500;color:var(--text2);cursor:pointer;transition:all .2s}
+.nav-item:hover{background:rgba(255,255,255,0.05);color:var(--text)}
+.nav-item.active{background:rgba(232,84,10,0.12);color:var(--purple-l);border:1px solid rgba(232,84,10,0.2)}
+.nav-item svg{flex-shrink:0}
+.sidebar-footer{padding:16px 20px;border-top:1px solid var(--border2)}
+
+/* Main */
+.main{margin-left:var(--sidebar-w);flex:1;display:flex;flex-direction:column;min-height:100vh}
+.topbar{height:60px;background:rgba(6,6,26,0.85);backdrop-filter:blur(16px);border-bottom:1px solid var(--border2);display:flex;align-items:center;padding:0 24px;gap:16px;position:sticky;top:0;z-index:40}
+.topbar-title{font-family:'Inter',system-ui,sans-serif;font-weight:700;font-size:1rem}
+.page-content{padding:24px;flex:1}
+.page{display:none}
+.page.active{display:block}
+
+/* Metrics */
+.metrics-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px}
+.metric-card{background:var(--bg-card);border:1px solid var(--border2);border-radius:var(--r-xl);padding:20px;position:relative;overflow:hidden;transition:all .3s}
+.metric-card:hover{border-color:var(--border);transform:translateY(-2px)}
+.metric-card::before{content:'';position:absolute;top:0;right:0;width:80px;height:80px;border-radius:50%;filter:blur(30px);opacity:.5}
+.mc-purple::before{background:var(--purple)}
+.mc-gold::before{background:var(--gold)}
+.mc-green::before{background:var(--green)}
+.mc-pink::before{background:var(--pink)}
+.metric-value{font-family:'Inter',system-ui,sans-serif;font-size:1.8rem;font-weight:800;line-height:1;margin-bottom:4px}
+.metric-label{font-size:.78rem;color:var(--text2);margin-bottom:8px}
+.metric-trend{font-size:.75rem;display:flex;align-items:center;gap:4px;font-weight:600}
+.trend-up{color:var(--green)}
+.trend-down{color:var(--red)}
+
+/* Charts */
+.chart-row{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px}
+.chart-card{background:var(--bg-card);border:1px solid var(--border2);border-radius:var(--r-xl);padding:20px}
+.chart-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
+.chart-title{font-weight:700;font-size:.9rem}
+.bar-chart{display:flex;align-items:flex-end;gap:6px;height:100px}
+.bar{flex:1;border-radius:4px 4px 0 0;min-height:4px;transition:height .3s}
+.bar-label{font-size:.65rem;color:var(--text2);text-align:center;margin-top:4px}
+
+/* Table */
+.data-table{width:100%;border-collapse:collapse}
+.data-table th{font-size:.72rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text2);padding:10px 12px;text-align:left;border-bottom:1px solid var(--border2)}
+.data-table td{padding:12px;font-size:.85rem;border-bottom:1px solid rgba(255,255,255,0.04);vertical-align:middle}
+.data-table tr:last-child td{border-bottom:none}
+.data-table tbody tr:hover{background:rgba(255,255,255,0.02)}
+
+/* Live Studio */
+.studio-grid{display:grid;grid-template-columns:1fr 320px;gap:20px;height:calc(100vh - 140px)}
+.studio-video{position:relative;border-radius:var(--r-xl);overflow:hidden;background:#000}
+.studio-video video{width:100%;height:100%;object-fit:cover}
+.blur-face{position:absolute;backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border-radius:50%;background:rgba(255,255,255,0.05);pointer-events:none}
+.studio-controls{position:absolute;bottom:20px;left:20px;right:20px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.studio-panel{background:var(--bg-card);border:1px solid var(--border2);border-radius:var(--r-xl);display:flex;flex-direction:column;overflow:hidden}
+.studio-stats{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:16px}
+.studio-stat{background:rgba(255,255,255,0.04);border-radius:var(--r);padding:12px;text-align:center}
+.studio-stat-val{font-family:'Inter',system-ui,sans-serif;font-size:1.4rem;font-weight:800}
+.studio-stat-label{font-size:.7rem;color:var(--text2)}
+.chat-panel{flex:1;overflow-y:auto;padding:10px 14px;display:flex;flex-direction:column;gap:8px}
+.chat-msg{background:rgba(255,255,255,0.04);border-radius:8px;padding:7px 10px;font-size:.8rem}
+.chat-msg-name{font-weight:600;font-size:.72rem;margin-bottom:2px}
+.chat-input-wrap{padding:10px 14px;border-top:1px solid var(--border2);display:flex;gap:8px}
+
+/* Menu editor */
+.menu-table-card{background:var(--bg-card);border:1px solid var(--border2);border-radius:var(--r-xl);overflow:hidden;margin-bottom:16px}
+.menu-table-header{padding:16px 20px;border-bottom:1px solid var(--border2);display:flex;justify-content:space-between;align-items:center}
+
+/* Toggle switch */
+.toggle{width:36px;height:20px;border-radius:10px;background:var(--border2);position:relative;cursor:pointer;transition:background .2s;flex-shrink:0}
+.toggle.on{background:var(--green)}
+.toggle::after{content:'';width:14px;height:14px;background:#fff;border-radius:50%;position:absolute;top:3px;left:3px;transition:left .2s;box-shadow:0 1px 4px rgba(0,0,0,0.3)}
+.toggle.on::after{left:19px}
+
+/* Orders */
+.order-tabs{display:flex;gap:4px;background:rgba(255,255,255,0.04);border:1px solid var(--border2);border-radius:var(--r-full);padding:4px;margin-bottom:20px;width:fit-content}
+.order-tab{padding:8px 18px;border-radius:var(--r-full);font-size:.8rem;font-weight:600;cursor:pointer;transition:all .2s;color:var(--text2)}
+.order-tab.active{background:var(--grad);color:#fff}
+.orders-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px}
+.order-card{background:var(--bg-card);border:1px solid var(--border2);border-radius:var(--r-xl);padding:16px;transition:all .3s}
+.order-card:hover{border-color:var(--border)}
+.order-card.new{border-color:rgba(245,158,11,0.4);background:rgba(245,158,11,0.04)}
+
+/* Waitlist */
+.wl-table-row{display:flex;align-items:center;gap:12px;padding:14px 16px;border-bottom:1px solid var(--border2)}
+.wl-table-row:last-child{border-bottom:none}
+.wl-pos-badge{width:36px;height:36px;border-radius:50%;background:rgba(232,84,10,0.15);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-family:'Inter',system-ui,sans-serif;font-weight:800;font-size:.9rem;color:var(--purple-l);flex-shrink:0}
+
+/* Modal */
+.modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,0.7);backdrop-filter:blur(4px);z-index:200;display:flex;align-items:center;justify-content:center;padding:20px}
+.modal{background:var(--bg2);border:1px solid var(--border2);border-radius:var(--r-2xl);padding:32px;max-width:480px;width:100%;position:relative}
+.modal-close{position:absolute;top:16px;right:16px;width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,0.06);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text2)}
+
+/* Plan / trial banners */
+.trial-banner{padding:12px 24px;display:flex;align-items:center;gap:14px;font-size:.84rem;border-bottom:1px solid var(--border2)}
+.trial-banner.trial{background:rgba(245,158,11,0.08);border-color:rgba(245,158,11,0.2)}
+.trial-banner.active{background:rgba(16,185,129,0.07);border-color:rgba(16,185,129,0.2)}
+.trial-bar-wrap{flex:1;max-width:160px;height:5px;background:rgba(255,255,255,0.08);border-radius:99px;overflow:hidden}
+.trial-bar-fill{height:100%;border-radius:99px;background:var(--grad-gold);transition:width .4s}
+
+/* Feature lock overlay for restricted sections */
+.feature-locked{position:relative}
+.feature-locked::after{content:'🔒 Upgrade to Pro to access this feature';position:absolute;inset:0;background:rgba(6,6,26,0.88);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;font-size:.9rem;font-weight:600;color:var(--text2);border-radius:var(--r-xl);cursor:pointer;text-align:center;padding:20px}
+
+/* Mobile hamburger button */
+.mob-menu-btn{display:none;align-items:center;justify-content:center;width:36px;height:36px;border-radius:var(--r);background:rgba(255,255,255,0.06);border:1px solid var(--border2);cursor:pointer;flex-shrink:0}
+.mob-menu-btn:hover{background:rgba(255,255,255,0.1)}
+/* Sidebar overlay backdrop */
+.sidebar-backdrop{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:49;backdrop-filter:blur(4px)}
+.sidebar-backdrop.active{display:block}
+
+@media(max-width:1100px){
+  .metrics-grid{grid-template-columns:1fr 1fr}
+  .chart-row,.studio-grid{grid-template-columns:1fr}
+  .studio-grid{height:auto}
+}
+@media(max-width:768px){
+  .sidebar{transform:translateX(-100%);transition:transform .28s cubic-bezier(.4,0,.2,1)}
+  .sidebar.open{transform:translateX(0)}
+  .main{margin-left:0}
+  .mob-menu-btn{display:flex}
+  .metrics-grid{grid-template-columns:1fr 1fr}
+  .page-content{padding:16px}
+  .topbar{padding:0 16px}
+}
+</style>
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#E8540A">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="LiveHushh">
+  <link rel="apple-touch-icon" href="/icons/icon-192.png">
+</head>
+<body>
+
+<!-- Sidebar backdrop (mobile only) -->
+<div class="sidebar-backdrop" id="sidebarBackdrop" onclick="closeSidebar()"></div>
+
+<!-- SIDEBAR -->
+<aside class="sidebar" id="ownerSidebar">
+  <div class="sidebar-logo">
+    <span class="lh-logo"><span class="lh-logo-live">live</span><span class="lh-logo-hushh">hushh.</span></span>
+  </div>
+  <div class="sidebar-owner">
+    <div class="owner-avatar" id="ownerAvatarLetter">?</div>
+    <div>
+      <div class="owner-name" id="ownerDisplayName">Loading…</div>
+      <div class="owner-plan" id="ownerPlanLine">—</div>
+    </div>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-item active" onclick="showPage('analytics',this)">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+      Analytics
+    </div>
+    <div class="nav-item" onclick="showPage('live',this)">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polygon points="10,8 16,12 10,16" fill="currentColor"/></svg>
+      Live Studio
+    </div>
+    <div class="nav-item" onclick="showPage('menu',this)">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.5 10c-.83 0-1.5-.67-1.5-1.5v-5c0-.83.67-1.5 1.5-1.5s1.5.67 1.5 1.5v5c0 .83-.67 1.5-1.5 1.5z"/><path d="M20.5 10H19V8.5c0-.83.67-1.5 1.5-1.5s1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/><path d="M9.5 14c.83 0 1.5.67 1.5 1.5v5c0 .83-.67 1.5-1.5 1.5S8 21.33 8 20.5v-5c0-.83.67-1.5 1.5-1.5z"/><path d="M3.5 14H5v1.5c0 .83-.67 1.5-1.5 1.5S2 16.33 2 15.5 2.67 14 3.5 14z"/><path d="M14 14.5c0-.83.67-1.5 1.5-1.5h5c.83 0 1.5.67 1.5 1.5s-.67 1.5-1.5 1.5h-5c-.83 0-1.5-.67-1.5-1.5z"/><path d="M15.5 19H14v1.5c0 .83.67 1.5 1.5 1.5s1.5-.67 1.5-1.5-.67-1.5-1.5-1.5z"/><path d="M10 9.5C10 8.67 9.33 8 8.5 8h-5C2.67 8 2 8.67 2 9.5S2.67 11 3.5 11h5c.83 0 1.5-.67 1.5-1.5z"/><path d="M8.5 5H10V3.5C10 2.67 9.33 2 8.5 2S7 2.67 7 3.5 7.67 5 8.5 5z"/></svg>
+      Menu
+    </div>
+    <div class="nav-item" onclick="showPage('orders',this)">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+      Orders
+      <span class="pill pill-gold" style="margin-left:auto;font-size:.65rem;padding:2px 8px" id="newOrderBadge">2 new</span>
+    </div>
+    <div class="nav-item" onclick="showPage('waitlist',this)">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/></svg>
+      Waitlist
+      <span class="pill pill-green" style="margin-left:auto;font-size:.65rem;padding:2px 8px">5 waiting</span>
+    </div>
+    <div class="nav-item" onclick="showPage('deals',this)">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+      Deals
+    </div>
+    <div class="nav-item" onclick="showPage('media',this)">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+      Media &amp; Videos
+      <span class="pill pill-gold" style="margin-left:auto;font-size:.62rem;padding:2px 7px">Pro</span>
+    </div>
+    <div class="nav-item" onclick="showPage('settings',this)">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      Settings
+    </div>
+  </nav>
+  <div class="sidebar-footer">
+    <a href="auth.html" class="btn btn-ghost btn-sm w-full">Sign Out</a>
+  </div>
+</aside>
+
+<!-- TRIAL EXPIRED OVERLAY -->
+<div id="expiredOverlay" style="display:none;position:fixed;inset:0;background:rgba(6,6,26,0.96);backdrop-filter:blur(12px);z-index:500;display:none;align-items:center;justify-content:center;padding:24px">
+  <div style="background:var(--bg2);border:1px solid var(--border2);border-radius:24px;padding:40px;max-width:640px;width:100%;text-align:center">
+    <div style="width:72px;height:72px;border-radius:50%;background:rgba(239,68,68,0.12);display:flex;align-items:center;justify-content:center;margin:0 auto 20px;font-size:2rem">⏰</div>
+    <h2 style="font-family:Inter,sans-serif;font-size:1.6rem;font-weight:800;margin-bottom:8px">Your trial has ended</h2>
+    <p style="color:var(--text2);margin-bottom:32px;font-size:.95rem">Your restaurant is currently paused on LiveHushh. Choose a plan below to go live again — no interruption to your customers.</p>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:28px" id="upgradeCards"></div>
+    <p style="font-size:.78rem;color:var(--text3)">Secure payment · Cancel anytime · Instant activation</p>
+  </div>
+</div>
+
+<!-- MAIN -->
+<main class="main">
+  <div class="topbar">
+    <!-- Hamburger — only visible on mobile -->
+    <div class="mob-menu-btn" onclick="openSidebar()" title="Menu">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+        <line x1="3" y1="6"  x2="21" y2="6"/>
+        <line x1="3" y1="12" x2="21" y2="12"/>
+        <line x1="3" y1="18" x2="21" y2="18"/>
+      </svg>
+    </div>
+    <div class="topbar-title" id="pageTitle">Analytics</div>
+    <div style="flex:1"></div>
+    <div id="liveIndicator" style="display:none" class="live-badge">Broadcasting Live</div>
+    <button class="btn btn-gold btn-sm" onclick="location.href='go-live.html'">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polygon points="10,8 16,12 10,16" fill="currentColor"/></svg>
+      Go Live
+    </button>
+    <a href="index.html" class="btn btn-ghost btn-sm">← Home</a>
+  </div>
+
+  <!-- TRIAL / PLAN BANNER -->
+  <div id="planBanner" style="display:none"></div>
+
+  <div class="page-content">
+
+    <!-- ══ ANALYTICS ══ -->
+    <div id="page-analytics" class="page active">
+      <div class="metrics-grid">
+        <div class="metric-card mc-purple">
+          <div class="metric-label">Total Live Sessions</div>
+          <div class="metric-value g-text">7</div>
+          <div class="metric-trend trend-up">↑ 40% vs last month</div>
+        </div>
+        <div class="metric-card mc-gold">
+          <div class="metric-label">Avg Viewers / Session</div>
+          <div class="metric-value g-text-gold">284</div>
+          <div class="metric-trend trend-up">↑ 22% vs last month</div>
+        </div>
+        <div class="metric-card mc-green">
+          <div class="metric-label">Revenue This Month</div>
+          <div class="metric-value" style="color:var(--green)">$18,400</div>
+          <div class="metric-trend trend-up">↑ 38% vs last month</div>
+        </div>
+        <div class="metric-card mc-pink">
+          <div class="metric-label">Orders from Streams</div>
+          <div class="metric-value" style="color:var(--pink)">142</div>
+          <div class="metric-trend trend-up">↑ 65% conversion</div>
+        </div>
+      </div>
+
+      <div class="chart-row">
+        <!-- Viewers chart -->
+        <div class="chart-card">
+          <div class="chart-header">
+            <span class="chart-title">Viewers Per Session</span>
+            <span class="pill pill-purple" style="font-size:.7rem">Last 7 sessions</span>
+          </div>
+          <div class="bar-chart" id="viewersChart"></div>
+          <div style="display:flex;gap:0;margin-top:4px" id="viewersLabels"></div>
+        </div>
+        <!-- Revenue chart -->
+        <div class="chart-card">
+          <div class="chart-header">
+            <span class="chart-title">Revenue Trend</span>
+            <span class="pill pill-gold" style="font-size:.7rem">Last 6 months</span>
+          </div>
+          <div class="bar-chart" id="revenueChart"></div>
+          <div style="display:flex;gap:0;margin-top:4px" id="revenueLabels"></div>
+        </div>
+      </div>
+
+      <!-- Session table -->
+      <div class="chart-card" style="margin-bottom:20px">
+        <div class="chart-header">
+          <span class="chart-title">Session History</span>
+          <button class="btn btn-secondary btn-sm" onclick="APP.showToast('Report exported','success')">Export CSV</button>
+        </div>
+        <table class="data-table">
+          <thead>
+            <tr><th>Date</th><th>Duration</th><th>Peak Viewers</th><th>Orders</th><th>Revenue</th><th>Status</th></tr>
+          </thead>
+          <tbody id="sessionTable"></tbody>
+        </table>
+      </div>
+
+      <!-- Top items + Busiest hours -->
+      <div class="chart-row">
+        <div class="chart-card">
+          <div class="chart-header"><span class="chart-title">Top Menu Items</span></div>
+          <div id="topItems" style="display:flex;flex-direction:column;gap:10px"></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-header"><span class="chart-title">Busiest Hours</span></div>
+          <div class="bar-chart" id="hourChart" style="height:80px"></div>
+          <div style="display:flex;margin-top:4px" id="hourLabels"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ LIVE STUDIO ══ -->
+    <div id="page-live" class="page">
+      <div class="studio-grid">
+        <div class="studio-video">
+          <video autoplay muted loop playsinline src="https://www.w3schools.com/html/mov_bbb.mp4" style="width:100%;height:100%;object-fit:cover;min-height:400px"></video>
+          <div class="blur-face" style="width:100px;height:100px;top:20%;left:20%"></div>
+          <div class="blur-face" style="width:88px;height:88px;top:28%;left:44%"></div>
+          <div class="blur-face" style="width:80px;height:80px;top:18%;left:65%"></div>
+          <!-- Top bar -->
+          <div style="position:absolute;top:16px;left:16px;right:16px;display:flex;align-items:center;gap:10px">
+            <div id="liveBadge" class="live-badge" style="display:none">LIVE</div>
+            <div id="liveStatBar" style="display:none;background:rgba(0,0,0,0.6);backdrop-filter:blur(8px);border-radius:var(--r-full);padding:7px 14px;display:flex;gap:14px;font-size:.8rem">
+              <span>👁 <span id="sv">0</span></span>
+              <span>⏱ <span id="sd">00:00</span></span>
+              <span>📦 <span id="so">0</span> orders</span>
+              <span>$ <span id="sr">0</span></span>
+            </div>
+          </div>
+          <div class="studio-controls">
+            <button id="goLiveBtn" class="btn btn-danger btn-lg" onclick="location.href='go-live.html'">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polygon points="10,8 16,12 10,16" fill="currentColor"/></svg>
+              Go Live
+            </button>
+            <button class="btn btn-secondary" onclick="pushDealModal()">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+              Push Deal
+            </button>
+          </div>
+        </div>
+
+        <div class="studio-panel">
+          <div style="padding:14px 16px;border-bottom:1px solid var(--border2);font-weight:700;font-size:.9rem;display:flex;align-items:center;gap:8px">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+            Live Stats
+          </div>
+          <div class="studio-stats">
+            <div class="studio-stat">
+              <div class="studio-stat-val g-text" id="stViewers">—</div>
+              <div class="studio-stat-label">Viewers</div>
+            </div>
+            <div class="studio-stat">
+              <div class="studio-stat-val g-text-gold" id="stRevenue">$0</div>
+              <div class="studio-stat-label">Revenue</div>
+            </div>
+            <div class="studio-stat">
+              <div class="studio-stat-val" style="color:var(--green)" id="stOrders">0</div>
+              <div class="studio-stat-label">Orders</div>
+            </div>
+            <div class="studio-stat">
+              <div class="studio-stat-val" style="color:var(--cyan)" id="stDuration">00:00</div>
+              <div class="studio-stat-label">Duration</div>
+            </div>
+          </div>
+          <div style="padding:10px 16px;border-bottom:1px solid var(--border2);font-size:.8rem;font-weight:600;display:flex;align-items:center;gap:6px">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            Viewer Chat
+          </div>
+          <div class="chat-panel" id="studioChat" style="max-height:300px;overflow-y:auto"></div>
+          <div class="chat-input-wrap">
+            <input class="input" id="studioChatInput" type="text" placeholder="Reply to viewers..." style="font-size:.82rem" onkeydown="if(event.key==='Enter')sendStudioChat()">
+            <button class="btn btn-primary btn-sm" onclick="sendStudioChat()">Send</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ MENU ══ -->
+    <div id="page-menu" class="page">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+        <h2 style="font-family:'Inter',system-ui,sans-serif;font-size:1.2rem;font-weight:700">Menu Management</h2>
+        <button class="btn btn-primary btn-sm" onclick="quickAddItem()">+ Add Item</button>
+      </div>
+      <div id="menuEditor"></div>
+    </div>
+
+    <!-- ══ ORDERS ══ -->
+    <div id="page-orders" class="page">
+      <div class="order-tabs">
+        <div class="order-tab active" onclick="filterOrders('all',this)">All</div>
+        <div class="order-tab" onclick="filterOrders('placed',this)">New <span class="pill pill-gold" style="font-size:.65rem;padding:2px 7px;margin-left:4px">2</span></div>
+        <div class="order-tab" onclick="filterOrders('preparing',this)">Preparing</div>
+        <div class="order-tab" onclick="filterOrders('out_for_delivery',this)">Delivery</div>
+        <div class="order-tab" onclick="filterOrders('delivered',this)">Delivered</div>
+      </div>
+      <div class="orders-grid" id="ownerOrdersGrid"></div>
+    </div>
+
+    <!-- ══ WAITLIST ══ -->
+    <div id="page-waitlist" class="page">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+        <h2 style="font-family:'Inter',system-ui,sans-serif;font-size:1.2rem;font-weight:700">Waitlist Queue</h2>
+        <div style="display:flex;gap:8px">
+          <span class="pill pill-green">5 Waiting</span>
+          <span class="pill pill-purple">12 Seated Today</span>
+        </div>
+      </div>
+      <div class="chart-card" style="padding:0">
+        <div id="waitlistPanel"></div>
+      </div>
+    </div>
+
+    <!-- ══ DEALS ══ -->
+    <div id="page-deals" class="page">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+        <h2 style="font-family:'Inter',system-ui,sans-serif;font-size:1.2rem;font-weight:700">Deals & Specials</h2>
+        <button class="btn btn-gold btn-sm" onclick="openDealModal()">+ Create Deal</button>
+      </div>
+      <div id="dealsPanel" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px"></div>
+    </div>
+
+    <!-- ══ MEDIA & VIDEOS ══ -->
+    <div id="page-media" class="page">
+
+      <!-- Restaurant Banner -->
+      <div class="chart-card" style="margin-bottom:20px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+          <div>
+            <div style="font-weight:700;font-size:1rem">Restaurant Banner Photo</div>
+            <div class="caption" style="margin-top:4px">Main image shown to diners on your listing</div>
+          </div>
+          <label class="btn btn-primary btn-sm" for="bannerUpload" style="cursor:pointer">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            Upload Photo
+          </label>
+          <input type="file" id="bannerUpload" accept="image/*" style="display:none" onchange="handleBannerUpload(this)">
+        </div>
+        <div style="border-radius:var(--r-xl);overflow:hidden;background:var(--bg3);height:220px;display:flex;align-items:center;justify-content:center;border:2px dashed var(--border2);position:relative;cursor:pointer" onclick="document.getElementById('bannerUpload').click()">
+          <img id="bannerPreviewImg" src="" alt="" style="width:100%;height:100%;object-fit:cover;display:none">
+          <div id="bannerPlaceholder" style="text-align:center;color:var(--text3)">
+            <svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" style="margin:0 auto 12px;display:block"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+            <div style="font-size:.88rem;font-weight:600">Click to upload banner photo</div>
+            <div style="font-size:.75rem;margin-top:4px">JPG, PNG, WEBP · Max 10MB</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Menu Item Photos -->
+      <div class="chart-card" style="margin-bottom:20px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+          <div>
+            <div style="font-weight:700;font-size:1rem">Menu Item Photos</div>
+            <div class="caption" style="margin-top:4px">Add photos per dish — restaurants with photos get 3× more orders</div>
+          </div>
+        </div>
+        <div id="menuPhotoGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px"></div>
+      </div>
+
+      <!-- Video Uploads -->
+      <div class="chart-card">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px">
+          <div>
+            <div style="font-weight:700;font-size:1rem">Video Uploads</div>
+            <div class="caption" style="margin-top:4px">Short videos (max 60s) showcasing your restaurant · sent for admin review</div>
+          </div>
+          <span class="pill pill-gold" style="font-size:.7rem" id="videoPlanBadge">Pro · 3 videos/day</span>
+        </div>
+
+        <div style="background:var(--bg3);border-radius:var(--r-lg);padding:14px 18px;display:flex;align-items:center;gap:16px;margin-bottom:16px;flex-wrap:wrap">
+          <div style="flex:1;min-width:160px">
+            <div style="font-size:.82rem;font-weight:600;margin-bottom:7px">
+              Today: <span id="videoCountToday" style="color:var(--purple-l)">0</span> / 3 uploaded
+            </div>
+            <div style="background:var(--border2);border-radius:99px;height:7px;overflow:hidden">
+              <div id="videoCountBar" style="background:var(--grad);height:100%;border-radius:99px;width:0%;transition:width .4s ease"></div>
+            </div>
+          </div>
+          <label class="btn btn-primary btn-sm" for="videoUpload" id="videoUploadLbl" style="cursor:pointer;white-space:nowrap">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            Add Video
+          </label>
+          <input type="file" id="videoUpload" accept="video/*" style="display:none" onchange="handleVideoUpload(this)">
+        </div>
+
+        <div id="videosGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px">
+          <div style="text-align:center;color:var(--text3);grid-column:1/-1;padding:36px 0" id="videosEmpty">
+            <svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" style="margin:0 auto 12px;display:block"><path d="M15 10l4.553-2.069A1 1 0 0 1 21 8.82v6.361a1 1 0 0 1-1.447.894L15 14M3 8a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8z"/></svg>
+            <div style="font-size:.87rem;font-weight:500">No videos yet — upload your first one!</div>
+            <div class="caption" style="margin-top:4px">Approved videos appear on your live stream page</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ SETTINGS ══ -->
+    <div id="page-settings" class="page">
+      <div style="max-width:640px;display:flex;flex-direction:column;gap:16px">
+        <div class="chart-card">
+          <div class="chart-title" style="margin-bottom:16px">🍽️ Restaurant Profile <span style="font-size:.75rem;color:var(--text2);font-weight:400">— visible to customers</span></div>
+          <div style="display:grid;gap:14px">
+            <div class="form-row">
+              <div class="form-group"><label class="form-label">Restaurant Name *</label><input class="input" id="prof_name" placeholder="e.g. The Spice Route"></div>
+              <div class="form-group"><label class="form-label">Cuisine Type *</label><input class="input" id="prof_cuisine" placeholder="e.g. North Indian"></div>
+            </div>
+            <div class="form-group"><label class="form-label">Short Description</label><input class="input" id="prof_desc" placeholder="e.g. Authentic flavors from the heart of India"></div>
+            <div class="form-row">
+              <div class="form-group"><label class="form-label">City</label><input class="input" id="prof_city" placeholder="e.g. New York"></div>
+              <div class="form-group"><label class="form-label">Price Range</label>
+                <select class="input" id="prof_price">
+                  <option value="$">$ — Budget</option>
+                  <option value="$$" selected>$$ — Moderate</option>
+                  <option value="$$$">$$$ — Upscale</option>
+                  <option value="$$$$">$$$$ — Fine dining</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group"><label class="form-label">Phone</label><input class="input" id="prof_phone" placeholder="+1 555 000 0000"></div>
+              <div class="form-group"><label class="form-label">Opening Hours</label><input class="input" id="prof_hours" placeholder="e.g. 11am – 11pm"></div>
+            </div>
+            <div class="form-group"><label class="form-label">Address</label><input class="input" id="prof_address" placeholder="Full street address"></div>
+            <div id="profSaveMsg" style="display:none;padding:10px 14px;border-radius:var(--r);font-size:.83rem;background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.3);color:#10B981">✅ Restaurant profile saved and visible to customers!</div>
+            <button class="btn btn-primary" onclick="saveRestaurantProfile()">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+              Save & Publish to Customer App
+            </button>
+          </div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-title" style="margin-bottom:16px">Streaming Settings</div>
+          <div style="display:flex;flex-direction:column;gap:14px">
+            <div style="display:flex;justify-content:space-between;align-items:center;font-size:.875rem">
+              <div><div style="font-weight:600">Auto face blurring</div><div class="caption">Always on — cannot be disabled</div></div>
+              <div class="toggle on" style="opacity:.6"></div>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;font-size:.875rem">
+              <div><div style="font-weight:600">Viewer chat enabled</div><div class="caption">Allow viewers to chat during streams</div></div>
+              <div class="toggle on" onclick="this.classList.toggle('on')"></div>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;font-size:.875rem">
+              <div><div style="font-weight:600">Push deal notifications</div><div class="caption">Notify followers when you push a deal</div></div>
+              <div class="toggle on" onclick="this.classList.toggle('on')"></div>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;font-size:.875rem">
+              <div><div style="font-weight:600">Auto-schedule streams</div><div class="caption">Remind you when to go live based on peak hours</div></div>
+              <div class="toggle" onclick="this.classList.toggle('on')"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- PUSH DEAL MODAL -->
+<div id="dealModal" class="modal-backdrop hidden">
+  <div class="modal" style="max-width:500px;width:95%">
+    <button class="modal-close" onclick="closeDealModal()">✕</button>
+    <div class="label" style="margin-bottom:6px">Push a Deal</div>
+    <h3 class="subhead" style="margin-bottom:20px">Create & push deal to customers</h3>
+    <form onsubmit="createDeal(event)" style="display:flex;flex-direction:column;gap:14px">
+      <div class="form-group">
+        <label class="form-label">Deal Title *</label>
+        <input class="input" type="text" id="dealTitle" placeholder="e.g. Happy Hour — 25% off Drinks" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Description</label>
+        <input class="input" type="text" id="dealDesc" placeholder="e.g. Valid today 5–7 PM only">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Discount %</label>
+          <input class="input" type="number" id="dealDiscount" placeholder="25" min="1" max="100">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Expiry (hrs, optional)</label>
+          <input class="input" type="number" id="dealExpiry" placeholder="e.g. 2" min="0">
+        </div>
+      </div>
+
+      <!-- Applies To -->
+      <div class="form-group">
+        <label class="form-label">Applies To</label>
+        <select class="input" id="dealScope" onchange="onDealScopeChange(this.value)">
+          <option value="all">All menu items</option>
+          <option value="category">Specific category</option>
+          <option value="items">Specific items</option>
+        </select>
+      </div>
+
+      <!-- Category picker (hidden unless scope = category) -->
+      <div id="dealCategoryWrap" class="form-group" style="display:none">
+        <label class="form-label">Choose Category</label>
+        <select class="input" id="dealCategory"></select>
+      </div>
+
+      <!-- Item multi-picker (hidden unless scope = items) -->
+      <div id="dealItemsWrap" style="display:none">
+        <label class="form-label" style="display:block;margin-bottom:8px">Choose Items</label>
+        <div id="dealItemCheckboxes" style="display:flex;flex-direction:column;gap:8px;max-height:160px;overflow-y:auto;padding:10px;background:var(--bg2);border-radius:var(--r);border:1px solid var(--border2)">
+          <span style="color:var(--text3);font-size:.85rem">No menu items added yet</span>
+        </div>
+      </div>
+
+      <button type="submit" class="btn btn-gold w-full" style="margin-top:4px">🚀 Push Deal Live</button>
+    </form>
+  </div>
+</div>
+
+<!-- Add / Edit Menu Item Modal -->
+<div id="itemModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);backdrop-filter:blur(4px);z-index:300;align-items:center;justify-content:center;padding:20px">
+  <div style="background:var(--bg2);border:1px solid var(--border2);border-radius:20px;padding:28px;max-width:440px;width:100%;position:relative;max-height:90vh;overflow-y:auto">
+    <div style="font-family:Inter,sans-serif;font-size:1.1rem;font-weight:800;margin-bottom:20px" id="im_title">Menu Item</div>
+
+    <!-- Photo upload -->
+    <div style="margin-bottom:16px">
+      <label class="form-label">Item Photo</label>
+      <div style="position:relative;width:100%;height:130px;border-radius:var(--r);background:var(--bg3);border:2px dashed var(--border2);overflow:hidden;display:flex;align-items:center;justify-content:center;cursor:pointer" onclick="document.getElementById('im_photo_input').click()">
+        <img id="im_photo_preview" src="" style="display:none;width:100%;height:100%;object-fit:cover;position:absolute;inset:0">
+        <div id="im_photo_placeholder" style="display:flex;flex-direction:column;align-items:center;gap:6px;color:var(--text3)">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+          <span style="font-size:.8rem">Tap to add photo</span>
+        </div>
+        <input id="im_photo_input" type="file" accept="image/*" style="display:none" onchange="previewItemPhoto(this)">
+      </div>
+    </div>
+
+    <div class="form-group" style="margin-bottom:14px">
+      <label class="form-label">Item Name *</label>
+      <input class="input" id="im_name" type="text" placeholder="e.g. Craft Beer">
+    </div>
+    <div class="form-group" style="margin-bottom:14px">
+      <label class="form-label">Description</label>
+      <input class="input" id="im_desc" type="text" placeholder="Short description (optional)">
+    </div>
+    <div class="form-group" style="margin-bottom:14px">
+      <label class="form-label">Price ($) *</label>
+      <input class="input" id="im_price" type="number" step="0.01" min="0" placeholder="12.99">
+    </div>
+    <div style="display:flex;gap:24px;margin-bottom:20px">
+      <label style="display:flex;align-items:center;gap:8px;font-size:.88rem;cursor:pointer">
+        <input type="checkbox" id="im_veg" style="width:16px;height:16px"> Vegetarian
+      </label>
+      <label style="display:flex;align-items:center;gap:8px;font-size:.88rem;cursor:pointer">
+        <input type="checkbox" id="im_avail" checked style="width:16px;height:16px"> Available
+      </label>
+    </div>
+    <div style="display:flex;gap:10px">
+      <button class="btn btn-primary" style="flex:1" onclick="saveItemModal()">Save Item</button>
+      <button class="btn btn-ghost" onclick="closeItemModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast-container" style="position:fixed;bottom:24px;right:24px;z-index:9999;display:flex;flex-direction:column;gap:8px"></div>
+
+<script src="js/aws-config.js"></script>
+<script src="js/data.js?v=2"></script>
+<script>
+/* ── API helper (same pattern as customer-app) ────────────────────────── */
+const _API = (() => {
+  const base = ((window.LH_CONFIG || {}).api || {}).baseUrl || '';
+  const ready = base && !base.startsWith('REPLACE');
+  function token() {
+    try { return (JSON.parse(localStorage.getItem('lh_session') || '{}')).idToken || ''; } catch { return ''; }
+  }
+  async function get(path) {
+    if (!ready) return null;
+    const r = await fetch(base + path, { headers: { Authorization: token() } });
+    return r.ok ? r.json() : null;
+  }
+  async function post(path, body) {
+    if (!ready) return null;
+    const r = await fetch(base + path, { method:'POST', headers:{ 'Content-Type':'application/json', Authorization: token() }, body: JSON.stringify(body) });
+    return r.ok ? r.json() : null;
+  }
+  async function patch(path, body) {
+    if (!ready) return null;
+    const r = await fetch(base + path, { method:'PATCH', headers:{ 'Content-Type':'application/json', Authorization: token() }, body: JSON.stringify(body) });
+    return r.ok ? r.json() : null;
+  }
+  async function del(path) {
+    if (!ready) return null;
+    const r = await fetch(base + path, { method:'DELETE', headers:{ Authorization: token() } });
+    return r.ok ? r.json() : null;
+  }
+  return { ready, get, post, patch, delete: del };
+})();
+
+let isLive = false;
+let liveInt = null;
+let chatInt = null;
+let liveSec = 0;
+let liveViewers = 0;
+let liveOrders = 0;
+let liveRevenue = 0;
+
+const chatNames = ['Ryan K.','Emily S.','Alex T.','Sophie M.','David P.','Rachel G.','Kevin L.'];
+const chatLines = ["What's today's special?","Looks amazing! 😍","Can I book a table?","Just ordered! 🎉","The butter chicken looks incredible","Is there veg options?","On my way over now!","Great ambiance ✨","Ordering from home — genius","How long is the wait?"];
+
+/* ── Mobile sidebar ───────────────────────────── */
+function openSidebar() {
+  document.getElementById('ownerSidebar').classList.add('open');
+  document.getElementById('sidebarBackdrop').classList.add('active');
+  document.body.style.overflow = 'hidden';
+}
+function closeSidebar() {
+  document.getElementById('ownerSidebar').classList.remove('open');
+  document.getElementById('sidebarBackdrop').classList.remove('active');
+  document.body.style.overflow = '';
+}
+
+function showPage(name, el) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-'+name).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  if (el) el.classList.add('active');
+  document.getElementById('pageTitle').textContent = el ? el.textContent.trim() : name;
+  if (name === 'analytics') initAnalytics();
+  if (name === 'menu') renderMenuEditor();
+  if (name === 'orders') renderOwnerOrders('all');
+  if (name === 'waitlist') renderWaitlistPanel();
+  if (name === 'deals') renderDeals();
+  if (name === 'media') initMediaPage();
+  if (name === 'settings') loadRestaurantProfile();
+  if (name !== 'live') { clearInterval(chatInt); chatInt = null; }
+  else startStudioChat();
+  closeSidebar(); // auto-close sidebar on mobile after navigation
+}
+
+/* ── ANALYTICS ── */
+function initAnalytics() {
+  const sessions = APP.liveSessions;
+  const maxV = Math.max(...sessions.map(s=>s.maxViewers||s.avgViewers||1));
+  const vChart = document.getElementById('viewersChart');
+  const vLabels = document.getElementById('viewersLabels');
+  vChart.innerHTML = sessions.map(s=>`<div class="bar" style="height:${((s.maxViewers||s.avgViewers||0)/maxV)*90}px;background:var(--grad);" title="${s.maxViewers||s.avgViewers} viewers"></div>`).join('');
+  vLabels.innerHTML = sessions.map(s=>`<div class="bar-label" style="flex:1">${s.date.slice(5)}</div>`).join('');
+
+  const months = ['Sep','Oct','Nov','Dec','Jan','Feb'];
+  const revs = [62000,74000,89000,112000,145000,184000];
+  const maxR = Math.max(...revs);
+  document.getElementById('revenueChart').innerHTML = revs.map(r=>`<div class="bar" style="height:${(r/maxR)*90}px;background:var(--grad-gold);"></div>`).join('');
+  document.getElementById('revenueLabels').innerHTML = months.map(m=>`<div class="bar-label" style="flex:1">${m}</div>`).join('');
+
+  const tbody = document.getElementById('sessionTable');
+  tbody.innerHTML = sessions.map(s=>`
+    <tr>
+      <td>${s.date}</td>
+      <td>${s.duration}</td>
+      <td><span style="color:var(--purple-l);font-weight:600">${s.maxViewers||s.avgViewers||'-'}</span></td>
+      <td>${s.orders}</td>
+      <td style="color:var(--gold);font-weight:600">$${s.revenue.toLocaleString()}</td>
+      <td><span class="pill pill-green" style="font-size:.7rem">Completed</span></td>
+    </tr>`).join('');
+
+  const topItems = [
+    {name:'Butter Chicken',orders:84,pct:95},
+    {name:'Paneer Tikka',orders:61,pct:72},
+    {name:'Dal Makhani',orders:48,pct:57},
+    {name:'Naan',orders:44,pct:52},
+    {name:'Mango Lassi',orders:38,pct:45},
+  ];
+  document.getElementById('topItems').innerHTML = topItems.map(i=>`
+    <div>
+      <div style="display:flex;justify-content:space-between;font-size:.82rem;margin-bottom:5px">
+        <span>${i.name}</span><span style="color:var(--text2)">${i.orders} orders</span>
+      </div>
+      <div style="background:rgba(255,255,255,0.07);border-radius:4px;height:6px">
+        <div style="background:var(--grad);height:100%;border-radius:4px;width:${i.pct}%"></div>
+      </div>
+    </div>`).join('');
+
+  const hours = [12,18,24,30,42,58,72,80,68,55,40,24];
+  const hLabels = ['10a','11a','12p','1p','2p','6p','7p','8p','9p','10p','11p','12a'];
+  const maxH = Math.max(...hours);
+  document.getElementById('hourChart').innerHTML = hours.map(h=>`<div class="bar" style="height:${(h/maxH)*72}px;background:var(--grad-cyan);"></div>`).join('');
+  document.getElementById('hourLabels').innerHTML = hLabels.map(l=>`<div class="bar-label" style="flex:1">${l}</div>`).join('');
+}
+
+/* ── LIVE STUDIO ── */
+function toggleLive() {
+  isLive = !isLive;
+  const btn = document.getElementById('goLiveBtn');
+  const badge = document.getElementById('liveBadge');
+  const statBar = document.getElementById('liveStatBar');
+  const indicator = document.getElementById('liveIndicator');
+
+  if (isLive) {
+    btn.className = 'btn btn-secondary btn-lg';
+    btn.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg> End Stream`;
+    badge.style.display = 'inline-flex';
+    statBar.style.display = 'flex';
+    indicator.style.display = 'inline-flex';
+    liveViewers = 50; liveOrders = 0; liveRevenue = 0; liveSec = 0;
+    document.getElementById('stViewers').textContent = liveViewers;
+    liveInt = setInterval(() => {
+      liveSec++;
+      liveViewers += Math.floor(Math.random()*10)-3;
+      if (liveViewers < 20) liveViewers = 20;
+      if (Math.random() > 0.85) { liveOrders++; liveRevenue += [220,280,340,180,420][Math.floor(Math.random()*5)]; }
+      const m = String(Math.floor(liveSec/60)).padStart(2,'0');
+      const s = String(liveSec%60).padStart(2,'0');
+      const dur = m+':'+s;
+      document.getElementById('sv').textContent = liveViewers;
+      document.getElementById('sd').textContent = dur;
+      document.getElementById('so').textContent = liveOrders;
+      document.getElementById('sr').textContent = liveRevenue.toLocaleString();
+      document.getElementById('stViewers').textContent = liveViewers;
+      document.getElementById('stRevenue').textContent = '$'+liveRevenue.toLocaleString();
+      document.getElementById('stOrders').textContent = liveOrders;
+      document.getElementById('stDuration').textContent = dur;
+    }, 1000);
+    APP.showToast('You are now LIVE! Viewers can see your stream.','success',4000);
+  } else {
+    clearInterval(liveInt);
+    btn.className = 'btn btn-danger btn-lg';
+    btn.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polygon points="10,8 16,12 10,16" fill="currentColor"/></svg> Go Live`;
+    badge.style.display = 'none';
+    statBar.style.display = 'none';
+    indicator.style.display = 'none';
+    APP.showToast(`Stream ended. ${liveViewers} peak viewers · $${liveRevenue.toLocaleString()} revenue`, 'info', 5000);
+  }
+}
+
+function startStudioChat() {
+  if (chatInt) return;
+  const chat = document.getElementById('studioChat');
+  chatInt = setInterval(() => {
+    if (!isLive) return;
+    const name = chatNames[Math.floor(Math.random()*chatNames.length)];
+    const msg = chatLines[Math.floor(Math.random()*chatLines.length)];
+    const colors = ['#F4844A','#F472B6','#22D3EE','#34D399','#FBBF24'];
+    const col = colors[Math.floor(Math.random()*colors.length)];
+    const div = document.createElement('div');
+    div.className = 'chat-msg';
+    div.innerHTML = `<div class="chat-msg-name" style="color:${col}">${name}</div>${msg}`;
+    chat.appendChild(div);
+    chat.scrollTop = chat.scrollHeight;
+    if (chat.children.length > 30) chat.removeChild(chat.firstChild);
+  }, 2200);
+}
+
+function sendStudioChat() {
+  const input = document.getElementById('studioChatInput');
+  const val = input.value.trim();
+  if (!val) return;
+  const chat = document.getElementById('studioChat');
+  const div = document.createElement('div');
+  div.className = 'chat-msg';
+  div.style.background = 'rgba(245,158,11,0.08)';
+  div.style.borderLeft = '2px solid var(--gold)';
+  div.innerHTML = `<div class="chat-msg-name" style="color:var(--gold)">You (Owner)</div>${val}`;
+  chat.appendChild(div);
+  chat.scrollTop = chat.scrollHeight;
+  input.value = '';
+}
+
+function pushDealModal() { openDealModal(); }
+
+function openDealModal() {
+  // Populate category / item pickers from current menu
+  const menu = getMenu();
+  const catSel = document.getElementById('dealCategory');
+  catSel.innerHTML = menu.length
+    ? menu.map((c,i) => `<option value="${i}">${c.category}</option>`).join('')
+    : '<option value="">No categories yet</option>';
+
+  const itemBox = document.getElementById('dealItemCheckboxes');
+  const allItems = [];
+  menu.forEach((cat, ci) => {
+    (cat.items || []).forEach((item, ii) => {
+      allItems.push({ ci, ii, id: item.id, name: `${cat.category} — ${item.name}` });
+    });
+  });
+  itemBox.innerHTML = allItems.length
+    ? allItems.map(it => `
+        <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-size:.875rem">
+          <input type="checkbox" value="${it.id}" data-name="${it.name}" style="accent-color:var(--purple)">
+          ${it.name}
+        </label>`).join('')
+    : '<span style="color:var(--text3);font-size:.85rem">No menu items added yet</span>';
+
+  // Reset form
+  document.getElementById('dealTitle').value = '';
+  document.getElementById('dealDesc').value = '';
+  document.getElementById('dealDiscount').value = '';
+  document.getElementById('dealExpiry').value = '';
+  document.getElementById('dealScope').value = 'all';
+  onDealScopeChange('all');
+
+  document.getElementById('dealModal').classList.remove('hidden');
+}
+
+function closeDealModal() {
+  document.getElementById('dealModal').classList.add('hidden');
+}
+
+function onDealScopeChange(val) {
+  document.getElementById('dealCategoryWrap').style.display = val === 'category' ? '' : 'none';
+  document.getElementById('dealItemsWrap').style.display    = val === 'items'    ? '' : 'none';
+}
+
+async function createDeal(e) {
+  e.preventDefault();
+  const title    = document.getElementById('dealTitle').value.trim();
+  const desc     = document.getElementById('dealDesc').value.trim();
+  const discount = parseInt(document.getElementById('dealDiscount').value) || 0;
+  const expiryHrs= parseFloat(document.getElementById('dealExpiry').value) || 0;
+  const scope    = document.getElementById('dealScope').value;
+
+  let appliesTo = 'all';
+  let appliesToLabel = 'All items';
+  const menu = getMenu();
+
+  if (scope === 'category') {
+    const ci = parseInt(document.getElementById('dealCategory').value);
+    if (!isNaN(ci) && menu[ci]) {
+      appliesTo = { type: 'category', categoryIndex: ci, categoryName: menu[ci].category };
+      appliesToLabel = menu[ci].category;
+    }
+  } else if (scope === 'items') {
+    const checked = [...document.querySelectorAll('#dealItemCheckboxes input:checked')];
+    if (!checked.length) { APP.showToast('Select at least one item', 'error'); return; }
+    appliesTo = { type: 'items', itemIds: checked.map(c => c.value), itemNames: checked.map(c => c.dataset.name) };
+    appliesToLabel = checked.map(c => c.dataset.name).join(', ');
+  }
+
+  const expiresAt = expiryHrs > 0 ? new Date(Date.now() + expiryHrs * 3600 * 1000).toISOString() : null;
+
+  const btn = e.target.querySelector('button[type=submit]');
+  btn.disabled = true; btn.textContent = 'Pushing…';
+  try {
+    await _API.post('/deals', { title, desc, discount, appliesTo, appliesToLabel, expiresAt });
+    closeDealModal();
+    APP.showToast('🔥 Deal pushed live! Customers can see it now.', 'success', 4000);
+    renderDeals();
+  } catch(err) {
+    APP.showToast('Failed to push deal — try again', 'error');
+  } finally {
+    btn.disabled = false; btn.textContent = '🚀 Push Deal Live';
+  }
+}
+
+/* ── MENU EDITOR ── */
+/* ── MENU EDITOR ─────────────────────────────────────────────────────────── */
+// Menu is stored as restaurant.menu = [{category, items:[{id,name,desc,price,veg,available}]}]
+
+function renderMenuEditor() {
+  const r = APP.restaurants[0];
+  const el = document.getElementById('menuEditor');
+  if (!r) {
+    el.innerHTML = `<div style="text-align:center;padding:48px;color:var(--text2)">
+      <div style="font-size:2rem;margin-bottom:12px">🍽️</div>
+      <div style="font-weight:600;margin-bottom:6px">No restaurant profile yet</div>
+      <div style="font-size:.85rem;margin-bottom:16px">Go to Settings and fill in your restaurant details first.</div>
+      <button class="btn btn-primary btn-sm" onclick="showPage('settings',document.querySelector('.nav-item:last-child'))">Go to Settings</button>
+    </div>`;
+    return;
+  }
+
+  const menu = r.menu || [];
+  if (!menu.length) {
+    el.innerHTML = `<div style="text-align:center;padding:48px;color:var(--text2)">
+      <div style="font-size:2rem;margin-bottom:12px">📋</div>
+      <div style="font-weight:600;margin-bottom:6px">Your menu is empty</div>
+      <div style="font-size:.85rem;margin-bottom:20px">Add your first category and items below.</div>
+      <button class="btn btn-primary" onclick="openAddCategoryModal()">+ Add Category</button>
+    </div>`;
+    return;
+  }
+
+  el.innerHTML = menu.map((cat, ci) => `
+    <div class="menu-table-card" style="margin-bottom:16px">
+      <div class="menu-table-header">
+        <span style="font-weight:700;font-size:.9rem">${cat.category}</span>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-secondary btn-sm" onclick="openAddItemModal(${ci})">+ Add Item</button>
+          <button class="btn btn-ghost btn-sm" style="color:var(--red)" onclick="removeCategory(${ci})">Remove Category</button>
+        </div>
+      </div>
+      ${(cat.items || []).length ? `
+      <table class="data-table">
+        <thead><tr><th>Item</th><th>Price</th><th>Type</th><th>Available</th><th>Actions</th></tr></thead>
+        <tbody>
+          ${(cat.items || []).map((item, ii) => `
+            <tr>
+              <td><span style="font-weight:600">${item.name}</span><br><span class="caption">${item.desc || ''}</span></td>
+              <td style="font-weight:600;color:var(--gold)">$${Number(item.price).toFixed(2)}</td>
+              <td>${item.veg ? '<span class="pill pill-green" style="font-size:.7rem">🟢 Veg</span>' : '<span class="pill pill-red" style="font-size:.7rem">🔴 Non-Veg</span>'}</td>
+              <td><div class="toggle ${item.available !== false ? 'on' : ''}" onclick="toggleItemAvail(${ci},${ii},this)"></div></td>
+              <td style="display:flex;gap:6px;align-items:center">
+                <button class="btn btn-secondary btn-sm" onclick="openEditItemModal(${ci},${ii})">Edit</button>
+                <button class="btn btn-ghost btn-sm" style="color:var(--red)" onclick="removeMenuItem(${ci},${ii})">Remove</button>
+              </td>
+            </tr>`).join('')}
+        </tbody>
+      </table>` : `<div style="padding:16px 20px;color:var(--text2);font-size:.85rem">No items yet — <a href="#" onclick="openAddItemModal(${ci});return false" style="color:var(--purple-l)">add one</a></div>`}
+    </div>`).join('') +
+    `<button class="btn btn-secondary" onclick="openAddCategoryModal()" style="margin-top:8px">+ Add Category</button>`;
+}
+
+// ── Get menu from restaurant (mutate + save) ────────────────────────────────
+function getMenu() { return (APP.restaurants[0] || {}).menu || []; }
+
+async function saveMenu() {
+  const menu = getMenu();
+  if (!_API.ready) { renderMenuEditor(); return; }
+  try {
+    await _API.post('/restaurants', { menu });
+    APP.showToast('Menu saved!', 'success');
+  } catch(e) { APP.showToast('Save failed — try again', 'error'); }
+  renderMenuEditor();
+}
+
+// ── Category actions ────────────────────────────────────────────────────────
+function openAddCategoryModal() {
+  const name = prompt('Category name (e.g. Starters, Mains, Drinks):');
+  if (!name || !name.trim()) return;
+  const menu = getMenu();
+  menu.push({ category: name.trim(), items: [] });
+  APP.restaurants[0].menu = menu;
+  saveMenu();
+}
+
+function removeCategory(ci) {
+  const cat = getMenu()[ci];
+  if (!cat) return;
+  if (!confirm(`Remove category "${cat.category}" and all its items?`)) return;
+  getMenu().splice(ci, 1);
+  saveMenu();
+}
+
+// ── Item actions ────────────────────────────────────────────────────────────
+let _editTarget = null;  // {ci, ii} or {ci} for new item
+
+function quickAddItem() {
+  const menu = getMenu();
+  if (!menu.length) {
+    if (confirm('You need a category first. Add one now?')) openAddCategoryModal();
+    return;
+  }
+  if (menu.length === 1) {
+    openAddItemModal(0);
+    return;
+  }
+  // Multiple categories — prompt which one
+  const names = menu.map((c,i) => `${i+1}. ${c.category}`).join('\n');
+  const raw = prompt(`Which category?\n${names}\n\nEnter number:`);
+  const ci = parseInt(raw) - 1;
+  if (isNaN(ci) || ci < 0 || ci >= menu.length) return;
+  openAddItemModal(ci);
+}
+
+function openAddItemModal(ci) {
+  _editTarget = { ci, ii: null };
+  _showItemModal(ci, null);
+}
+
+function openEditItemModal(ci, ii) {
+  _editTarget = { ci, ii };
+  _showItemModal(ci, ii);
+}
+
+function _showItemModal(ci, ii) {
+  const item = ii !== null ? (getMenu()[ci].items[ii] || {}) : {};
+  document.getElementById('im_title').textContent = ii !== null ? 'Edit Item' : 'Add Item';
+  document.getElementById('itemModal').style.display = 'flex';
+  document.getElementById('im_name').value    = item.name    || '';
+  document.getElementById('im_desc').value    = item.desc    || '';
+  document.getElementById('im_price').value   = item.price   || '';
+  document.getElementById('im_veg').checked   = item.veg     || false;
+  document.getElementById('im_avail').checked = item.available !== false;
+  // Photo
+  const photos = JSON.parse(localStorage.getItem('lh_menu_photos') || '{}');
+  const existingPhoto = item.photo || (item.name && photos[item.name]) || '';
+  const preview = document.getElementById('im_photo_preview');
+  const placeholder = document.getElementById('im_photo_placeholder');
+  document.getElementById('im_photo_input').value = '';
+  if (existingPhoto) {
+    preview.src = existingPhoto;
+    preview.style.display = 'block';
+    placeholder.style.display = 'none';
+  } else {
+    preview.src = '';
+    preview.style.display = 'none';
+    placeholder.style.display = 'flex';
+  }
+}
+
+function previewItemPhoto(input) {
+  const file = input.files[0];
+  if (!file) return;
+  if (file.size > 5 * 1024 * 1024) { APP.showToast('Photo must be under 5MB', 'error'); input.value=''; return; }
+  const reader = new FileReader();
+  reader.onload = ev => {
+    const preview = document.getElementById('im_photo_preview');
+    preview.src = ev.target.result;
+    preview.style.display = 'block';
+    document.getElementById('im_photo_placeholder').style.display = 'none';
+  };
+  reader.readAsDataURL(file);
+}
+
+function closeItemModal() { document.getElementById('itemModal').style.display = 'none'; }
+
+function saveItemModal() {
+  const name  = document.getElementById('im_name').value.trim();
+  const price = parseFloat(document.getElementById('im_price').value);
+  if (!name || isNaN(price)) { APP.showToast('Name and price are required', 'error'); return; }
+
+  // Persist photo to localStorage keyed by name
+  const photoSrc = document.getElementById('im_photo_preview').src;
+  if (photoSrc && photoSrc.startsWith('data:')) {
+    const photos = JSON.parse(localStorage.getItem('lh_menu_photos') || '{}');
+    photos[name] = photoSrc;
+    localStorage.setItem('lh_menu_photos', JSON.stringify(photos));
+  }
+
+  const item = {
+    id:        'item_' + Date.now(),
+    name,
+    desc:      document.getElementById('im_desc').value.trim(),
+    price:     parseFloat(price).toFixed(2),
+    veg:       document.getElementById('im_veg').checked,
+    available: document.getElementById('im_avail').checked,
+    photo:     (photoSrc && photoSrc.startsWith('data:')) ? photoSrc : (document.getElementById('im_photo_preview').src || ''),
+  };
+  const menu = getMenu();
+  const { ci, ii } = _editTarget;
+  if (ii !== null) {
+    item.id = menu[ci].items[ii].id || item.id;
+    menu[ci].items[ii] = item;
+  } else {
+    menu[ci].items.push(item);
+  }
+  APP.restaurants[0].menu = menu;
+  closeItemModal();
+  saveMenu();
+}
+
+function removeMenuItem(ci, ii) {
+  const item = getMenu()[ci].items[ii];
+  if (!item || !confirm(`Remove "${item.name}"?`)) return;
+  getMenu()[ci].items.splice(ii, 1);
+  saveMenu();
+}
+
+function toggleItemAvail(ci, ii, toggleEl) {
+  toggleEl.classList.toggle('on');
+  const avail = toggleEl.classList.contains('on');
+  getMenu()[ci].items[ii].available = avail;
+  saveMenu();
+}
+
+/* ── ORDERS ── */
+function renderOwnerOrders(filter) {
+  const orders = filter === 'all' ? APP.orders : APP.orders.filter(o => o.status === filter);
+  const statusColors = {placed:'gold',preparing:'purple',out_for_delivery:'cyan',delivered:'green'};
+  const actions = {
+    placed: (o,i) => `<button class="btn btn-primary btn-sm" onclick="updateOrderStatus(${i},'preparing')">Accept</button><button class="btn btn-danger btn-sm" onclick="updateOrderStatus(${i},'delivered')">Reject</button>`,
+    preparing: (o,i) => `<button class="btn btn-gold btn-sm" onclick="updateOrderStatus(${i},'out_for_delivery')">Mark Ready</button>`,
+    out_for_delivery: (o,i) => `<button class="btn btn-secondary btn-sm" onclick="updateOrderStatus(${i},'delivered')">Delivered</button>`,
+    delivered: () => `<span class="pill pill-green" style="font-size:.72rem">Completed</span>`
+  };
+  const r = APP.restaurants[0];
+  document.getElementById('ownerOrdersGrid').innerHTML = orders.map((o,i) => `
+    <div class="order-card ${o.status==='placed'?'new':''}">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+        <span style="font-weight:700">Order #${o.id.replace('ord-','')}</span>
+        <span class="pill pill-${statusColors[o.status]||'purple'}" style="font-size:.7rem">${o.status.replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase())}</span>
+      </div>
+      <div class="caption" style="margin-bottom:8px">${o.items.map(it=>it.name).join(', ')}</div>
+      <div style="font-weight:700;color:var(--gold);margin-bottom:12px">$${o.total}</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">${(actions[o.status]||actions.delivered)(o,i)}</div>
+    </div>`).join('') || '<div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--text2)">No orders in this category</div>';
+}
+
+/* ── RESTAURANT PROFILE SAVE ───────────────────────────────────────────── */
+function loadRestaurantProfile() {
+  const r = APP.restaurants[0] || {};
+  // Field names from normalizeRestaurant() in Lambda
+  document.getElementById('prof_name').value    = r.name        || '';
+  document.getElementById('prof_cuisine').value = r.cuisine     || '';
+  document.getElementById('prof_desc').value    = r.description || '';
+  document.getElementById('prof_city').value    = r.city        || '';
+  document.getElementById('prof_price').value   = r.priceRange  || '$$';
+  document.getElementById('prof_phone').value   = r.phone       || '';
+  document.getElementById('prof_hours').value   = r.hours       || '';
+  document.getElementById('prof_address').value = r.address     || '';
+}
+
+async function saveRestaurantProfile() {
+  const profile = {
+    name:        document.getElementById('prof_name').value.trim(),
+    cuisine:     document.getElementById('prof_cuisine').value.trim(),
+    description: document.getElementById('prof_desc').value.trim(),
+    city:        document.getElementById('prof_city').value.trim(),
+    priceRange:  document.getElementById('prof_price').value,
+    phone:       document.getElementById('prof_phone').value.trim(),
+    hours:       document.getElementById('prof_hours').value.trim(),
+    address:     document.getElementById('prof_address').value.trim(),
+    updatedAt:   new Date().toISOString(),
+    // Preserve existing fields
+    menu:        (APP.restaurants[0] || {}).menu || [],
+    isLive:      (APP.restaurants[0] || {}).isLive || false,
+    rating:      (APP.restaurants[0] || {}).rating || 4.5,
+  };
+
+  if (!profile.name || !profile.cuisine) {
+    APP.showToast('Please fill in Restaurant Name and Cuisine Type', 'error'); return;
+  }
+
+  // Post to MongoDB via API
+  if (_API.ready) {
+    const saved = await _API.post('/restaurants', profile).catch(() => null);
+    if (!saved) { APP.showToast('Save failed — check connection', 'error'); return; }
+  }
+
+  // Update local state
+  if (APP.restaurants[0]) {
+    Object.assign(APP.restaurants[0], profile);
+  } else {
+    APP.restaurants.unshift({ id: 'rest_' + Date.now(), ...profile });
+  }
+
+  // Refresh sidebar restaurant name
+  const planLabel = (APP.restaurants[0].planStatus === 'trial') ? 'Free Trial'
+                  : (APP.restaurants[0].planStatus === 'active') ? 'Active Plan'
+                  : 'No Plan';
+  document.getElementById('ownerPlanLine').textContent = `${profile.name} · ${planLabel}`;
+
+  // Show success message
+  const msg = document.getElementById('profSaveMsg');
+  msg.style.display = 'block';
+  setTimeout(() => msg.style.display = 'none', 4000);
+  APP.showToast('Restaurant profile saved and live for customers!', 'success');
+}
+
+function updateOrderStatus(idx, status) {
+  APP.orders[idx].status = status;
+  // Sync to API if available
+  const order = APP.orders[idx];
+  if (order && order._id) {
+    _API.patch('/orders/' + order._id, { status }).catch(() => {});
+  }
+  renderOwnerOrders('all');
+  APP.showToast('Order status updated to '+status.replace(/_/g,' '), 'success');
+}
+
+function filterOrders(f, el) {
+  document.querySelectorAll('.order-tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  renderOwnerOrders(f);
+}
+
+/* ── WAITLIST ── */
+function renderWaitlistPanel() {
+  document.getElementById('waitlistPanel').innerHTML = APP.waitlist.map((w,i) => {
+    const r = APP.getRestaurant(w.restaurantId);
+    return `
+      <div class="wl-table-row">
+        <div class="wl-pos-badge">${i+1}</div>
+        <div style="flex:1">
+          <div style="font-weight:600;font-size:.9rem">${w.name || 'Guest ' + (i+1)}</div>
+          <div class="caption">${w.guests} guests · Joined ${w.joinedAt||'recently'}</div>
+        </div>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-primary btn-sm" onclick="seatGuest(${i})">Seat Now</button>
+          <button class="btn btn-ghost btn-sm" style="color:var(--red)" onclick="removeGuest(${i})">Remove</button>
+        </div>
+      </div>`;
+  }).join('') || '<div style="padding:32px;text-align:center;color:var(--text2)">No guests in queue</div>';
+}
+
+function seatGuest(idx) { APP.waitlist.splice(idx,1); renderWaitlistPanel(); APP.showToast('Guest seated! Table assigned.','success'); }
+function removeGuest(idx) { APP.waitlist.splice(idx,1); renderWaitlistPanel(); APP.showToast('Guest removed from queue.','info'); }
+
+/* ── DEALS ── */
+async function renderDeals() {
+  const panel = document.getElementById('dealsPanel');
+  panel.innerHTML = '<div style="color:var(--text3);font-size:.875rem;padding:12px">Loading deals…</div>';
+  let deals = [];
+  try { deals = await _API.get('/deals'); } catch(e) { deals = []; }
+
+  if (!deals.length) {
+    panel.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:48px 20px;color:var(--text2)">
+      <div style="font-size:2rem;margin-bottom:12px">🏷️</div>
+      <div style="font-weight:600;margin-bottom:6px">No deals yet</div>
+      <div style="font-size:.85rem;margin-bottom:20px">Push a deal to show customers a limited offer on your menu.</div>
+      <button class="btn btn-gold btn-sm" onclick="openDealModal()">+ Create First Deal</button>
+    </div>`;
+    return;
+  }
+
+  // Schedule auto-refresh when the soonest deal expires
+  const now = Date.now();
+  const expiryTimes = deals
+    .filter(d => d.active && d.expiresAt)
+    .map(d => new Date(d.expiresAt).getTime() - now)
+    .filter(ms => ms > 0);
+  if (expiryTimes.length) {
+    const soonest = Math.min(...expiryTimes);
+    setTimeout(() => { renderDeals(); APP.showToast('A deal has expired and been turned off', 'info'); }, soonest + 500);
+  }
+
+  panel.innerHTML = deals.map(d => {
+    const id = d._id || d.id;
+    const expired = d.expiresAt && new Date(d.expiresAt) < new Date();
+    const active  = d.active && !expired;
+    const expLabel = d.expiresAt ? `Expires ${new Date(d.expiresAt).toLocaleString()}` : 'No expiry';
+    const scopeLabel = !d.appliesTo || d.appliesTo === 'all'
+      ? 'All items'
+      : (d.appliesToLabel || 'Selected items');
+    return `
+    <div class="chart-card" style="position:relative">
+      <div style="position:absolute;top:14px;right:14px;display:flex;gap:8px;align-items:center">
+        <div class="toggle ${active?'on':''}" title="${active?'Active — click to deactivate':'Inactive — click to activate'}"
+          onclick="toggleDeal('${id}',${active},this)"></div>
+        <button onclick="deleteDeal('${id}')" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:1rem;padding:2px 4px" title="Delete">🗑</button>
+      </div>
+      <div class="pill ${active?'pill-green':expired?'pill-red':'pill-dark'}" style="font-size:.7rem;margin-bottom:12px">
+        ${expired?'Expired':active?'Live':'Paused'}
+      </div>
+      <div style="font-weight:700;margin-bottom:4px">${d.title}</div>
+      <div class="caption" style="margin-bottom:6px">${d.desc||''}</div>
+      <div style="font-size:.78rem;color:var(--text3);margin-bottom:10px">Applies to: <b style="color:var(--text)">${scopeLabel}</b></div>
+      <div style="font-size:1.4rem;font-weight:800;color:var(--gold);margin-bottom:4px">${d.discount?d.discount+'% off':'Special offer'}</div>
+      <div class="caption">${expLabel}</div>
+    </div>`;
+  }).join('');
+}
+
+async function toggleDeal(id, currentlyActive, toggleEl) {
+  toggleEl.classList.toggle('on');
+  const newActive = !currentlyActive;
+  try {
+    await _API.patch('/deals/' + id, { active: newActive });
+    APP.showToast(newActive ? '✅ Deal is now live' : 'Deal paused', 'info');
+    renderDeals();
+  } catch(e) {
+    toggleEl.classList.toggle('on'); // revert
+    APP.showToast('Failed to update deal', 'error');
+  }
+}
+
+async function deleteDeal(id) {
+  if (!confirm('Delete this deal? It will no longer be visible to customers.')) return;
+  try {
+    await _API.delete('/deals/' + id);
+    APP.showToast('Deal deleted', 'info');
+    renderDeals();
+  } catch(e) {
+    APP.showToast('Failed to delete deal', 'error');
+  }
+}
+
+/* ── MEDIA & VIDEOS ── */
+const VIDEO_LIMIT = 3; // Pro plan daily limit
+const VIDEO_DATE_KEY = 'lh_vid_day_' + new Date().toDateString();
+
+function handleBannerUpload(input) {
+  const file = input.files[0]; if (!file) return;
+  if (file.size > 10 * 1024 * 1024) { APP.showToast('Image must be under 10MB', 'error'); return; }
+  const reader = new FileReader();
+  reader.onload = ev => {
+    document.getElementById('bannerPreviewImg').src = ev.target.result;
+    document.getElementById('bannerPreviewImg').style.display = 'block';
+    document.getElementById('bannerPlaceholder').style.display = 'none';
+    localStorage.setItem('lh_banner', ev.target.result);
+    APP.showToast('✅ Banner photo updated!', 'success');
+  };
+  reader.readAsDataURL(file);
+  input.value = '';
+}
+
+function renderMenuPhotoGrid() {
+  const rest = APP.restaurants[0];
+  if (!rest || !rest.menu) return;
+  const allItems = rest.menu.flatMap(cat => cat.items || []).slice(0, 12);
+  const photos = JSON.parse(localStorage.getItem('lh_menu_photos') || '{}');
+  document.getElementById('menuPhotoGrid').innerHTML = allItems.map(item => `
+    <div style="background:var(--bg3);border-radius:var(--r-lg);overflow:hidden;border:1px solid var(--border2)">
+      <div style="height:100px;background:var(--bg2);display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden">
+        ${photos[item.name]
+          ? `<img src="${photos[item.name]}" style="width:100%;height:100%;object-fit:cover">`
+          : `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="color:var(--text3)"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>`}
+        <label style="position:absolute;bottom:5px;right:5px;background:rgba(0,0,0,0.65);color:#fff;border-radius:6px;padding:3px 7px;font-size:.68rem;cursor:pointer;display:flex;align-items:center;gap:4px">
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          Photo<input type="file" accept="image/*" style="display:none" onchange="handleMenuPhoto('${item.name.replace(/'/g,"\\'")}',this)">
+        </label>
+      </div>
+      <div style="padding:8px 10px">
+        <div style="font-weight:600;font-size:.78rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${item.name}</div>
+        <div style="color:var(--gold);font-size:.74rem;font-weight:600">$${item.price}</div>
+      </div>
+    </div>`).join('');
+}
+
+function handleMenuPhoto(itemName, input) {
+  const file = input.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    const photos = JSON.parse(localStorage.getItem('lh_menu_photos') || '{}');
+    photos[itemName] = ev.target.result;
+    localStorage.setItem('lh_menu_photos', JSON.stringify(photos));
+    renderMenuPhotoGrid();
+    APP.showToast(`📸 Photo saved for ${itemName}!`, 'success');
+  };
+  reader.readAsDataURL(file);
+  input.value = '';
+}
+
+function handleVideoUpload(input) {
+  const file = input.files[0]; if (!file) return;
+  const count = parseInt(localStorage.getItem(VIDEO_DATE_KEY) || '0');
+  if (count >= VIDEO_LIMIT) {
+    APP.showToast('Daily limit reached — 3 videos/day on Pro. Upgrade to Enterprise for unlimited.', 'error', 5000);
+    input.value = ''; return;
+  }
+  if (file.size > 50 * 1024 * 1024) { APP.showToast('Video must be under 50MB', 'error'); input.value = ''; return; }
+  APP.showToast('⏳ Processing video…', 'info');
+  const reader = new FileReader();
+  reader.onload = ev => {
+    const vids = JSON.parse(localStorage.getItem('lh_videos') || '[]');
+    const restName = (APP.restaurants && APP.restaurants[0]) ? APP.restaurants[0].name : 'My Restaurant';
+    vids.unshift({ name: file.name, src: ev.target.result, url: ev.target.result, uploadedAt: new Date().toISOString(), time: new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}), status: 'pending', restaurant: restName });
+    localStorage.setItem('lh_videos', JSON.stringify(vids));
+    const nc = count + 1;
+    localStorage.setItem(VIDEO_DATE_KEY, nc);
+    renderVideosGrid(vids, nc);
+    APP.showToast('✅ Video uploaded! Pending admin review.', 'success');
+  };
+  reader.readAsDataURL(file);
+  input.value = '';
+}
+
+function renderVideosGrid(vids, count) {
+  const used = count !== undefined ? count : parseInt(localStorage.getItem(VIDEO_DATE_KEY) || '0');
+  document.getElementById('videoCountToday').textContent = used;
+  document.getElementById('videoCountBar').style.width = Math.min(used / VIDEO_LIMIT * 100, 100) + '%';
+  const lbl = document.getElementById('videoUploadLbl');
+  if (used >= VIDEO_LIMIT) { lbl.style.opacity = '.4'; lbl.style.pointerEvents = 'none'; lbl.title = 'Daily limit reached'; }
+  else { lbl.style.opacity = '1'; lbl.style.pointerEvents = 'auto'; }
+  const emptyEl = document.getElementById('videosEmpty');
+  if (!vids || !vids.length) { if (emptyEl) emptyEl.style.display = 'block'; return; }
+  if (emptyEl) emptyEl.style.display = 'none';
+  const grid = document.getElementById('videosGrid');
+  const cards = vids.map((v, i) => `
+    <div style="background:var(--bg3);border-radius:var(--r-lg);overflow:hidden;border:1px solid var(--border2)">
+      <div style="height:120px;background:#111;position:relative;display:flex;align-items:center;justify-content:center;overflow:hidden">
+        <video src="${v.url}" style="width:100%;height:100%;object-fit:cover" muted playsinline preload="metadata"></video>
+        <span class="pill ${v.status==='approved'?'pill-green':'pill-gold'}" style="position:absolute;top:8px;right:8px;font-size:.62rem;padding:2px 8px">${v.status==='approved'?'✅ Live':'⏳ Review'}</span>
+      </div>
+      <div style="padding:9px 12px;display:flex;justify-content:space-between;align-items:center">
+        <div style="min-width:0">
+          <div style="font-size:.78rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:150px">${v.name}</div>
+          <div class="caption">Uploaded ${v.time}</div>
+        </div>
+        <button onclick="deleteVideo(${i})" style="color:var(--red);background:none;border:none;cursor:pointer;padding:4px;font-size:1rem;flex-shrink:0" title="Delete">🗑</button>
+      </div>
+    </div>`).join('');
+  // Insert cards before the empty placeholder
+  const existingCards = grid.querySelectorAll('[data-vid-card]');
+  existingCards.forEach(e => e.remove());
+  const temp = document.createElement('div');
+  temp.innerHTML = cards;
+  [...temp.children].forEach(c => { c.setAttribute('data-vid-card','1'); grid.insertBefore(c, emptyEl); });
+}
+
+function deleteVideo(i) {
+  const vids = JSON.parse(localStorage.getItem('lh_videos') || '[]');
+  vids.splice(i, 1);
+  localStorage.setItem('lh_videos', JSON.stringify(vids));
+  document.getElementById('videosGrid').querySelectorAll('[data-vid-card]').forEach(e => e.remove());
+  const emptyEl = document.getElementById('videosEmpty');
+  if (emptyEl) emptyEl.style.display = 'block';
+  renderVideosGrid(vids);
+  APP.showToast('Video removed.', 'info');
+}
+
+function initMediaPage() {
+  const savedBanner = localStorage.getItem('lh_banner');
+  if (savedBanner) {
+    document.getElementById('bannerPreviewImg').src = savedBanner;
+    document.getElementById('bannerPreviewImg').style.display = 'block';
+    document.getElementById('bannerPlaceholder').style.display = 'none';
+  }
+  renderMenuPhotoGrid();
+  const vids = JSON.parse(localStorage.getItem('lh_videos') || '[]');
+  renderVideosGrid(vids);
+}
+
+/* ── INIT ── */
+(async () => {
+  // ── Auth check ──────────────────────────────────────────────────────────
+  let SESSION = {};
+  try { SESSION = JSON.parse(localStorage.getItem('lh_session') || '{}'); } catch(e) {}
+  if (!SESSION.idToken || SESSION.role !== 'owner') { location.href = 'auth.html'; return; }
+
+  // ── Sidebar owner info from session ─────────────────────────────────────
+  const ownerName = SESSION.name || SESSION.email || 'Owner';
+  document.getElementById('ownerDisplayName').textContent = ownerName;
+  document.getElementById('ownerAvatarLetter').textContent = ownerName.charAt(0).toUpperCase();
+
+  if (!_API.ready) {
+    APP.showToast('API not configured — data will not sync', 'error');
+  } else {
+    try {
+      const [restaurants, orders] = await Promise.all([
+        _API.get('/restaurants'),
+        _API.get('/orders'),
+      ]);
+      if (restaurants && restaurants.length) APP.restaurants = restaurants;
+      if (orders) APP.orders = orders;
+
+      const rid = (APP.restaurants[0] || {}).id;
+      if (rid) {
+        const wl = await _API.get('/waitlist?restaurantId=' + rid);
+        if (wl) APP.waitlist = wl;
+      }
+    } catch(e) {
+      APP.showToast('Failed to load data from API', 'error');
+    }
+  }
+
+  // ── Update sidebar with real restaurant name and plan ────────────────────
+  const resto = APP.restaurants[0];
+  if (resto) {
+    const planLabel = resto.planStatus === 'active'  ? (resto.activePlan  || 'Pro') + ' Plan'
+                    : resto.planStatus === 'trial'   ? 'Free Trial'
+                    : resto.planStatus === 'expired' ? 'Trial Ended'
+                    : 'No Plan';
+    document.getElementById('ownerPlanLine').textContent = `${resto.name} · ${planLabel}`;
+  } else {
+    document.getElementById('ownerPlanLine').textContent = 'No restaurant yet';
+  }
+
+  initAnalytics();
+  renderOwnerOrders('all');
+  renderWaitlistPanel();
+  renderDeals();
+
+  // ── Request browser notification permission ──
+  if ('Notification' in window && Notification.permission === 'default') {
+    Notification.requestPermission();
+  }
+
+  // ── Poll for new orders every 30 seconds ──
+  setInterval(async () => {
+    let fresh = null;
+    if (_API.ready) {
+      fresh = await _API.get('/orders');
+    }
+    if (!fresh) return;
+    const prevCount = APP.orders.length;
+    const newOrders = fresh.filter(o => !APP.orders.find(existing => existing.id === o.id || existing._id === o._id));
+    APP.orders = fresh;
+    if (newOrders.length > 0) {
+      APP.showToast(`🔔 ${newOrders.length} new order${newOrders.length > 1 ? 's' : ''} received!`, 'success');
+      renderOwnerOrders('all');
+      // Browser push notification
+      if ('Notification' in window && Notification.permission === 'granted') {
+        new Notification('LiveHushh — New Order!', {
+          body: `${newOrders.length} new order${newOrders.length > 1 ? 's' : ''} waiting for confirmation`,
+          icon: '/icons/icon-192.png',
+        });
+      }
+    }
+  }, 30000);
+})();
+</script>
+<script src="js/theme.js"></script>
+<script>if("serviceWorker"in navigator){navigator.serviceWorker.register("/service-worker.js").then(()=>console.log("SW registered")).catch(e=>console.warn("SW error",e));}</script>
+</body>
+</html>

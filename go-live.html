@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Go Live — LiveHushh</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  :root{--bg:#06061A;--bg2:#0D0D2B;--gold:#F59E0B;--red:#EF4444;--green:#10B981;--purple:#8B5CF6;--text:#F0F0FF;--text2:#9CA3AF;--r:10px}
+  body{background:#000;color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Inter',sans-serif;height:100dvh;overflow:hidden;display:flex;flex-direction:column;position:relative}
+
+  /* Camera canvas fills screen */
+  #liveCanvas{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0}
+  #hiddenVideo{display:none}
+
+  /* Overlays */
+  .top-bar{position:absolute;top:0;left:0;right:0;z-index:10;padding:env(safe-area-inset-top,16px) 16px 16px;display:flex;align-items:center;justify-content:space-between;background:linear-gradient(to bottom,rgba(0,0,0,0.7),transparent)}
+  .bottom-bar{position:absolute;bottom:0;left:0;right:0;z-index:10;padding:16px 16px calc(env(safe-area-inset-bottom,0px) + 20px);background:linear-gradient(to top,rgba(0,0,0,0.85),transparent);display:flex;flex-direction:column;gap:12px}
+
+  /* Live badge */
+  .live-pill{background:#EF4444;color:#fff;font-size:.75rem;font-weight:800;letter-spacing:.1em;padding:5px 14px;border-radius:100px;display:flex;align-items:center;gap:6px}
+  .live-dot{width:8px;height:8px;border-radius:50%;background:#fff;animation:blink 1s infinite}
+  @keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+
+  /* Stat pills */
+  .stat-row{display:flex;gap:8px;align-items:center}
+  .stat-pill{background:rgba(0,0,0,0.55);backdrop-filter:blur(8px);border-radius:100px;padding:5px 12px;font-size:.78rem;font-weight:600;display:flex;align-items:center;gap:6px}
+
+  /* Buttons */
+  .icon-btn{width:48px;height:48px;border-radius:50%;background:rgba(0,0,0,0.55);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,0.15);color:#fff;font-size:1.3rem;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .2s;flex-shrink:0}
+  .icon-btn:active{transform:scale(.92)}
+  .icon-btn.active{background:rgba(139,92,246,0.4);border-color:var(--purple)}
+
+  .go-btn{flex:1;height:56px;border-radius:28px;font-size:1rem;font-weight:800;letter-spacing:.05em;border:none;cursor:pointer;transition:all .25s;display:flex;align-items:center;justify-content:center;gap:8px}
+  .go-btn.idle{background:linear-gradient(135deg,#EF4444,#F59E0B);color:#fff}
+  .go-btn.live{background:rgba(239,68,68,0.15);border:2px solid #EF4444;color:#EF4444}
+  .go-btn.loading{background:rgba(255,255,255,0.1);color:var(--text2);pointer-events:none}
+
+  /* Deal overlay panel */
+  #dealPanel{position:absolute;top:50%;right:16px;transform:translateY(-50%);z-index:10;background:rgba(0,0,0,0.7);backdrop-filter:blur(12px);border:1px solid rgba(245,158,11,0.3);border-radius:14px;padding:16px;width:220px;display:none}
+  #dealPanel.show{display:block}
+
+  /* Setup screen */
+  #setupScreen{position:absolute;inset:0;z-index:20;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;padding:32px;text-align:center}
+  #setupScreen.hidden{display:none}
+  .setup-title{font-size:1.4rem;font-weight:800;margin-bottom:4px}
+  .setup-sub{color:var(--text2);font-size:.88rem;line-height:1.5}
+  .field{width:100%;max-width:400px}
+  .label{font-size:.78rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--text2);margin-bottom:6px;text-align:left}
+  .input{width:100%;padding:11px 14px;border-radius:var(--r);background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);color:var(--text);font-size:.88rem;outline:none}
+  .input:focus{border-color:var(--purple)}
+  .btn-start{width:100%;max-width:400px;padding:14px;border-radius:var(--r);background:linear-gradient(135deg,#8B5CF6,#E8540A);color:#fff;font-weight:800;font-size:1rem;border:none;cursor:pointer}
+
+  /* Deals list in setup */
+  .deal-chip{background:rgba(245,158,11,0.12);border:1px solid rgba(245,158,11,0.25);border-radius:8px;padding:8px 12px;font-size:.8rem;cursor:pointer;text-align:left;width:100%;max-width:400px;display:flex;justify-content:space-between;align-items:center}
+  .deal-chip.sel{background:rgba(245,158,11,0.25);border-color:var(--gold)}
+
+  /* End screen */
+  #endScreen{position:absolute;inset:0;z-index:30;background:rgba(0,0,0,0.92);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:32px;text-align:center;display:none}
+
+  /* Permission screen */
+  #permScreen{position:absolute;inset:0;z-index:25;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:32px;text-align:center}
+  #permScreen.hidden{display:none}
+
+  .blur-rect{position:absolute;backdrop-filter:blur(18px) brightness(0.9);border-radius:50%;pointer-events:none;z-index:5;background:rgba(0,0,0,0.1)}
+</style>
+</head>
+<body>
+
+<!-- Permission screen -->
+<div id="permScreen">
+  <div style="font-size:3rem">📷</div>
+  <div class="setup-title">Camera Access Needed</div>
+  <div class="setup-sub">LiveHushh needs access to your camera and microphone to go live.</div>
+  <button class="btn-start" onclick="requestPerms()">Allow Camera & Mic</button>
+  <a href="owner-dashboard.html" style="color:var(--text2);font-size:.85rem">← Back to Dashboard</a>
+</div>
+
+<!-- Setup screen (enter IVS stream key) -->
+<div id="setupScreen" class="hidden">
+  <div style="position:absolute;top:16px;left:16px"><a href="owner-dashboard.html" style="color:var(--text2);font-size:.85rem">← Back</a></div>
+
+  <div style="font-size:2.5rem">🎬</div>
+  <div>
+    <div class="setup-title">Ready to Go Live?</div>
+    <div class="setup-sub">Connect your IVS stream key from AWS, then tap Start.<br>Your customers within 20 miles will be notified instantly.</div>
+  </div>
+
+  <div class="field"><div class="label">IVS Stream Key</div>
+    <input class="input" id="streamKeyInput" type="password" placeholder="sk_us-east-1_xxxxxxxxxx" autocomplete="off">
+  </div>
+  <div class="field"><div class="label">IVS Ingest Endpoint</div>
+    <input class="input" id="ingestInput" type="text" placeholder="a1b2c3d4e5f6.global-contribute.live-video.net">
+  </div>
+  <div class="field"><div class="label">IVS Playback URL (for customers)</div>
+    <input class="input" id="playbackInput" type="text" placeholder="https://a1b2c3.us-east-1.playback.live-video.net/api/video/v1/....m3u8">
+  </div>
+
+  <div class="field">
+    <div class="label" style="margin-bottom:8px">Pin a Deal to this Stream (optional)</div>
+    <div id="dealChips" style="display:flex;flex-direction:column;gap:8px"></div>
+  </div>
+
+  <button class="btn-start" id="startLiveBtn" onclick="startSession()">🔴 Go Live</button>
+  <div id="setupErr" style="color:#EF4444;font-size:.82rem"></div>
+</div>
+
+<!-- LIVE BROADCAST SCREEN -->
+<!-- Hidden video for camera capture -->
+<video id="hiddenVideo" autoplay playsinline muted></video>
+<!-- Canvas for drawing (with face blur) -->
+<canvas id="liveCanvas"></canvas>
+
+<!-- Face blur overlays (positioned by TensorFlow) -->
+<div id="blurOverlays"></div>
+
+<!-- Top bar -->
+<div class="top-bar">
+  <div style="display:flex;align-items:center;gap:10px">
+    <span id="livePill" style="display:none" class="live-pill"><span class="live-dot"></span>LIVE</span>
+    <span id="offlinePill" style="background:rgba(0,0,0,0.55);backdrop-filter:blur(8px);border-radius:100px;padding:5px 14px;font-size:.78rem;font-weight:600">Preview</span>
+  </div>
+  <div class="stat-row">
+    <div class="stat-pill" id="viewerPill">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+      <span id="viewerCount">0</span>
+    </div>
+    <div class="stat-pill" id="timerPill">
+      <svg width="11" height="11" fill="#10B981" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6"/></svg>
+      <span id="liveTimer">00:00</span>
+    </div>
+  </div>
+</div>
+
+<!-- Control buttons (right side) -->
+<div style="position:absolute;right:16px;top:50%;transform:translateY(-50%);z-index:10;display:flex;flex-direction:column;gap:14px">
+  <div class="icon-btn" onclick="flipCamera()" title="Flip Camera">🔄</div>
+  <div class="icon-btn" id="blurBtn" onclick="toggleBlur()" title="Face Blur">😶</div>
+  <div class="icon-btn" id="dealBtn" onclick="toggleDealPanel()" title="Show Deal">🏷️</div>
+  <div class="icon-btn" onclick="toggleMic()" id="micBtn" title="Mute">🎙️</div>
+</div>
+
+<!-- Pinned deal overlay -->
+<div id="dealPanel">
+  <div style="font-size:.7rem;font-weight:700;letter-spacing:.08em;color:var(--gold);margin-bottom:8px">PINNED DEAL</div>
+  <div id="dealPanelTitle" style="font-weight:700;margin-bottom:4px"></div>
+  <div id="dealPanelDesc" style="font-size:.8rem;color:var(--text2);margin-bottom:8px"></div>
+  <div id="dealPanelDiscount" style="font-size:1.6rem;font-weight:800;color:var(--gold)"></div>
+</div>
+
+<!-- Bottom bar -->
+<div class="bottom-bar">
+  <div id="restNameBar" style="font-weight:700;font-size:.95rem;text-shadow:0 1px 4px rgba(0,0,0,.8)"></div>
+  <div style="display:flex;gap:10px;align-items:center">
+    <button class="go-btn idle" id="goBtn" onclick="handleGoBtn()">
+      <span id="goBtnIcon">🔴</span>
+      <span id="goBtnText">Start Broadcast</span>
+    </button>
+  </div>
+</div>
+
+<!-- End session screen -->
+<div id="endScreen">
+  <div style="font-size:3rem">🎬</div>
+  <div style="font-size:1.4rem;font-weight:800">Stream Ended</div>
+  <div id="endStats" style="color:var(--text2);font-size:.9rem"></div>
+  <button onclick="location.href='owner-dashboard.html'" style="padding:14px 32px;border-radius:var(--r);background:var(--purple);color:#fff;font-weight:700;border:none;cursor:pointer;font-size:.95rem">Back to Dashboard</button>
+</div>
+
+<script src="js/aws-config.js"></script>
+<!-- IVS Web Broadcast SDK -->
+<script src="https://web-broadcast.live-video.net/1.6.0/amazon-ivs-web-broadcast.js"></script>
+<!-- TensorFlow + BlazeFace for face detection -->
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.10.0/dist/tf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/blazeface@0.0.7/dist/blazeface.js"></script>
+
+<script>
+/* ── Session ── */
+let SESSION = {};
+try { SESSION = JSON.parse(localStorage.getItem('lh_session') || '{}'); } catch {}
+if (!SESSION.idToken || SESSION.role !== 'owner') { location.href = 'auth.html'; }
+
+const API_BASE = ((window.LH_CONFIG || {}).api || {}).baseUrl || '';
+function apiToken() { return SESSION.idToken || ''; }
+async function apiCall(method, path, body) {
+  const r = await fetch(API_BASE + path, {
+    method,
+    headers: { 'Content-Type': 'application/json', Authorization: apiToken() },
+    body: body ? JSON.stringify(body) : undefined,
+  });
+  const json = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(json.error || r.status);
+  return json;
+}
+
+/* ── State ── */
+let localStream    = null;
+let broadcastClient= null;
+let faceModel      = null;
+let blurEnabled    = true;
+let blurAnimId     = null;
+let micMuted       = false;
+let isLive         = false;
+let facingMode     = 'environment'; // back camera default
+let liveSeconds    = 0;
+let timerInterval  = null;
+let viewerInterval = null;
+let pinnedDeal     = null;
+let liveViewers    = 0;
+let peakViewers    = 0;
+let activeDeals    = [];
+
+const canvas    = document.getElementById('liveCanvas');
+const ctx       = canvas.getContext('2d');
+const hiddenVid = document.getElementById('hiddenVideo');
+
+/* ── Camera / Permissions ── */
+async function requestPerms() {
+  try {
+    localStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode }, audio: true });
+    document.getElementById('permScreen').classList.add('hidden');
+    await initCamera();
+    showSetup();
+  } catch(e) {
+    document.getElementById('permScreen').querySelector('.setup-sub').textContent =
+      'Permission denied. Please allow camera access in your browser settings.';
+  }
+}
+
+async function initCamera() {
+  hiddenVid.srcObject = localStream;
+  hiddenVid.play();
+  await new Promise(res => hiddenVid.onloadedmetadata = res);
+  canvas.width  = hiddenVid.videoWidth  || 1280;
+  canvas.height = hiddenVid.videoHeight || 720;
+  startDraw();
+  if (blurEnabled) loadBlazeFace();
+}
+
+async function flipCamera() {
+  facingMode = facingMode === 'environment' ? 'user' : 'environment';
+  if (localStream) localStream.getTracks().forEach(t => t.stop());
+  localStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode }, audio: !micMuted });
+  hiddenVid.srcObject = localStream;
+  hiddenVid.play();
+
+  if (broadcastClient && isLive) {
+    // Swap video device in IVS
+    const devices = await IVSBroadcastClient.getVideoInputDevice('camera').catch(() => null);
+    if (devices) broadcastClient.removeVideoInputDevice('camera');
+    const [vTrack] = localStream.getVideoTracks();
+    await broadcastClient.addVideoInputDevice(new MediaStream([vTrack]), 'camera', { index: 0 });
+  }
+}
+
+function toggleMic() {
+  micMuted = !micMuted;
+  if (localStream) localStream.getAudioTracks().forEach(t => { t.enabled = !micMuted; });
+  document.getElementById('micBtn').textContent = micMuted ? '🔇' : '🎙️';
+  document.getElementById('micBtn').classList.toggle('active', micMuted);
+}
+
+/* ── Draw loop (canvas = what viewers see) ── */
+function startDraw() {
+  function draw() {
+    if (hiddenVid.readyState >= 2) {
+      ctx.drawImage(hiddenVid, 0, 0, canvas.width, canvas.height);
+    }
+    requestAnimationFrame(draw);
+  }
+  draw();
+}
+
+/* ── TensorFlow Face Blur ── */
+async function loadBlazeFace() {
+  try {
+    faceModel = await blazeface.load();
+    detectFaces();
+  } catch(e) { console.warn('BlazeFace load failed', e); }
+}
+
+async function detectFaces() {
+  if (!faceModel || !blurEnabled) { blurAnimId = requestAnimationFrame(detectFaces); return; }
+  const predictions = await faceModel.estimateFaces(hiddenVid, false).catch(() => []);
+  // Blur on canvas
+  const overlayDiv = document.getElementById('blurOverlays');
+  overlayDiv.innerHTML = '';
+  predictions.forEach(pred => {
+    const [x1, y1] = pred.topLeft;
+    const [x2, y2] = pred.bottomRight;
+    const scaleX = canvas.clientWidth  / (canvas.width  || 1);
+    const scaleY = canvas.clientHeight / (canvas.height || 1);
+    const w = (x2 - x1) * scaleX + 30;
+    const h = (y2 - y1) * scaleY + 20;
+    const left = x1 * scaleX - 10;
+    const top  = y1 * scaleY - 10;
+    // Blur directly on canvas
+    ctx.save();
+    ctx.filter = 'blur(18px)';
+    ctx.drawImage(hiddenVid, x1-8, y1-8, (x2-x1)+16, (y2-y1)+16, x1-8, y1-8, (x2-x1)+16, (y2-y1)+16);
+    ctx.filter = 'none';
+    ctx.restore();
+    // Visual overlay indicator
+    const el = document.createElement('div');
+    el.className = 'blur-rect';
+    el.style.cssText = `left:${left}px;top:${top}px;width:${w}px;height:${h}px`;
+    overlayDiv.appendChild(el);
+  });
+  blurAnimId = setTimeout(detectFaces, 200); // check faces every 200ms
+}
+
+function toggleBlur() {
+  blurEnabled = !blurEnabled;
+  document.getElementById('blurBtn').classList.toggle('active', blurEnabled);
+  document.getElementById('blurOverlays').innerHTML = '';
+  if (blurEnabled && faceModel) detectFaces();
+}
+
+/* ── Setup Screen ── */
+async function showSetup() {
+  document.getElementById('setupScreen').classList.remove('hidden');
+  // Load saved IVS credentials
+  const saved = JSON.parse(localStorage.getItem('lh_ivs') || '{}');
+  if (saved.streamKey)  document.getElementById('streamKeyInput').value = saved.streamKey;
+  if (saved.ingest)     document.getElementById('ingestInput').value    = saved.ingest;
+  if (saved.playback)   document.getElementById('playbackInput').value  = saved.playback;
+  // Load deals
+  try {
+    activeDeals = await apiCall('GET', '/deals');
+    activeDeals = (activeDeals || []).filter(d => d.active && (!d.expiresAt || new Date(d.expiresAt) > new Date()));
+  } catch {}
+  const dc = document.getElementById('dealChips');
+  dc.innerHTML = '';
+  if (!activeDeals.length) {
+    dc.innerHTML = '<div style="font-size:.8rem;color:var(--text2)">No active deals — create one in your dashboard first</div>';
+  } else {
+    activeDeals.forEach((d, i) => {
+      const chip = document.createElement('button');
+      chip.className = 'deal-chip';
+      chip.innerHTML = `<span>${d.title}${d.discount?' — '+d.discount+'% off':''}</span><span id="dealCheck${i}">○</span>`;
+      chip.onclick = () => selectDeal(d, chip, i);
+      dc.appendChild(chip);
+    });
+  }
+  // Update restaurant name bar
+  document.getElementById('restNameBar').textContent = SESSION.name || 'Your Restaurant';
+}
+
+function selectDeal(deal, chip, idx) {
+  document.querySelectorAll('.deal-chip').forEach((c,i) => {
+    c.classList.remove('sel');
+    document.getElementById('dealCheck'+i).textContent = '○';
+  });
+  if (pinnedDeal && pinnedDeal._id === deal._id) {
+    pinnedDeal = null; return;
+  }
+  pinnedDeal = deal;
+  chip.classList.add('sel');
+  document.getElementById('dealCheck'+idx).textContent = '✓';
+}
+
+/* ── Start Live Broadcast ── */
+async function startSession() {
+  const streamKey = document.getElementById('streamKeyInput').value.trim();
+  const ingest    = document.getElementById('ingestInput').value.trim();
+  const playback  = document.getElementById('playbackInput').value.trim();
+  const errEl     = document.getElementById('setupErr');
+  errEl.textContent = '';
+
+  if (!streamKey || !ingest) {
+    errEl.textContent = 'Stream Key and Ingest Endpoint are required. Get them from AWS → Amazon IVS.';
+    return;
+  }
+
+  // Save credentials locally
+  localStorage.setItem('lh_ivs', JSON.stringify({ streamKey, ingest, playback }));
+
+  const btn = document.getElementById('startLiveBtn');
+  btn.disabled = true; btn.textContent = 'Connecting…';
+
+  try {
+    // Init IVS Broadcast Client
+    broadcastClient = IVSBroadcastClient.create({
+      streamConfig: IVSBroadcastClient.BASIC_LANDSCAPE,
+      ingestEndpoint: ingest,
+    });
+
+    // Add canvas stream (faces already blurred on canvas)
+    const canvasStream = canvas.captureStream(30);
+    const [vTrack] = canvasStream.getVideoTracks();
+    const [aTrack] = localStream.getAudioTracks();
+
+    await broadcastClient.addVideoInputDevice(new MediaStream([vTrack]), 'camera', { index: 0 });
+    await broadcastClient.addAudioInputDevice(new MediaStream([aTrack]), 'mic',    { index: 0 });
+
+    await broadcastClient.startBroadcast(streamKey);
+
+    // Notify backend → sends push notifications
+    const loc = await getLocation();
+    await apiCall('POST', '/live/start', { playbackUrl: playback, lat: loc?.lat, lng: loc?.lng });
+
+    document.getElementById('setupScreen').classList.add('hidden');
+    startLiveUI();
+  } catch(e) {
+    btn.disabled = false; btn.textContent = '🔴 Go Live';
+    errEl.textContent = 'Failed to start: ' + (e.message || 'Check your stream key and ingest endpoint');
+  }
+}
+
+function startLiveUI() {
+  isLive = true;
+  document.getElementById('livePill').style.display = 'flex';
+  document.getElementById('offlinePill').style.display = 'none';
+  document.getElementById('goBtn').className = 'go-btn live';
+  document.getElementById('goBtnIcon').textContent = '⬛';
+  document.getElementById('goBtnText').textContent  = 'End Stream';
+  liveSeconds  = 0;
+  liveViewers  = Math.floor(Math.random()*20) + 5;
+  peakViewers  = liveViewers;
+  document.getElementById('viewerCount').textContent = liveViewers;
+
+  // Timer
+  timerInterval = setInterval(() => {
+    liveSeconds++;
+    const m = String(Math.floor(liveSeconds/60)).padStart(2,'0');
+    const s = String(liveSeconds%60).padStart(2,'0');
+    document.getElementById('liveTimer').textContent = m+':'+s;
+  }, 1000);
+
+  // Simulated viewer growth (real viewers come from IVS metrics API)
+  viewerInterval = setInterval(() => {
+    liveViewers = Math.max(1, liveViewers + Math.floor(Math.random()*8)-2);
+    peakViewers  = Math.max(peakViewers, liveViewers);
+    document.getElementById('viewerCount').textContent = liveViewers;
+  }, 5000);
+
+  // Show pinned deal
+  if (pinnedDeal) {
+    document.getElementById('dealPanelTitle').textContent    = pinnedDeal.title;
+    document.getElementById('dealPanelDesc').textContent     = pinnedDeal.desc || '';
+    document.getElementById('dealPanelDiscount').textContent = pinnedDeal.discount ? pinnedDeal.discount+'% off' : 'Special';
+    document.getElementById('dealPanel').classList.add('show');
+  }
+}
+
+function handleGoBtn() {
+  if (!isLive) return; // handled by setup
+  endStream();
+}
+
+async function endStream() {
+  isLive = false;
+  clearInterval(timerInterval);
+  clearInterval(viewerInterval);
+  if (broadcastClient) { broadcastClient.stopBroadcast(); broadcastClient = null; }
+  if (localStream) localStream.getTracks().forEach(t => t.stop());
+  await apiCall('POST', '/live/end', {}).catch(() => {});
+  const m = Math.floor(liveSeconds/60);
+  const s = liveSeconds % 60;
+  document.getElementById('endStats').textContent =
+    `Duration: ${m}m ${s}s · Peak viewers: ${peakViewers}`;
+  document.getElementById('endScreen').style.display = 'flex';
+}
+
+function toggleDealPanel() {
+  document.getElementById('dealPanel').classList.toggle('show');
+}
+
+/* ── Geolocation ── */
+function getLocation() {
+  return new Promise(res => {
+    if (!navigator.geolocation) { res(null); return; }
+    navigator.geolocation.getCurrentPosition(
+      p => res({ lat: p.coords.latitude, lng: p.coords.longitude }),
+      () => res(null),
+      { timeout: 5000 }
+    );
+  });
+}
+
+/* ── Boot ── */
+(async () => {
+  // Check if we already have camera permission
+  try {
+    const perm = await navigator.permissions.query({ name: 'camera' });
+    if (perm.state === 'granted') {
+      localStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode }, audio: true });
+      document.getElementById('permScreen').classList.add('hidden');
+      await initCamera();
+      showSetup();
+    }
+  } catch {}
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>For Restaurants — LiveHushh</title>
+<link rel="stylesheet" href="css/styles.css?v=3">
+<style>
+.reveal{opacity:0;transform:translateY(28px);transition:opacity .6s cubic-bezier(0.4,0,0.2,1),transform .6s cubic-bezier(0.4,0,0.2,1)}
+.reveal.visible{opacity:1;transform:translateY(0)}
+
+/* Hero */
+.hero-split{display:grid;grid-template-columns:1fr 1fr;gap:64px;align-items:center}
+.hero-actions{display:flex;gap:14px;flex-wrap:wrap;margin-top:36px}
+
+/* Benefits */
+.benefit-row{display:grid;grid-template-columns:1fr 1fr;gap:80px;align-items:center;padding:80px 0}
+.benefit-row.flip{direction:rtl}
+.benefit-row.flip > *{direction:ltr}
+.benefit-row+.benefit-row{border-top:1px solid var(--border2)}
+.benefit-visual{border-radius:var(--r-2xl);overflow:hidden;position:relative}
+.benefit-text .label{margin-bottom:14px}
+.benefit-text h3{font-family:'Inter',system-ui,sans-serif;font-size:clamp(1.6rem,2.5vw,2.2rem);font-weight:800;letter-spacing:-.03em;line-height:1.15;margin-bottom:16px}
+.benefit-text p{font-size:1rem;color:var(--text2);line-height:1.75;margin-bottom:28px}
+.benefit-list{display:flex;flex-direction:column;gap:12px}
+.benefit-item{display:flex;align-items:flex-start;gap:12px;font-size:.9rem;color:var(--text2)}
+.benefit-item-icon{width:22px;height:22px;border-radius:6px;background:rgba(232,84,10,0.15);border:1px solid rgba(232,84,10,0.3);display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
+
+/* Pricing */
+.pricing-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;align-items:start}
+.pricing-card{background:var(--bg-card);border:1px solid var(--border2);border-radius:var(--r-2xl);padding:36px;position:relative;transition:all .3s var(--ease)}
+.pricing-card.featured{background:var(--grad-subtle);border-color:var(--border);transform:scale(1.04)}
+.pricing-card.featured::before{content:'';position:absolute;inset:-1px;background:var(--grad);border-radius:inherit;z-index:-1;opacity:.2}
+.pricing-badge{position:absolute;top:-12px;left:50%;transform:translateX(-50%);background:var(--grad);color:#fff;font-size:.72rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:5px 16px;border-radius:var(--r-full);white-space:nowrap}
+.pricing-name{font-size:.8rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text2);margin-bottom:8px}
+.pricing-price{font-family:'Inter',system-ui,sans-serif;font-size:2.8rem;font-weight:800;line-height:1;margin-bottom:4px}
+.pricing-period{font-size:.82rem;color:var(--text2);margin-bottom:24px}
+.pricing-features{display:flex;flex-direction:column;gap:11px;margin-bottom:32px;padding-bottom:32px;border-bottom:1px solid var(--border2)}
+.pricing-feature{display:flex;align-items:center;gap:10px;font-size:.875rem}
+.pricing-feature svg{flex-shrink:0}
+.check-green{color:var(--green)}
+.check-muted{color:var(--text3)}
+
+/* Signup form */
+.signup-card{background:var(--bg-card);border:1px solid var(--border2);border-radius:var(--r-2xl);padding:48px;max-width:640px;margin:0 auto}
+
+/* Stats inline */
+.inline-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;margin-top:48px}
+.inline-stat{text-align:center;padding:24px;background:var(--bg-card);border:1px solid var(--border2);border-radius:var(--r-xl)}
+.inline-stat-num{font-family:'Inter',system-ui,sans-serif;font-size:2rem;font-weight:800;background:var(--grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:4px}
+.inline-stat-label{font-size:.82rem;color:var(--text2)}
+
+/* Footer */
+.footer{border-top:1px solid var(--border2);padding:60px 0 36px}
+.footer-bottom{display:flex;justify-content:space-between;align-items:center;padding-top:28px;border-top:1px solid var(--border2);font-size:.82rem;color:var(--text3)}
+
+@media(max-width:900px){
+  .hero-split,.benefit-row,.pricing-grid{grid-template-columns:1fr}
+  .benefit-row.flip{direction:ltr}
+  .pricing-card.featured{transform:none}
+  .inline-stats{grid-template-columns:1fr}
+}
+</style>
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#E8540A">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="LiveHushh">
+  <link rel="apple-touch-icon" href="/icons/icon-192.png">
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="nav" id="nav">
+  <div class="nav-inner">
+    <a href="index.html" class="nav-logo">
+      <span class="lh-logo"><span class="lh-logo-live">live</span><span class="lh-logo-hushh">hushh.</span></span>
+    </a>
+    <div class="nav-links" id="navLinks">
+      <a href="index.html" class="nav-link">Home</a>
+      <a href="for-customers.html" class="nav-link">For Customers</a>
+      <a href="demo.html" class="nav-link">Request Demo</a>
+      <a href="contact.html" class="nav-link">Help</a>
+      <div class="nav-actions">
+        <a href="auth.html" class="btn btn-ghost btn-sm">Log in</a>
+        <a href="auth.html" class="btn btn-gold btn-sm">List My Restaurant</a>
+      </div>
+    </div>
+    <div class="nav-actions" style="display:flex">
+      <a href="auth.html" class="btn btn-ghost btn-sm">Log in</a>
+      <a href="auth.html" class="btn btn-gold btn-sm">List My Restaurant</a>
+    </div>
+    <button class="hamburger" id="hamburgerBtn" onclick="toggleMobileMenu()">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+</nav>
+<script>
+function toggleMobileMenu() {
+  const nav = document.getElementById('navLinks');
+  const btn = document.getElementById('hamburgerBtn');
+  const open = nav.classList.toggle('open');
+  btn.classList.toggle('open', open);
+}
+document.addEventListener('click', function(e) {
+  const nav = document.getElementById('navLinks');
+  const btn = document.getElementById('hamburgerBtn');
+  if (nav && nav.classList.contains('open') && !nav.contains(e.target) && !btn.contains(e.target)) {
+    nav.classList.remove('open'); btn.classList.remove('open');
+  }
+});
+</script>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-bg">
+    <div class="orb orb-1" style="background:radial-gradient(circle,rgba(245,158,11,0.3),transparent 70%)"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+    <div class="hero-grid-lines"></div>
+  </div>
+  <div class="container hero-content">
+    <div class="hero-split">
+      <div>
+        <div class="hero-eyebrow">
+          <span class="pill pill-gold">
+            <svg width="10" height="10" viewBox="0 0 10 10"><circle cx="5" cy="5" r="4" fill="#F59E0B"/></svg>
+            For Restaurant Owners
+          </span>
+        </div>
+        <h1 class="display">Turn your kitchen <em class="g-text-gold" style="font-style:normal">into a stage</em></h1>
+        <p class="body-lg mt-6" style="max-width:500px">Go live, push real-time deals, manage waitlists, and fulfill orders — all from one powerful dashboard. Watch your revenue grow as diners tune in.</p>
+        <div class="hero-actions">
+          <a href="auth.html" class="btn btn-gold btn-lg">Start Free 14-Day Trial</a>
+          <a href="demo.html" class="btn btn-secondary btn-lg">Book a Demo</a>
+        </div>
+        <p class="caption mt-6" style="color:var(--text3)">No credit card required · Cancel anytime · Setup in 5 minutes</p>
+      </div>
+
+      <!-- Dashboard preview illustration -->
+      <div style="position:relative">
+        <svg viewBox="0 0 480 400" xmlns="http://www.w3.org/2000/svg" style="width:100%;filter:drop-shadow(0 32px 64px rgba(245,158,11,0.2))">
+          <defs>
+            <linearGradient id="dashGrad" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stop-color="#E8540A"/>
+              <stop offset="100%" stop-color="#F59E0B"/>
+            </linearGradient>
+            <linearGradient id="goldGrad" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stop-color="#F59E0B"/>
+              <stop offset="100%" stop-color="#EF4444"/>
+            </linearGradient>
+          </defs>
+          <!-- Main dashboard card -->
+          <rect x="10" y="10" width="460" height="380" rx="20" fill="#0e0e2a" stroke="rgba(245,158,11,0.2)" stroke-width="1.5"/>
+          <!-- Sidebar -->
+          <rect x="10" y="10" width="100" height="380" rx="20" fill="rgba(255,255,255,0.03)"/>
+          <rect x="10" y="10" width="100" height="380" rx="20" fill="rgba(0,0,0,0.2)"/>
+          <!-- Sidebar items -->
+          <rect x="22" y="30" width="76" height="28" rx="8" fill="rgba(245,158,11,0.15)" stroke="rgba(245,158,11,0.3)" stroke-width="1"/>
+          <rect x="28" y="39" width="14" height="10" rx="2" fill="rgba(245,158,11,0.6)"/>
+          <text x="46" y="49" font-family="Inter,sans-serif" font-size="8.5" fill="#F59E0B" font-weight="600">Analytics</text>
+          <rect x="22" y="66" width="76" height="24" rx="6" fill="rgba(255,255,255,0.04)"/>
+          <text x="34" y="82" font-family="Inter,sans-serif" font-size="8" fill="#94A3B8">&#9654; Go Live</text>
+          <rect x="22" y="96" width="76" height="24" rx="6" fill="rgba(255,255,255,0.04)"/>
+          <text x="34" y="112" font-family="Inter,sans-serif" font-size="8" fill="#94A3B8">&#9776; Menu</text>
+          <rect x="22" y="126" width="76" height="24" rx="6" fill="rgba(255,255,255,0.04)"/>
+          <text x="34" y="142" font-family="Inter,sans-serif" font-size="8" fill="#94A3B8">&#128722; Orders</text>
+          <rect x="22" y="156" width="76" height="24" rx="6" fill="rgba(255,255,255,0.04)"/>
+          <text x="34" y="172" font-family="Inter,sans-serif" font-size="8" fill="#94A3B8">&#128100; Waitlist</text>
+          <!-- Metric cards -->
+          <rect x="122" y="24" width="90" height="64" rx="10" fill="rgba(255,255,255,0.04)" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+          <text x="134" y="52" font-family="Syne,sans-serif" font-size="20" font-weight="800" fill="#F4844A">342</text>
+          <text x="134" y="68" font-family="Inter,sans-serif" font-size="8" fill="#94A3B8">Live Viewers</text>
+          <rect x="222" y="24" width="90" height="64" rx="10" fill="rgba(255,255,255,0.04)" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+          <text x="234" y="52" font-family="Syne,sans-serif" font-size="18" font-weight="800" fill="#F59E0B">&#8377;18.4k</text>
+          <text x="234" y="68" font-family="Inter,sans-serif" font-size="8" fill="#94A3B8">Today Revenue</text>
+          <rect x="322" y="24" width="90" height="64" rx="10" fill="rgba(255,255,255,0.04)" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+          <text x="334" y="52" font-family="Syne,sans-serif" font-size="18" font-weight="800" fill="#10B981">+38%</text>
+          <text x="334" y="68" font-family="Inter,sans-serif" font-size="8" fill="#94A3B8">vs Last Week</text>
+          <!-- Chart -->
+          <rect x="122" y="100" width="230" height="140" rx="10" fill="rgba(255,255,255,0.03)" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+          <text x="134" y="120" font-family="Syne,sans-serif" font-size="10" font-weight="700" fill="#F8FAFC">Viewer Trend</text>
+          <!-- Bars -->
+          <rect x="136" y="175" width="14" height="50" rx="3" fill="rgba(232,84,10,0.4)"/>
+          <rect x="156" y="158" width="14" height="67" rx="3" fill="rgba(232,84,10,0.5)"/>
+          <rect x="176" y="143" width="14" height="82" rx="3" fill="rgba(232,84,10,0.6)"/>
+          <rect x="196" y="133" width="14" height="92" rx="3" fill="url(#goldGrad)" opacity="0.8"/>
+          <rect x="216" y="148" width="14" height="77" rx="3" fill="rgba(232,84,10,0.5)"/>
+          <rect x="236" y="138" width="14" height="87" rx="3" fill="url(#goldGrad)" opacity="0.7"/>
+          <rect x="256" y="128" width="14" height="97" rx="3" fill="url(#goldGrad)" opacity="0.9"/>
+          <rect x="276" y="140" width="14" height="85" rx="3" fill="rgba(232,84,10,0.5)"/>
+          <rect x="296" y="130" width="14" height="95" rx="3" fill="url(#goldGrad)"/>
+          <!-- Live Studio preview -->
+          <rect x="362" y="100" width="100" height="140" rx="10" fill="rgba(239,68,68,0.08)" stroke="rgba(239,68,68,0.25)" stroke-width="1.5"/>
+          <rect x="370" y="110" width="36" height="14" rx="7" fill="rgba(239,68,68,0.9)"/>
+          <circle cx="378" cy="117" r="3" fill="#fff" opacity="0.85"/>
+          <text x="383" y="121" font-family="Inter,sans-serif" font-size="7.5" fill="#fff" font-weight="700">LIVE</text>
+          <ellipse cx="412" cy="160" rx="16" ry="20" fill="rgba(255,255,255,0.06)"/>
+          <rect x="398" y="144" width="28" height="28" rx="14" fill="rgba(200,200,255,0.1)"/>
+          <text x="374" y="225" font-family="Inter,sans-serif" font-size="8" fill="#94A3B8">Broadcasting...</text>
+          <!-- Orders -->
+          <rect x="122" y="252" width="166" height="120" rx="10" fill="rgba(255,255,255,0.03)" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+          <text x="134" y="272" font-family="Syne,sans-serif" font-size="10" font-weight="700" fill="#F8FAFC">Recent Orders</text>
+          <rect x="134" y="282" width="142" height="24" rx="6" fill="rgba(16,185,129,0.1)"/>
+          <text x="142" y="298" font-family="Inter,sans-serif" font-size="8.5" fill="#10B981">#1042 · Grilled Salmon · $24</text>
+          <rect x="134" y="310" width="142" height="24" rx="6" fill="rgba(255,255,255,0.03)"/>
+          <text x="142" y="326" font-family="Inter,sans-serif" font-size="8.5" fill="#94A3B8">#1041 · Caesar Salad · $19</text>
+          <rect x="134" y="338" width="142" height="24" rx="6" fill="rgba(245,158,11,0.08)"/>
+          <text x="142" y="354" font-family="Inter,sans-serif" font-size="8.5" fill="#F59E0B">#1040 · Pasta Primavera · $16</text>
+          <!-- Waitlist -->
+          <rect x="298" y="252" width="164" height="120" rx="10" fill="rgba(255,255,255,0.03)" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+          <text x="310" y="272" font-family="Syne,sans-serif" font-size="10" font-weight="700" fill="#F8FAFC">Waitlist Queue</text>
+          <text x="310" y="292" font-family="Inter,sans-serif" font-size="8.5" fill="#94A3B8">Sharma · 2 guests · 8 min</text>
+          <rect x="418" y="283" width="34" height="16" rx="8" fill="rgba(16,185,129,0.2)" stroke="rgba(16,185,129,0.3)" stroke-width="1"/>
+          <text x="424" y="295" font-family="Inter,sans-serif" font-size="8" fill="#10B981">Seat</text>
+          <text x="310" y="316" font-family="Inter,sans-serif" font-size="8.5" fill="#94A3B8">Patel · 4 guests · 12 min</text>
+          <text x="310" y="340" font-family="Inter,sans-serif" font-size="8.5" fill="#94A3B8">Kumar · 3 guests · 18 min</text>
+        </svg>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TICKER -->
+<div class="ticker">
+  <div class="ticker-track">
+    <span class="ticker-item"><span class="ticker-dot" style="background:var(--gold)"></span>38% Average Revenue Increase</span>
+    <span class="ticker-item"><span class="ticker-dot"></span>Go Live in Under 5 Minutes</span>
+    <span class="ticker-item"><span class="ticker-dot" style="background:var(--pink)"></span>Real-Time Deals & Specials</span>
+    <span class="ticker-item"><span class="ticker-dot" style="background:var(--green)"></span>Smart Waitlist Management</span>
+    <span class="ticker-item"><span class="ticker-dot" style="background:var(--cyan)"></span>Deep Analytics Dashboard</span>
+    <span class="ticker-item"><span class="ticker-dot" style="background:var(--gold)"></span>38% Average Revenue Increase</span>
+    <span class="ticker-item"><span class="ticker-dot"></span>Go Live in Under 5 Minutes</span>
+    <span class="ticker-item"><span class="ticker-dot" style="background:var(--pink)"></span>Real-Time Deals & Specials</span>
+    <span class="ticker-item"><span class="ticker-dot" style="background:var(--green)"></span>Smart Waitlist Management</span>
+    <span class="ticker-item"><span class="ticker-dot" style="background:var(--cyan)"></span>Deep Analytics Dashboard</span>
+  </div>
+</div>
+
+<!-- BENEFITS -->
+<section class="section">
+  <div class="container">
+    <div class="section-header reveal">
+      <div class="label">Platform Benefits</div>
+      <h2 class="headline">Everything you need to <span class="g-text">grow your restaurant</span></h2>
+    </div>
+
+    <!-- Benefit 1: Go Live -->
+    <div class="benefit-row reveal">
+      <div class="benefit-visual">
+        <svg viewBox="0 0 440 320" xmlns="http://www.w3.org/2000/svg" style="width:100%;border-radius:20px;background:#0e0e2a;border:1px solid rgba(239,68,68,0.2)">
+          <defs>
+            <radialGradient id="liveGlow" cx="50%" cy="50%">
+              <stop offset="0%" stop-color="rgba(239,68,68,0.15)"/>
+              <stop offset="100%" stop-color="transparent"/>
+            </radialGradient>
+          </defs>
+          <rect width="440" height="320" fill="url(#liveGlow)"/>
+          <!-- Video frame -->
+          <rect x="20" y="20" width="280" height="180" rx="14" fill="rgba(255,255,255,0.03)" stroke="rgba(239,68,68,0.3)" stroke-width="1.5"/>
+          <!-- Silhouettes -->
+          <ellipse cx="110" cy="130" rx="28" ry="36" fill="rgba(255,255,255,0.06)"/>
+          <ellipse cx="165" cy="124" rx="24" ry="30" fill="rgba(255,255,255,0.05)"/>
+          <ellipse cx="215" cy="132" rx="22" ry="28" fill="rgba(255,255,255,0.04)"/>
+          <!-- Face blurs -->
+          <rect x="94" y="106" rx="16" ry="16" width="32" height="32" fill="rgba(200,220,255,0.12)"/>
+          <rect x="149" y="102" rx="14" ry="14" width="28" height="28" fill="rgba(200,220,255,0.1)"/>
+          <!-- LIVE badge + pulse -->
+          <rect x="30" y="30" width="48" height="18" rx="9" fill="rgba(239,68,68,0.9)"/>
+          <circle cx="40" cy="39" r="4" fill="#fff" opacity="0.85"/>
+          <circle cx="40" cy="39" r="8" fill="#EF4444" opacity="0.2"/>
+          <text x="48" y="43" font-family="Inter,sans-serif" font-size="9" fill="#fff" font-weight="700">LIVE</text>
+          <!-- Viewer count -->
+          <rect x="230" y="30" width="60" height="18" rx="9" fill="rgba(0,0,0,0.6)"/>
+          <text x="242" y="43" font-family="Inter,sans-serif" font-size="9" fill="#F8FAFC">&#128065; 1,240</text>
+          <!-- Chat panel -->
+          <rect x="310" y="20" width="120" height="280" rx="12" fill="rgba(255,255,255,0.03)" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+          <text x="322" y="44" font-family="Syne,sans-serif" font-size="10" font-weight="700" fill="#F8FAFC">Live Chat</text>
+          <rect x="318" y="54" width="104" height="28" rx="6" fill="rgba(255,255,255,0.04)"/>
+          <text x="326" y="66" font-family="Inter,sans-serif" font-size="7.5" fill="#F4844A" font-weight="600">Rohit K.</text>
+          <text x="326" y="77" font-family="Inter,sans-serif" font-size="7.5" fill="#94A3B8">What's today's special?</text>
+          <rect x="318" y="88" width="104" height="28" rx="6" fill="rgba(255,255,255,0.04)"/>
+          <text x="326" y="100" font-family="Inter,sans-serif" font-size="7.5" fill="#F59E0B" font-weight="600">Priya S.</text>
+          <text x="326" y="111" font-family="Inter,sans-serif" font-size="7.5" fill="#94A3B8">Looks amazing! &#128525;</text>
+          <rect x="318" y="122" width="104" height="28" rx="6" fill="rgba(255,255,255,0.04)"/>
+          <text x="326" y="134" font-family="Inter,sans-serif" font-size="7.5" fill="#22D3EE" font-weight="600">Amar T.</text>
+          <text x="326" y="145" font-family="Inter,sans-serif" font-size="7.5" fill="#94A3B8">Reserving table now!</text>
+          <!-- Deal push -->
+          <rect x="20" y="212" width="280" height="88" rx="12" fill="rgba(245,158,11,0.08)" stroke="rgba(245,158,11,0.25)" stroke-width="1"/>
+          <text x="32" y="234" font-family="Syne,sans-serif" font-size="11" font-weight="800" fill="#F59E0B">FLASH DEAL — Live Viewers Only</text>
+          <text x="32" y="252" font-family="Inter,sans-serif" font-size="9" fill="#94A3B8">Butter Chicken Thali · 30% off · Next 20 mins</text>
+          <rect x="32" y="265" width="90" height="26" rx="8" fill="url(#goldGrad)" opacity="0.9"/>
+          <text x="52" y="282" font-family="Inter,sans-serif" font-size="9" fill="#fff" font-weight="700">Push Deal Live</text>
+          <text x="148" y="282" font-family="Inter,sans-serif" font-size="9" fill="#94A3B8">&#9203; 18:42 remaining</text>
+        </svg>
+      </div>
+      <div class="benefit-text">
+        <div class="label">Go Live</div>
+        <h3>Stream your restaurant to <span class="g-text">thousands of hungry diners</span></h3>
+        <p>Hit go live and instantly connect with diners browsing your area. Show off the ambiance, kitchen energy, and specials in real-time — all with automatic face blurring to protect guest privacy.</p>
+        <div class="benefit-list">
+          <div class="benefit-item">
+            <div class="benefit-item-icon"><svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M5 8l2 2 4-4" stroke="#F4844A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            One-tap live broadcasting — no tech skills needed
+          </div>
+          <div class="benefit-item">
+            <div class="benefit-item-icon"><svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M5 8l2 2 4-4" stroke="#F4844A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            Live chat with viewers to answer questions
+          </div>
+          <div class="benefit-item">
+            <div class="benefit-item-icon"><svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M5 8l2 2 4-4" stroke="#F4844A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            Push time-sensitive deals mid-stream
+          </div>
+          <div class="benefit-item">
+            <div class="benefit-item-icon"><svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M5 8l2 2 4-4" stroke="#F4844A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            Auto face-blur protects all guests — always
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Benefit 2: Analytics -->
+    <div class="benefit-row flip reveal">
+      <div class="benefit-visual">
+        <svg viewBox="0 0 440 300" xmlns="http://www.w3.org/2000/svg" style="width:100%;border-radius:20px;background:#0e0e2a;border:1px solid rgba(232,84,10,0.2)">
+          <defs>
+            <linearGradient id="barPurple" x1="0" y1="1" x2="0" y2="0">
+              <stop offset="0%" stop-color="#E8540A" stop-opacity="0.4"/>
+              <stop offset="100%" stop-color="#F4844A"/>
+            </linearGradient>
+            <linearGradient id="barPink" x1="0" y1="1" x2="0" y2="0">
+              <stop offset="0%" stop-color="#F59E0B" stop-opacity="0.4"/>
+              <stop offset="100%" stop-color="#F472B6"/>
+            </linearGradient>
+          </defs>
+          <!-- Metric cards row -->
+          <rect x="20" y="20" width="88" height="70" rx="10" fill="rgba(255,255,255,0.04)" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+          <text x="32" y="52" font-family="Syne,sans-serif" font-size="18" font-weight="800" fill="#F4844A">342</text>
+          <text x="32" y="68" font-family="Inter,sans-serif" font-size="8" fill="#94A3B8">Peak Viewers</text>
+          <rect x="118" y="20" width="88" height="70" rx="10" fill="rgba(255,255,255,0.04)" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+          <text x="130" y="52" font-family="Syne,sans-serif" font-size="16" font-weight="800" fill="#F59E0B">$1.8k</text>
+          <text x="130" y="68" font-family="Inter,sans-serif" font-size="8" fill="#94A3B8">Revenue Today</text>
+          <rect x="216" y="20" width="88" height="70" rx="10" fill="rgba(255,255,255,0.04)" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+          <text x="228" y="52" font-family="Syne,sans-serif" font-size="18" font-weight="800" fill="#10B981">+38%</text>
+          <text x="228" y="68" font-family="Inter,sans-serif" font-size="8" fill="#94A3B8">vs Last Week</text>
+          <rect x="314" y="20" width="106" height="70" rx="10" fill="rgba(255,255,255,0.04)" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+          <text x="326" y="52" font-family="Syne,sans-serif" font-size="18" font-weight="800" fill="#22D3EE">7</text>
+          <text x="326" y="68" font-family="Inter,sans-serif" font-size="8" fill="#94A3B8">Live Sessions</text>
+          <!-- Revenue chart -->
+          <rect x="20" y="104" width="260" height="176" rx="12" fill="rgba(255,255,255,0.02)" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+          <text x="34" y="124" font-family="Syne,sans-serif" font-size="10" font-weight="700" fill="#F8FAFC">Revenue (This Month)</text>
+          <!-- Bars -->
+          <rect x="36" y="198" width="16" height="68" rx="3" fill="url(#barPurple)"/>
+          <rect x="58" y="182" width="16" height="84" rx="3" fill="url(#barPurple)"/>
+          <rect x="80" y="162" width="16" height="104" rx="3" fill="url(#barPink)"/>
+          <rect x="102" y="148" width="16" height="118" rx="3" fill="url(#barPink)"/>
+          <rect x="124" y="170" width="16" height="96" rx="3" fill="url(#barPurple)"/>
+          <rect x="146" y="155" width="16" height="111" rx="3" fill="url(#barPink)"/>
+          <rect x="168" y="140" width="16" height="126" rx="3" fill="url(#barPink)"/>
+          <rect x="190" y="160" width="16" height="106" rx="3" fill="url(#barPurple)"/>
+          <rect x="212" y="145" width="16" height="121" rx="3" fill="url(#barPink)"/>
+          <rect x="234" y="135" width="16" height="131" rx="3" fill="url(#barPink)"/>
+          <!-- Baseline -->
+          <line x1="32" y1="269" x2="272" y2="269" stroke="rgba(255,255,255,0.08)" stroke-width="1"/>
+          <!-- Month labels -->
+          <text x="36" y="280" font-family="Inter,sans-serif" font-size="7" fill="#94A3B8">Aug</text>
+          <text x="102" y="280" font-family="Inter,sans-serif" font-size="7" fill="#94A3B8">Oct</text>
+          <text x="168" y="280" font-family="Inter,sans-serif" font-size="7" fill="#94A3B8">Dec</text>
+          <text x="234" y="280" font-family="Inter,sans-serif" font-size="7" fill="#94A3B8">Feb</text>
+          <!-- Top items panel -->
+          <rect x="292" y="104" width="128" height="176" rx="12" fill="rgba(255,255,255,0.02)" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+          <text x="304" y="124" font-family="Syne,sans-serif" font-size="10" font-weight="700" fill="#F8FAFC">Top Items</text>
+          <text x="304" y="144" font-family="Inter,sans-serif" font-size="8.5" fill="#F8FAFC">Butter Chicken</text>
+          <rect x="304" y="149" width="90" height="6" rx="3" fill="rgba(255,255,255,0.08)"/>
+          <rect x="304" y="149" width="80" height="6" rx="3" fill="url(#barPink)"/>
+          <text x="304" y="172" font-family="Inter,sans-serif" font-size="8.5" fill="#F8FAFC">Paneer Tikka</text>
+          <rect x="304" y="177" width="90" height="6" rx="3" fill="rgba(255,255,255,0.08)"/>
+          <rect x="304" y="177" width="64" height="6" rx="3" fill="url(#barPurple)"/>
+          <text x="304" y="200" font-family="Inter,sans-serif" font-size="8.5" fill="#F8FAFC">Dal Makhani</text>
+          <rect x="304" y="205" width="90" height="6" rx="3" fill="rgba(255,255,255,0.08)"/>
+          <rect x="304" y="205" width="50" height="6" rx="3" fill="url(#barPink)"/>
+        </svg>
+      </div>
+      <div class="benefit-text">
+        <div class="label">Analytics</div>
+        <h3>Data-driven insights to <span class="g-text">maximise every session</span></h3>
+        <p>Know exactly how your streams perform. Track peak viewer times, which menu items drive orders, revenue per session, and busiest hours — all updated in real-time.</p>
+        <div class="benefit-list">
+          <div class="benefit-item">
+            <div class="benefit-item-icon"><svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M5 8l2 2 4-4" stroke="#F4844A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            Viewer count, peak hours, session duration
+          </div>
+          <div class="benefit-item">
+            <div class="benefit-item-icon"><svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M5 8l2 2 4-4" stroke="#F4844A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            Revenue attribution by stream and menu item
+          </div>
+          <div class="benefit-item">
+            <div class="benefit-item-icon"><svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M5 8l2 2 4-4" stroke="#F4844A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            Repeat customer and engagement tracking
+          </div>
+          <div class="benefit-item">
+            <div class="benefit-item-icon"><svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M5 8l2 2 4-4" stroke="#F4844A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            Export reports & weekly summaries via email
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Benefit 3: Menu & Orders -->
+    <div class="benefit-row reveal">
+      <div class="benefit-visual">
+        <svg viewBox="0 0 440 300" xmlns="http://www.w3.org/2000/svg" style="width:100%;border-radius:20px;background:#0e0e2a;border:1px solid rgba(245,158,11,0.2)">
+          <!-- Menu list -->
+          <rect x="20" y="20" width="200" height="260" rx="14" fill="rgba(255,255,255,0.03)" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+          <text x="34" y="44" font-family="Syne,sans-serif" font-size="11" font-weight="700" fill="#F8FAFC">Menu Editor</text>
+          <!-- Category header -->
+          <rect x="30" y="54" width="80" height="16" rx="8" fill="rgba(232,84,10,0.2)" stroke="rgba(232,84,10,0.4)" stroke-width="1"/>
+          <text x="44" y="66" font-family="Inter,sans-serif" font-size="8" fill="#F4844A" font-weight="600">Mains</text>
+          <!-- Items -->
+          <rect x="30" y="76" width="180" height="40" rx="8" fill="rgba(255,255,255,0.04)"/>
+          <text x="40" y="92" font-family="Inter,sans-serif" font-size="9" font-weight="600" fill="#F8FAFC">Butter Chicken</text>
+          <text x="40" y="106" font-family="Inter,sans-serif" font-size="8" fill="#94A3B8">$24</text>
+          <rect x="172" y="83" width="30" height="14" rx="7" fill="rgba(16,185,129,0.15)" stroke="rgba(16,185,129,0.3)" stroke-width="1"/>
+          <circle cx="180" cy="90" r="3" fill="#10B981"/>
+          <text x="185" y="94" font-family="Inter,sans-serif" font-size="7" fill="#10B981">ON</text>
+          <rect x="30" y="122" width="180" height="40" rx="8" fill="rgba(255,255,255,0.04)"/>
+          <text x="40" y="138" font-family="Inter,sans-serif" font-size="9" font-weight="600" fill="#F8FAFC">Paneer Tikka</text>
+          <text x="40" y="152" font-family="Inter,sans-serif" font-size="8" fill="#94A3B8">$19</text>
+          <rect x="172" y="129" width="30" height="14" rx="7" fill="rgba(16,185,129,0.15)" stroke="rgba(16,185,129,0.3)" stroke-width="1"/>
+          <circle cx="180" cy="136" r="3" fill="#10B981"/>
+          <text x="185" y="140" font-family="Inter,sans-serif" font-size="7" fill="#10B981">ON</text>
+          <rect x="30" y="168" width="180" height="40" rx="8" fill="rgba(255,255,255,0.03)"/>
+          <text x="40" y="184" font-family="Inter,sans-serif" font-size="9" font-weight="600" fill="#94A3B8">Dal Makhani</text>
+          <text x="40" y="198" font-family="Inter,sans-serif" font-size="8" fill="#94A3B8">$16</text>
+          <rect x="172" y="175" width="30" height="14" rx="7" fill="rgba(239,68,68,0.12)" stroke="rgba(239,68,68,0.25)" stroke-width="1"/>
+          <text x="176" y="186" font-family="Inter,sans-serif" font-size="7" fill="#EF4444">OFF</text>
+          <!-- Add item -->
+          <rect x="30" y="218" width="180" height="36" rx="8" fill="rgba(232,84,10,0.1)" stroke="rgba(232,84,10,0.3)" stroke-width="1" stroke-dasharray="4,3"/>
+          <text x="85" y="240" font-family="Inter,sans-serif" font-size="9" fill="#F4844A">+ Add Item</text>
+          <!-- Orders panel -->
+          <rect x="232" y="20" width="188" height="260" rx="14" fill="rgba(255,255,255,0.03)" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+          <text x="246" y="44" font-family="Syne,sans-serif" font-size="11" font-weight="700" fill="#F8FAFC">Live Orders</text>
+          <!-- Status tabs -->
+          <rect x="242" y="52" width="50" height="14" rx="7" fill="rgba(245,158,11,0.2)"/>
+          <text x="253" y="63" font-family="Inter,sans-serif" font-size="7.5" fill="#F59E0B" font-weight="600">New (2)</text>
+          <rect x="298" y="52" width="58" height="14" rx="7" fill="rgba(255,255,255,0.04)"/>
+          <text x="306" y="63" font-family="Inter,sans-serif" font-size="7.5" fill="#94A3B8">Preparing</text>
+          <!-- Order cards -->
+          <rect x="242" y="74" width="168" height="64" rx="8" fill="rgba(245,158,11,0.06)" stroke="rgba(245,158,11,0.2)" stroke-width="1"/>
+          <text x="252" y="92" font-family="Syne,sans-serif" font-size="9" font-weight="700" fill="#F59E0B">#1042 · Table 5</text>
+          <text x="252" y="106" font-family="Inter,sans-serif" font-size="8" fill="#94A3B8">Grilled Salmon + Fries · $26</text>
+          <rect x="252" y="114" width="60" height="18" rx="9" fill="rgba(16,185,129,0.15)" stroke="rgba(16,185,129,0.3)" stroke-width="1"/>
+          <text x="265" y="126" font-family="Inter,sans-serif" font-size="8" fill="#10B981">Accept</text>
+          <rect x="320" y="114" width="50" height="18" rx="9" fill="rgba(239,68,68,0.12)" stroke="rgba(239,68,68,0.25)" stroke-width="1"/>
+          <text x="330" y="126" font-family="Inter,sans-serif" font-size="8" fill="#EF4444">Reject</text>
+          <rect x="242" y="146" width="168" height="58" rx="8" fill="rgba(255,255,255,0.03)" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+          <text x="252" y="164" font-family="Syne,sans-serif" font-size="9" font-weight="700" fill="#F8FAFC">#1041 · Takeaway</text>
+          <text x="252" y="178" font-family="Inter,sans-serif" font-size="8" fill="#94A3B8">Caesar Salad + Soup · $34</text>
+          <rect x="252" y="188" width="80" height="16" rx="8" fill="rgba(232,84,10,0.15)" stroke="rgba(232,84,10,0.3)" stroke-width="1"/>
+          <text x="264" y="200" font-family="Inter,sans-serif" font-size="8" fill="#F4844A">Mark Ready</text>
+        </svg>
+      </div>
+      <div class="benefit-text">
+        <div class="label">Menu &amp; Orders</div>
+        <h3>Manage your menu and <span class="g-text">fulfill orders live</span></h3>
+        <p>Edit your menu in seconds, toggle items on/off, and accept incoming orders during your stream. Customers order before they arrive — so your kitchen is always prepared.</p>
+        <div class="benefit-list">
+          <div class="benefit-item">
+            <div class="benefit-item-icon"><svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M5 8l2 2 4-4" stroke="#F4844A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            Live menu editor with instant on/off toggle
+          </div>
+          <div class="benefit-item">
+            <div class="benefit-item-icon"><svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M5 8l2 2 4-4" stroke="#F4844A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            Accept, prepare, and mark orders delivered
+          </div>
+          <div class="benefit-item">
+            <div class="benefit-item-icon"><svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M5 8l2 2 4-4" stroke="#F4844A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            Real-time kitchen notifications for new orders
+          </div>
+          <div class="benefit-item">
+            <div class="benefit-item-icon"><svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M5 8l2 2 4-4" stroke="#F4844A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            Track order status from placed to delivered
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Benefit 4: Waitlist -->
+    <div class="benefit-row flip reveal">
+      <div class="benefit-visual">
+        <svg viewBox="0 0 440 280" xmlns="http://www.w3.org/2000/svg" style="width:100%;border-radius:20px;background:#0e0e2a;border:1px solid rgba(16,185,129,0.2)">
+          <text x="24" y="44" font-family="Syne,sans-serif" font-size="13" font-weight="800" fill="#F8FAFC">Waitlist Manager</text>
+          <rect x="20" y="56" width="50" height="18" rx="9" fill="rgba(16,185,129,0.2)" stroke="rgba(16,185,129,0.35)" stroke-width="1"/>
+          <text x="34" y="69" font-family="Inter,sans-serif" font-size="8" fill="#10B981" font-weight="600">4 Waiting</text>
+          <rect x="76" y="56" width="60" height="18" rx="9" fill="rgba(255,255,255,0.04)"/>
+          <text x="86" y="69" font-family="Inter,sans-serif" font-size="8" fill="#94A3B8">Seated Today</text>
+          <!-- Waitlist items -->
+          <rect x="20" y="84" width="400" height="48" rx="10" fill="rgba(16,185,129,0.06)" stroke="rgba(16,185,129,0.2)" stroke-width="1"/>
+          <circle cx="48" cy="108" r="16" fill="rgba(232,84,10,0.2)" stroke="rgba(232,84,10,0.3)" stroke-width="1"/>
+          <text x="43" y="112" font-family="Syne,sans-serif" font-size="11" font-weight="800" fill="#F4844A">1</text>
+          <text x="72" y="100" font-family="Syne,sans-serif" font-size="10" font-weight="700" fill="#F8FAFC">Sharma Family</text>
+          <text x="72" y="115" font-family="Inter,sans-serif" font-size="8.5" fill="#94A3B8">4 guests · Joined 7 min ago · &#126;8 min wait</text>
+          <rect x="306" y="96" width="54" height="24" rx="8" fill="rgba(16,185,129,0.2)" stroke="rgba(16,185,129,0.35)" stroke-width="1"/>
+          <text x="318" y="112" font-family="Inter,sans-serif" font-size="9" fill="#10B981" font-weight="600">Seat Now</text>
+          <rect x="366" y="96" width="44" height="24" rx="8" fill="rgba(239,68,68,0.1)" stroke="rgba(239,68,68,0.25)" stroke-width="1"/>
+          <text x="374" y="112" font-family="Inter,sans-serif" font-size="9" fill="#EF4444">Remove</text>
+
+          <rect x="20" y="140" width="400" height="48" rx="10" fill="rgba(255,255,255,0.03)" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+          <circle cx="48" cy="164" r="16" fill="rgba(245,158,11,0.15)" stroke="rgba(245,158,11,0.3)" stroke-width="1"/>
+          <text x="43" y="168" font-family="Syne,sans-serif" font-size="11" font-weight="800" fill="#F59E0B">2</text>
+          <text x="72" y="156" font-family="Syne,sans-serif" font-size="10" font-weight="700" fill="#F8FAFC">Patel Group</text>
+          <text x="72" y="171" font-family="Inter,sans-serif" font-size="8.5" fill="#94A3B8">6 guests · Joined 4 min ago · &#126;14 min wait</text>
+          <rect x="306" y="152" width="54" height="24" rx="8" fill="rgba(16,185,129,0.1)" stroke="rgba(16,185,129,0.2)" stroke-width="1"/>
+          <text x="318" y="168" font-family="Inter,sans-serif" font-size="9" fill="#10B981">Seat Now</text>
+          <rect x="366" y="152" width="44" height="24" rx="8" fill="rgba(239,68,68,0.08)" stroke="rgba(239,68,68,0.18)" stroke-width="1"/>
+          <text x="374" y="168" font-family="Inter,sans-serif" font-size="9" fill="#EF4444">Remove</text>
+
+          <rect x="20" y="196" width="400" height="48" rx="10" fill="rgba(255,255,255,0.03)" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+          <circle cx="48" cy="220" r="16" fill="rgba(34,211,238,0.1)" stroke="rgba(34,211,238,0.25)" stroke-width="1"/>
+          <text x="43" y="224" font-family="Syne,sans-serif" font-size="11" font-weight="800" fill="#22D3EE">3</text>
+          <text x="72" y="212" font-family="Syne,sans-serif" font-size="10" font-weight="700" fill="#F8FAFC">Kumar Party</text>
+          <text x="72" y="227" font-family="Inter,sans-serif" font-size="8.5" fill="#94A3B8">2 guests · Joined 2 min ago · &#126;20 min wait</text>
+        </svg>
+      </div>
+      <div class="benefit-text">
+        <div class="label">Smart Waitlist</div>
+        <h3>Let guests queue from <span class="g-text">anywhere — not your doorstep</span></h3>
+        <p>Customers join your waitlist digitally and track their position in real-time. You get a clear, orderly queue — and guests arrive exactly when you're ready for them.</p>
+        <div class="benefit-list">
+          <div class="benefit-item">
+            <div class="benefit-item-icon"><svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M5 8l2 2 4-4" stroke="#F4844A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            Guests join remotely and get live position updates
+          </div>
+          <div class="benefit-item">
+            <div class="benefit-item-icon"><svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M5 8l2 2 4-4" stroke="#F4844A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            Seat or skip guests with one tap
+          </div>
+          <div class="benefit-item">
+            <div class="benefit-item-icon"><svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M5 8l2 2 4-4" stroke="#F4844A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            SMS notifications sent automatically when ready
+          </div>
+          <div class="benefit-item">
+            <div class="benefit-item-icon"><svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M5 8l2 2 4-4" stroke="#F4844A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            Reduce no-shows with smart reminders
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PRICING -->
+<section class="section" style="background:linear-gradient(180deg,var(--bg) 0%,var(--bg2) 100%)">
+  <div class="container">
+    <div class="section-header reveal">
+      <div class="label">Pricing</div>
+      <h2 class="headline">Simple pricing, <span class="g-text-gold">serious results</span></h2>
+      <p class="body-lg">Start free for 14 days. No credit card required. Upgrade when you're ready to scale.</p>
+    </div>
+    <div class="pricing-grid reveal">
+
+      <div class="pricing-card">
+        <div class="pricing-name">Starter</div>
+        <div class="pricing-price g-text">$199 <span style="font-size:1rem;font-weight:500;color:var(--text2)">CAD/mo</span></div>
+        <div class="pricing-period">Best for new restaurants</div>
+        <div class="pricing-features">
+          <div class="pricing-feature check-green"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7" fill="rgba(16,185,129,0.2)"/><path d="M5 8l2 2 4-4" stroke="#10B981" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg> 5 live sessions / month</div>
+          <div class="pricing-feature check-green"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7" fill="rgba(16,185,129,0.2)"/><path d="M5 8l2 2 4-4" stroke="#10B981" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg> Up to 100 concurrent viewers</div>
+          <div class="pricing-feature check-green"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7" fill="rgba(16,185,129,0.2)"/><path d="M5 8l2 2 4-4" stroke="#10B981" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg> Basic analytics</div>
+          <div class="pricing-feature check-green"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7" fill="rgba(16,185,129,0.2)"/><path d="M5 8l2 2 4-4" stroke="#10B981" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg> Menu management</div>
+          <div class="pricing-feature check-green"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7" fill="rgba(16,185,129,0.2)"/><path d="M5 8l2 2 4-4" stroke="#10B981" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg> Waitlist (up to 20 guests)</div>
+          <div class="pricing-feature check-muted"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><line x1="4" y1="8" x2="12" y2="8" stroke="#475569" stroke-width="1.5" stroke-linecap="round"/></svg> Deal push during streams</div>
+          <div class="pricing-feature check-muted"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><line x1="4" y1="8" x2="12" y2="8" stroke="#475569" stroke-width="1.5" stroke-linecap="round"/></svg> Advanced analytics</div>
+        </div>
+        <a href="auth.html" class="btn btn-secondary w-full">Start Free Trial</a>
+      </div>
+
+      <div class="pricing-card featured">
+        <div class="pricing-badge">Most Popular</div>
+        <div class="pricing-name">Pro</div>
+        <div class="pricing-price g-text">$349 <span style="font-size:1rem;font-weight:500;color:var(--text2)">CAD/mo</span></div>
+        <div class="pricing-period">Best for growing restaurants</div>
+        <div class="pricing-features">
+          <div class="pricing-feature check-green"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7" fill="rgba(16,185,129,0.2)"/><path d="M5 8l2 2 4-4" stroke="#10B981" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg> Unlimited live sessions</div>
+          <div class="pricing-feature check-green"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7" fill="rgba(16,185,129,0.2)"/><path d="M5 8l2 2 4-4" stroke="#10B981" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg> Up to 1,000 concurrent viewers</div>
+          <div class="pricing-feature check-green"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7" fill="rgba(16,185,129,0.2)"/><path d="M5 8l2 2 4-4" stroke="#10B981" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg> Advanced analytics dashboard</div>
+          <div class="pricing-feature check-green"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7" fill="rgba(16,185,129,0.2)"/><path d="M5 8l2 2 4-4" stroke="#10B981" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg> Menu management + ordering</div>
+          <div class="pricing-feature check-green"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7" fill="rgba(16,185,129,0.2)"/><path d="M5 8l2 2 4-4" stroke="#10B981" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg> Unlimited waitlist guests</div>
+          <div class="pricing-feature check-green"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7" fill="rgba(16,185,129,0.2)"/><path d="M5 8l2 2 4-4" stroke="#10B981" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg> Deal push during streams</div>
+          <div class="pricing-feature check-green"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7" fill="rgba(16,185,129,0.2)"/><path d="M5 8l2 2 4-4" stroke="#10B981" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg> Priority support</div>
+        </div>
+        <a href="auth.html" class="btn btn-primary w-full">Start Free Trial</a>
+      </div>
+
+      <div class="pricing-card">
+        <div class="pricing-name">Enterprise</div>
+        <div class="pricing-price g-text-gold">$699 <span style="font-size:1rem;font-weight:500;color:var(--text2)">CAD/mo</span></div>
+        <div class="pricing-period">Best for restaurant chains</div>
+        <div class="pricing-features">
+          <div class="pricing-feature check-green"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7" fill="rgba(16,185,129,0.2)"/><path d="M5 8l2 2 4-4" stroke="#10B981" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg> Everything in Pro</div>
+          <div class="pricing-feature check-green"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7" fill="rgba(16,185,129,0.2)"/><path d="M5 8l2 2 4-4" stroke="#10B981" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg> Unlimited concurrent viewers</div>
+          <div class="pricing-feature check-green"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7" fill="rgba(16,185,129,0.2)"/><path d="M5 8l2 2 4-4" stroke="#10B981" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg> Multi-location management</div>
+          <div class="pricing-feature check-green"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7" fill="rgba(16,185,129,0.2)"/><path d="M5 8l2 2 4-4" stroke="#10B981" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg> Custom branding &amp; domain</div>
+          <div class="pricing-feature check-green"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7" fill="rgba(16,185,129,0.2)"/><path d="M5 8l2 2 4-4" stroke="#10B981" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg> Dedicated account manager</div>
+          <div class="pricing-feature check-green"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7" fill="rgba(16,185,129,0.2)"/><path d="M5 8l2 2 4-4" stroke="#10B981" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg> API access &amp; integrations</div>
+          <div class="pricing-feature check-green"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7" fill="rgba(16,185,129,0.2)"/><path d="M5 8l2 2 4-4" stroke="#10B981" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg> 24/7 phone support</div>
+        </div>
+        <a href="demo.html" class="btn btn-gold w-full">Talk to Sales</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SIGNUP FORM -->
+<section class="section">
+  <div class="container">
+    <div class="signup-card reveal">
+      <div style="text-align:center;margin-bottom:36px">
+        <div class="label" style="margin-bottom:12px">Get Started Today</div>
+        <h2 class="headline">List your restaurant<br><span class="g-text">in 5 minutes</span></h2>
+        <p class="body-lg mt-4">Be among the first restaurants to go live on LiveHushh — onboarding now.</p>
+      </div>
+      <form onsubmit="handleRestaurantSignup(event)" style="display:grid;gap:16px">
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">First Name</label>
+            <input class="input" type="text" placeholder="Emily" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Last Name</label>
+            <input class="input" type="text" placeholder="Clarke" required>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Restaurant Name</label>
+          <input class="input" type="text" placeholder="The Spice Route" required>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Email</label>
+            <input class="input" type="email" placeholder="emily@restaurant.com" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Phone</label>
+            <input class="input" type="tel" placeholder="+1 416 555 0100" required>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">City</label>
+          <select class="input input-select" required>
+            <option value="">Select your city</option>
+            <option>Toronto</option><option>Vancouver</option><option>Calgary</option>
+            <option>Ottawa</option><option>Montreal</option><option>Edmonton</option><option>Other</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Cuisine Type</label>
+          <select class="input input-select">
+            <option value="">Select cuisine</option>
+            <option>North Indian</option><option>South Indian</option><option>Chinese</option>
+            <option>Italian</option><option>Continental</option><option>Multi-cuisine</option>
+          </select>
+        </div>
+        <button type="submit" class="btn btn-gold btn-lg w-full" style="margin-top:8px">
+          Start 14-Day Free Trial
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+        </button>
+        <p class="caption" style="text-align:center">No credit card required · Cancel anytime</p>
+      </form>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer class="footer">
+  <div class="container">
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:gap;padding-bottom:28px;margin-bottom:28px;border-bottom:1px solid var(--border2)">
+      <a href="index.html" class="nav-logo">
+        <span class="lh-logo"><span class="lh-logo-live">live</span><span class="lh-logo-hushh">hushh.</span></span>
+      </a>
+      <div style="display:flex;gap:24px;flex-wrap:wrap">
+        <a href="index.html" style="font-size:.875rem;color:var(--text2)">Home</a>
+        <a href="for-customers.html" style="font-size:.875rem;color:var(--text2)">For Customers</a>
+        <a href="demo.html" style="font-size:.875rem;color:var(--text2)">Demo</a>
+        <a href="contact.html" style="font-size:.875rem;color:var(--text2)">Help</a>
+        <a href="auth.html" style="font-size:.875rem;color:var(--text2)">Login</a>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2025 LiveHushh</span>
+    </div>
+  </div>
+</footer>
+
+<script src="js/data.js?v=2"></script>
+<script>
+const nav = document.getElementById('nav');
+window.addEventListener('scroll', () => nav.classList.toggle('scrolled', window.scrollY > 20), {passive:true});
+const obs = new IntersectionObserver(entries => entries.forEach(e => { if(e.isIntersecting){ e.target.classList.add('visible'); obs.unobserve(e.target); } }), {threshold:0.1});
+document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
+
+function handleRestaurantSignup(e) {
+  e.preventDefault();
+  APP.showToast('Application received! We\'ll contact you within 24 hours.', 'success', 4000);
+  setTimeout(() => location.href = 'auth.html', 2000);
+}
+</script>
+<script src="js/theme.js"></script>
+</body>
+</html>

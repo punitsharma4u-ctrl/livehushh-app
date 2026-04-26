@@ -1,0 +1,10 @@
+{
+  "name": "livehushh-api",
+  "version": "1.0.0",
+  "description": "LiveHushh API Lambda — MongoDB proxy",
+  "main": "index.js",
+  "dependencies": {
+    "mongodb": "^6.0.0",
+    "web-push": "^3.6.7"
+  }
+}

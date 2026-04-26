@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Contact & Help — LiveHushh</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/styles.css?v=3">
+<style>
+/* ── Page tabs ── */
+.page-tabs{display:flex;gap:0;border-bottom:1px solid var(--border);margin-bottom:56px;overflow-x:auto}
+.page-tab{padding:16px 28px;font-size:0.9rem;font-weight:600;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;transition:var(--transition)}
+.page-tab.active{color:var(--purple);border-bottom-color:var(--purple)}
+.page-tab:hover:not(.active){color:var(--text)}
+.page-section{display:none}.page-section.active{display:block}
+
+/* ── Contact ── */
+.contact-grid{display:grid;grid-template-columns:1fr 1.4fr;gap:52px;align-items:start}
+.contact-info-card{background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:var(--r-xl);padding:24px;margin-bottom:16px;display:flex;gap:16px;transition:var(--transition)}
+.contact-info-card:hover{border-color:var(--purple);background:rgba(232,84,10,.06)}
+.contact-info-icon{width:48px;height:48px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:1.4rem;flex-shrink:0}
+.contact-info-icon.purple{background:rgba(232,84,10,.18)}
+.contact-info-icon.pink{background:rgba(236,72,153,.18)}
+.contact-info-icon.cyan{background:rgba(34,211,238,.18)}
+.contact-info-icon.gold{background:rgba(245,158,11,.18)}
+
+/* ── FAQ ── */
+.faq-item{border-bottom:1px solid var(--border);padding:22px 0;cursor:pointer}
+.faq-question{display:flex;justify-content:space-between;align-items:center;font-weight:600;font-size:1rem;color:var(--text)}
+.faq-icon{width:28px;height:28px;border-radius:50%;background:rgba(232,84,10,.15);display:flex;align-items:center;justify-content:center;font-size:1.1rem;transition:transform .3s;flex-shrink:0}
+.faq-answer{color:var(--muted);font-size:0.95rem;line-height:1.8;margin-top:14px;display:none}
+.faq-item.open .faq-answer{display:block}
+.faq-item.open .faq-icon{transform:rotate(45deg);background:rgba(232,84,10,.3)}
+
+/* ── Privacy / Terms ── */
+.legal-section{margin-bottom:40px}
+.legal-section h3{font-family:'Inter',system-ui,sans-serif;font-size:1.15rem;color:var(--text);margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid var(--border)}
+.legal-section p,.legal-section li{color:var(--muted);font-size:0.95rem;line-height:1.8;margin-bottom:10px}
+.legal-section ul{padding-left:20px}
+.legal-section ul li{list-style:disc}
+
+/* ── Hero mini ── */
+.page-hero{padding:100px 0 56px;text-align:center;position:relative}
+.page-hero h1{font-family:'Inter',system-ui,sans-serif;font-size:clamp(2rem,5vw,3.2rem);font-weight:800;margin-bottom:16px}
+.page-hero p{color:var(--muted);font-size:1.1rem;max-width:540px;margin:0 auto}
+
+/* ── Status badge ── */
+.status-badge{display:inline-flex;align-items:center;gap:8px;background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.3);border-radius:40px;padding:6px 16px;font-size:0.85rem;color:#22c55e;font-weight:600;margin-bottom:32px}
+.status-dot{width:8px;height:8px;border-radius:50%;background:#22c55e;animation:livePulse 2s infinite}
+
+@media(max-width:768px){
+  .contact-grid{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<!-- Noise overlay -->
+<div class="noise"></div>
+
+<!-- Nav -->
+<nav class="nav" id="mainNav">
+  <div class="nav-inner">
+    <a href="index.html" class="nav-logo">
+      <span class="lh-logo"><span class="lh-logo-live">live</span><span class="lh-logo-hushh">hushh.</span></span>
+    </a>
+    <div class="nav-links">
+      <a href="for-restaurants.html" class="nav-link">For Restaurants</a>
+      <a href="for-customers.html" class="nav-link">For Customers</a>
+      <a href="demo.html" class="nav-link">Request Demo</a>
+      <a href="contact.html" class="nav-link active">Help</a>
+    </div>
+    <div class="nav-actions">
+      <a href="auth.html" class="btn btn-ghost btn-sm">Sign In</a>
+      <a href="auth.html" class="btn btn-primary btn-sm">Get Started</a>
+    </div>
+  </div>
+</nav>
+
+<!-- Orbs -->
+<div class="orb" style="width:600px;height:600px;top:-200px;left:-200px;background:radial-gradient(circle,rgba(232,84,10,.18),transparent 70%)"></div>
+<div class="orb" style="width:500px;height:500px;top:100px;right:-150px;background:radial-gradient(circle,rgba(236,72,153,.12),transparent 70%)"></div>
+
+<!-- Page Hero -->
+<section class="page-hero">
+  <div class="status-badge"><span class="status-dot"></span>All systems operational</div>
+  <h1><span class="g-text">Help & Support</span></h1>
+  <p>Get answers, reach our team, or read the legal stuff — all in one place.</p>
+</section>
+
+<!-- Main Content -->
+<main style="padding:0 0 100px">
+  <div class="container">
+
+    <!-- Tabs -->
+    <div class="page-tabs">
+      <div class="page-tab active" onclick="switchTab('contact')">Contact Us</div>
+      <div class="page-tab" onclick="switchTab('faq')">FAQ</div>
+      <div class="page-tab" onclick="switchTab('privacy')">Privacy Policy</div>
+      <div class="page-tab" onclick="switchTab('terms')">Terms of Service</div>
+    </div>
+
+    <!-- ── CONTACT ── -->
+    <div class="page-section active" id="tab-contact">
+      <div class="contact-grid">
+        <!-- Info cards -->
+        <div>
+          <h2 style="font-family:'Inter',system-ui,sans-serif;font-size:1.6rem;margin-bottom:8px">Get in touch</h2>
+          <p style="color:var(--muted);margin-bottom:28px">Our support team is available Mon–Sat, 9am–7pm EST. We typically respond within 2 hours.</p>
+
+          <div class="contact-info-card">
+            <div class="contact-info-icon purple">📧</div>
+            <div>
+              <div style="font-weight:700;margin-bottom:4px">Email Support</div>
+              <div style="color:var(--muted);font-size:0.9rem">support@livehushh.com</div>
+              <div style="color:var(--purple);font-size:0.82rem;margin-top:4px">Response in &lt;2 hrs</div>
+            </div>
+          </div>
+
+          <div class="contact-info-card">
+            <div class="contact-info-icon pink">💬</div>
+            <div>
+              <div style="font-weight:700;margin-bottom:4px">Live Chat</div>
+              <div style="color:var(--muted);font-size:0.9rem">Available on all dashboard pages</div>
+              <div style="color:#22c55e;font-size:0.82rem;margin-top:4px">● Online now</div>
+            </div>
+          </div>
+
+          <div class="contact-info-card">
+            <div class="contact-info-icon cyan">📞</div>
+            <div>
+              <div style="font-weight:700;margin-bottom:4px">Phone Support</div>
+              <div style="color:var(--muted);font-size:0.9rem">+1 703 453 2938</div>
+              <div style="color:var(--muted);font-size:0.82rem;margin-top:4px">Mon–Sat 9am–7pm EST</div>
+            </div>
+          </div>
+
+          <div class="contact-info-card">
+            <div class="contact-info-icon gold">🏢</div>
+            <div>
+              <div style="font-weight:700;margin-bottom:4px">Office</div>
+              <div style="color:var(--muted);font-size:0.9rem">WeWork, 123 Bay Street, Toronto, ON M5H 4A7</div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Contact form -->
+        <div style="background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:var(--r-2xl);padding:36px">
+          <h3 style="font-family:'Inter',system-ui,sans-serif;font-size:1.25rem;margin-bottom:6px">Send us a message</h3>
+          <p style="color:var(--muted);font-size:0.9rem;margin-bottom:28px">Fill out the form and we'll get back to you shortly.</p>
+          <form onsubmit="submitContact(event)">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
+              <div class="form-group" style="margin-bottom:0">
+                <label class="form-label">First Name</label>
+                <input id="cf_fname" type="text" class="form-input" placeholder="James" required>
+              </div>
+              <div class="form-group" style="margin-bottom:0">
+                <label class="form-label">Last Name</label>
+                <input id="cf_lname" type="text" class="form-input" placeholder="Carter" required>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Email</label>
+              <input id="cf_email" type="email" class="form-input" placeholder="you@example.com" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Category</label>
+              <select id="cf_category" class="form-input">
+                <option>General Inquiry</option>
+                <option>Technical Support</option>
+                <option>Billing & Subscriptions</option>
+                <option>Restaurant Onboarding</option>
+                <option>Partnership Inquiry</option>
+                <option>Report an Issue</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Subject</label>
+              <input id="cf_subject" type="text" class="form-input" placeholder="How can we help?" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Message</label>
+              <textarea id="cf_message" class="form-input" rows="5" placeholder="Tell us more about your issue or question..." required style="resize:vertical"></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center">Send Message →</button>
+          </form>
+
+          <!-- Success state -->
+          <div id="contactSuccess" style="display:none;text-align:center;padding:40px 0">
+            <div style="font-size:3rem;margin-bottom:16px">✅</div>
+            <div style="font-family:'Inter',system-ui,sans-serif;font-size:1.3rem;font-weight:700;margin-bottom:8px">Message Sent!</div>
+            <div style="color:var(--muted)">We'll get back to you within 2 hours.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── FAQ ── -->
+    <div class="page-section" id="tab-faq">
+      <div style="max-width:720px;margin:0 auto">
+        <h2 style="font-family:'Inter',system-ui,sans-serif;font-size:1.8rem;margin-bottom:8px;text-align:center">Frequently Asked <span class="g-text">Questions</span></h2>
+        <p style="color:var(--muted);text-align:center;margin-bottom:48px">Everything you need to know about LiveHushh.</p>
+
+        <div style="font-size:0.8rem;font-weight:700;letter-spacing:.12em;color:var(--muted);margin-bottom:16px">FOR CUSTOMERS</div>
+
+        <div class="faq-item" onclick="toggleFaq(this)">
+          <div class="faq-question">What is LiveHushh?<span class="faq-icon">+</span></div>
+          <div class="faq-answer">LiveHushh is a restaurant discovery platform that lets you watch live streams of restaurant ambience before you visit — with all faces automatically blurred for privacy. You can browse menus, join waitlists, place orders, and discover flash deals in real time.</div>
+        </div>
+        <div class="faq-item" onclick="toggleFaq(this)">
+          <div class="faq-question">Is the live stream privacy-safe?<span class="faq-icon">+</span></div>
+          <div class="faq-answer">Absolutely. All faces in restaurant live streams are automatically blurred using our real-time privacy technology. Guests can enjoy the ambience without any privacy concerns. Restaurants cannot stream without this protection enabled.</div>
+        </div>
+        <div class="faq-item" onclick="toggleFaq(this)">
+          <div class="faq-question">How does the waitlist work?<span class="faq-icon">+</span></div>
+          <div class="faq-answer">Join a restaurant's virtual waitlist directly from the app. You'll see your real-time position, estimated wait time, and get notified when your table is ready — all without standing in line.</div>
+        </div>
+        <div class="faq-item" onclick="toggleFaq(this)">
+          <div class="faq-question">Can I order food through LiveHushh?<span class="faq-icon">+</span></div>
+          <div class="faq-answer">Yes! You can browse a restaurant's full menu, add items to your cart, and place dine-in pre-orders. This reduces your wait time once seated. Payment is handled at the restaurant.</div>
+        </div>
+        <div class="faq-item" onclick="toggleFaq(this)">
+          <div class="faq-question">Is LiveHushh free for customers?<span class="faq-icon">+</span></div>
+          <div class="faq-answer">Yes, LiveHushh is completely free for customers. Create an account and start discovering restaurants instantly with no subscription required.</div>
+        </div>
+
+        <div style="font-size:0.8rem;font-weight:700;letter-spacing:.12em;color:var(--muted);margin:36px 0 16px">FOR RESTAURANTS</div>
+
+        <div class="faq-item" onclick="toggleFaq(this)">
+          <div class="faq-question">How much does it cost for restaurants?<span class="faq-icon">+</span></div>
+          <div class="faq-answer">We offer three plans: Starter ($199 CAD/mo), Pro ($349 CAD/mo), and Enterprise ($699 CAD/mo). Each plan includes different features and livestream hours. Visit our <a href="for-restaurants.html" style="color:var(--purple)">For Restaurants</a> page for full details.</div>
+        </div>
+        <div class="faq-item" onclick="toggleFaq(this)">
+          <div class="faq-question">How do I set up live streaming?<span class="faq-icon">+</span></div>
+          <div class="faq-answer">After signing up, go to your Owner Dashboard → Live Studio. You can start streaming directly from your phone or tablet with just one tap. Our system automatically applies face blurring — no additional setup required.</div>
+        </div>
+        <div class="faq-item" onclick="toggleFaq(this)">
+          <div class="faq-question">Can I manage multiple branches?<span class="faq-icon">+</span></div>
+          <div class="faq-answer">Enterprise plan supports multiple locations under one account. Each branch gets its own dashboard, menu, and analytics while you can see an aggregated view across all locations.</div>
+        </div>
+        <div class="faq-item" onclick="toggleFaq(this)">
+          <div class="faq-question">How long does onboarding take?<span class="faq-icon">+</span></div>
+          <div class="faq-answer">Most restaurants go live within 24 hours of signing up. Our team reviews your application, sets up your profile, and guides you through the dashboard. Pro and Enterprise plans get a dedicated onboarding specialist.</div>
+        </div>
+        <div class="faq-item" onclick="toggleFaq(this)">
+          <div class="faq-question">Can I cancel my subscription anytime?<span class="faq-icon">+</span></div>
+          <div class="faq-answer">Yes, you can cancel at any time from your dashboard settings. Your account remains active until the end of your billing period with no cancellation fees.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── PRIVACY POLICY ── -->
+    <div class="page-section" id="tab-privacy">
+      <div style="max-width:760px;margin:0 auto">
+        <div style="margin-bottom:32px">
+          <h2 style="font-family:'Inter',system-ui,sans-serif;font-size:1.8rem;margin-bottom:8px">Privacy Policy</h2>
+          <div style="color:var(--muted);font-size:0.9rem">Last updated: January 1, 2025</div>
+        </div>
+
+        <div class="legal-section">
+          <h3>1. Information We Collect</h3>
+          <p>We collect information you provide directly (name, email, phone, location preferences), information generated from your use of our Services (browsing history, orders, waitlist entries, live stream views), and technical data (device type, IP address, browser type).</p>
+          <ul>
+            <li>Account registration data: name, email, password hash</li>
+            <li>Restaurant data: business name, address, menu, operating hours</li>
+            <li>Usage data: pages viewed, features used, time spent</li>
+            <li>Transaction data: orders placed, waitlist joins</li>
+          </ul>
+        </div>
+
+        <div class="legal-section">
+          <h3>2. How We Use Your Information</h3>
+          <p>Your information is used to provide and improve the LiveHushh platform, personalise your restaurant recommendations, process orders and waitlist requests, send service notifications, ensure platform security, and comply with legal obligations.</p>
+        </div>
+
+        <div class="legal-section">
+          <h3>3. Live Stream Privacy</h3>
+          <p>LiveHushh employs real-time face-blurring technology on all restaurant live streams. We do not store identifiable video data of guests. Restaurant owners consent to our streaming terms which prohibit storing, downloading, or re-broadcasting stream content outside our platform.</p>
+        </div>
+
+        <div class="legal-section">
+          <h3>4. Data Sharing</h3>
+          <p>We do not sell your personal data. We share data with:</p>
+          <ul>
+            <li>Restaurants: order and waitlist data necessary to fulfil your requests</li>
+            <li>Payment processors: for subscription billing (restaurant owners)</li>
+            <li>Analytics providers: aggregated, anonymised usage statistics</li>
+            <li>Legal authorities: when required by law</li>
+          </ul>
+        </div>
+
+        <div class="legal-section">
+          <h3>5. Data Retention</h3>
+          <p>Account data is retained for the duration of your account. Deleted accounts are purged within 30 days. Order history is retained for 2 years for dispute resolution. Anonymised analytics may be retained indefinitely.</p>
+        </div>
+
+        <div class="legal-section">
+          <h3>6. Your Rights</h3>
+          <p>Under applicable data protection laws (including Canada's PIPEDA and provincial privacy acts), you have the right to access, correct, delete, or port your personal data. Submit requests to privacy@livehushh.com. We respond within 30 days.</p>
+        </div>
+
+        <div class="legal-section">
+          <h3>7. Security</h3>
+          <p>We use industry-standard encryption (TLS 1.3, AES-256), regular security audits, and strict access controls. Despite these measures, no system is 100% secure. Report security concerns to security@livehushh.com.</p>
+        </div>
+
+        <div class="legal-section">
+          <h3>8. Contact</h3>
+          <p>For privacy-related queries: privacy@livehushh.com or LiveHushh Inc., WeWork, 123 Bay Street, Toronto, ON M5H 4A7.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── TERMS OF SERVICE ── -->
+    <div class="page-section" id="tab-terms">
+      <div style="max-width:760px;margin:0 auto">
+        <div style="margin-bottom:32px">
+          <h2 style="font-family:'Inter',system-ui,sans-serif;font-size:1.8rem;margin-bottom:8px">Terms of Service</h2>
+          <div style="color:var(--muted);font-size:0.9rem">Last updated: January 1, 2025 · Effective: January 15, 2025</div>
+        </div>
+
+        <div class="legal-section">
+          <h3>1. Acceptance of Terms</h3>
+          <p>By accessing or using LiveHushh ("the Platform"), you agree to be bound by these Terms. If you do not agree, do not use the Platform. These Terms apply to all users including customers, restaurant owners, and visitors.</p>
+        </div>
+
+        <div class="legal-section">
+          <h3>2. Account Registration</h3>
+          <p>You must provide accurate information when creating an account. You are responsible for maintaining the security of your account credentials and for all activities under your account. Notify us immediately of any unauthorised access.</p>
+        </div>
+
+        <div class="legal-section">
+          <h3>3. Restaurant Owners</h3>
+          <p>Restaurant owners subscribing to the Platform agree to:</p>
+          <ul>
+            <li>Provide accurate business and menu information</li>
+            <li>Comply with all applicable food safety and business regulations</li>
+            <li>Enable face-blurring technology on all live streams — disabling it is prohibited</li>
+            <li>Not record, download, or re-broadcast live stream footage</li>
+            <li>Honor orders and waitlist commitments made through the Platform</li>
+            <li>Pay subscription fees on time; non-payment may result in account suspension</li>
+          </ul>
+        </div>
+
+        <div class="legal-section">
+          <h3>4. Customer Conduct</h3>
+          <p>Customers agree not to: misuse the waitlist or ordering features, post false reviews, attempt to reverse-engineer or scrape platform data, or harass restaurant staff. Violations may result in account termination.</p>
+        </div>
+
+        <div class="legal-section">
+          <h3>5. Live Streaming Rules</h3>
+          <p>All live streams must comply with our Content Guidelines. Prohibited content includes: explicit or violent material, content that violates third-party rights, commercial advertising outside of approved promotional formats. LiveHushh may terminate any stream that violates these rules without notice.</p>
+        </div>
+
+        <div class="legal-section">
+          <h3>6. Intellectual Property</h3>
+          <p>All Platform content (software, design, brand assets) is owned by LiveHushh Inc. You may not copy, modify, or distribute Platform assets without written permission. You retain ownership of content you upload, but grant LiveHushh a licence to display it on the Platform.</p>
+        </div>
+
+        <div class="legal-section">
+          <h3>7. Limitation of Liability</h3>
+          <p>LiveHushh is not liable for: food quality or restaurant service, losses arising from Platform downtime, actions of third parties, or indirect/consequential damages. Our maximum liability in any dispute is limited to fees paid in the 3 months prior to the claim.</p>
+        </div>
+
+        <div class="legal-section">
+          <h3>8. Termination</h3>
+          <p>We may suspend or terminate accounts that violate these Terms. You may close your account at any time. Subscription fees are non-refundable except where required by law.</p>
+        </div>
+
+        <div class="legal-section">
+          <h3>9. Governing Law</h3>
+          <p>These Terms are governed by the laws of Ontario, Canada. Disputes shall be subject to the exclusive jurisdiction of courts in Toronto, Ontario. We encourage informal resolution before litigation.</p>
+        </div>
+
+        <div class="legal-section">
+          <h3>10. Changes to Terms</h3>
+          <p>We may update these Terms periodically. Material changes will be notified via email 30 days in advance. Continued use of the Platform after changes constitutes acceptance.</p>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<!-- Footer -->
+<footer style="border-top:1px solid var(--border);padding:48px 0;text-align:center">
+  <div class="container">
+    <a href="index.html" class="nav-logo" style="justify-content:center;margin-bottom:20px;display:inline-flex">
+      <span class="lh-logo"><span class="lh-logo-live">live</span><span class="lh-logo-hushh">hushh.</span></span>
+    </a>
+    <div style="display:flex;gap:24px;justify-content:center;flex-wrap:wrap;margin-bottom:20px">
+      <a href="index.html" style="color:var(--muted);font-size:0.9rem;text-decoration:none">Home</a>
+      <a href="for-restaurants.html" style="color:var(--muted);font-size:0.9rem;text-decoration:none">For Restaurants</a>
+      <a href="for-customers.html" style="color:var(--muted);font-size:0.9rem;text-decoration:none">For Customers</a>
+      <a href="demo.html" style="color:var(--muted);font-size:0.9rem;text-decoration:none">Request Demo</a>
+      <a href="contact.html" style="color:var(--muted);font-size:0.9rem;text-decoration:none">Help</a>
+    </div>
+    <div style="color:var(--muted);font-size:0.85rem">© 2025 LiveHushh</div>
+  </div>
+</footer>
+
+<script>
+// Tab switching
+function switchTab(name){
+  document.querySelectorAll('.page-tab').forEach((t,i)=>{
+    const names=['contact','faq','privacy','terms'];
+    t.classList.toggle('active', names[i]===name);
+  });
+  document.querySelectorAll('.page-section').forEach(s=>s.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+// FAQ toggle
+function toggleFaq(el){
+  el.classList.toggle('open');
+}
+
+// Contact form
+async function submitContact(e){
+  e.preventDefault();
+  const fname    = document.getElementById('cf_fname').value.trim();
+  const lname    = document.getElementById('cf_lname').value.trim();
+  const email    = document.getElementById('cf_email').value.trim();
+  const category = document.getElementById('cf_category').value;
+  const subject  = document.getElementById('cf_subject').value.trim();
+  const message  = document.getElementById('cf_message').value.trim();
+
+  const btn = e.target.querySelector('button[type="submit"]');
+  const originalText = btn.innerHTML;
+  btn.innerHTML = 'Sending…';
+  btn.disabled = true;
+
+  try {
+    const res = await fetch('https://formspree.io/f/xpqkbbgw', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      body: JSON.stringify({
+        name:     `${fname} ${lname}`,
+        email:    email,
+        category: category,
+        subject:  subject,
+        message:  message
+      })
+    });
+    const data = await res.json();
+    if (res.ok) {
+      e.target.style.display = 'none';
+      document.getElementById('contactSuccess').style.display = 'block';
+    } else {
+      throw new Error(data.error || 'Submission failed');
+    }
+  } catch(err) {
+    btn.innerHTML = originalText;
+    btn.disabled = false;
+    alert('Could not send message. Please email us directly at info@mydineview.com');
+  }
+}
+
+// Nav scroll
+window.addEventListener('scroll',()=>{
+  document.getElementById('mainNav').classList.toggle('scrolled', window.scrollY>50);
+});
+</script>
+<script src="js/theme.js"></script>
+</body>
+</html>

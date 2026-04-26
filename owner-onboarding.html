@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Set Up Your Restaurant — LiveHushh</title>
+<link rel="stylesheet" href="css/styles.css?v=3">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);min-height:100vh;font-family:'Inter',sans-serif;color:var(--text);overflow-x:hidden}
+
+/* ── Top bar ── */
+.ob-nav{height:64px;background:rgba(6,6,26,0.9);border-bottom:1px solid var(--border2);display:flex;align-items:center;justify-content:space-between;padding:0 32px;backdrop-filter:blur(16px);position:sticky;top:0;z-index:100}
+
+/* ── Step indicator ── */
+.ob-steps{display:flex;align-items:center;justify-content:center;gap:0;padding:36px 24px 0;max-width:560px;margin:0 auto}
+.ob-step{display:flex;align-items:center;flex:1}
+.ob-step:last-child{flex:0}
+.ob-step-circle{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.82rem;font-weight:700;flex-shrink:0;transition:all .3s;border:2px solid var(--border2);background:var(--bg-card);color:var(--text2)}
+.ob-step.done .ob-step-circle{background:var(--green);border-color:var(--green);color:#fff}
+.ob-step.active .ob-step-circle{background:var(--grad);border-color:transparent;color:#fff;box-shadow:0 0 0 4px rgba(232,84,10,0.2)}
+.ob-step-label{font-size:.72rem;color:var(--text2);margin-top:6px;text-align:center;white-space:nowrap}
+.ob-step.active .ob-step-label{color:var(--purple-l);font-weight:600}
+.ob-step.done .ob-step-label{color:var(--green)}
+.ob-step-inner{display:flex;flex-direction:column;align-items:center}
+.ob-step-line{flex:1;height:2px;background:var(--border2);margin:0 8px;margin-bottom:22px;transition:background .3s}
+.ob-step.done + .ob-step .ob-step-line,.ob-step.done .ob-step-line{background:var(--green)}
+
+/* ── Content wrapper ── */
+.ob-wrap{max-width:760px;margin:0 auto;padding:32px 24px 80px}
+.ob-heading{text-align:center;margin-bottom:32px}
+.ob-heading h2{font-family:'Inter',system-ui,sans-serif;font-size:1.8rem;font-weight:800;margin-bottom:8px}
+.ob-heading p{color:var(--text2);font-size:.95rem}
+
+/* ── Card ── */
+.ob-card{background:var(--bg-card);border:1px solid var(--border2);border-radius:var(--r-2xl);padding:32px;margin-bottom:20px}
+
+/* ── Form row ── */
+.form-row-2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.form-row-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px}
+@media(max-width:600px){.form-row-2,.form-row-3{grid-template-columns:1fr}}
+
+/* ── Plan cards ── */
+.plans-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+@media(max-width:700px){.plans-grid{grid-template-columns:1fr}}
+.plan-card{border:2px solid var(--border2);border-radius:var(--r-xl);padding:24px;cursor:pointer;transition:all .25s;background:var(--bg-card);position:relative;overflow:hidden}
+.plan-card:hover{border-color:var(--border3);transform:translateY(-2px)}
+.plan-card.selected{border-color:var(--purple);background:rgba(232,84,10,0.07);box-shadow:0 0 0 3px rgba(232,84,10,0.15)}
+.plan-badge{position:absolute;top:0;right:0;background:var(--grad);color:#fff;font-size:.65rem;font-weight:700;padding:4px 12px;border-radius:0 var(--r-xl) 0 var(--r);letter-spacing:.06em;text-transform:uppercase}
+.plan-name{font-size:1.05rem;font-weight:800;margin-bottom:4px}
+.plan-price{font-family:'Inter',system-ui,sans-serif;font-size:2rem;font-weight:800;margin:12px 0 4px}
+.plan-price span{font-size:.85rem;font-weight:400;color:var(--text2)}
+.plan-trial{font-size:.75rem;color:var(--green);font-weight:600;margin-bottom:16px}
+.plan-features{display:flex;flex-direction:column;gap:8px;margin-top:16px}
+.plan-feature{display:flex;align-items:center;gap:8px;font-size:.82rem;color:var(--text2)}
+.plan-feature.yes{color:var(--text)}
+.plan-feature svg{flex-shrink:0}
+
+/* ── Review card ── */
+.review-row{display:flex;justify-content:space-between;align-items:center;padding:14px 0;border-bottom:1px solid var(--border2)}
+.review-row:last-child{border-bottom:none}
+.review-label{font-size:.82rem;color:var(--text2)}
+.review-value{font-size:.88rem;font-weight:600}
+
+/* ── Trial highlight ── */
+.trial-box{background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.25);border-radius:var(--r-xl);padding:20px 24px;display:flex;align-items:center;gap:16px;margin-bottom:24px}
+.trial-icon{width:44px;height:44px;border-radius:50%;background:rgba(16,185,129,0.15);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+
+/* ── Nav buttons ── */
+.ob-nav-btns{display:flex;justify-content:space-between;align-items:center;margin-top:28px}
+
+/* ── Cuisine select ── */
+select.input{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2394A3B8' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center;padding-right:40px}
+</style>
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#E8540A">
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="ob-nav">
+  <a href="index.html" class="lh-logo" style="text-decoration:none">
+    <span class="lh-logo-live">live</span><span class="lh-logo-hushh">hushh.</span>
+  </a>
+  <div style="font-size:.82rem;color:var(--text2)" id="ob-user-name"></div>
+</nav>
+
+<!-- STEP INDICATOR -->
+<div class="ob-steps" id="stepsIndicator">
+  <div class="ob-step active" id="si-1">
+    <div class="ob-step-inner">
+      <div class="ob-step-circle">1</div>
+      <div class="ob-step-label">Restaurant Info</div>
+    </div>
+    <div class="ob-step-line"></div>
+  </div>
+  <div class="ob-step" id="si-2">
+    <div class="ob-step-inner">
+      <div class="ob-step-circle">2</div>
+      <div class="ob-step-label">Choose Plan</div>
+    </div>
+    <div class="ob-step-line"></div>
+  </div>
+  <div class="ob-step" id="si-3">
+    <div class="ob-step-inner">
+      <div class="ob-step-circle">3</div>
+      <div class="ob-step-label">Go Live</div>
+    </div>
+  </div>
+</div>
+
+<div class="ob-wrap">
+
+  <!-- ══ STEP 1 — RESTAURANT DETAILS ══ -->
+  <div id="step1">
+    <div class="ob-heading">
+      <h2>Tell us about your restaurant</h2>
+      <p>This is what customers will see on LiveHushh. You can always edit it later.</p>
+    </div>
+
+    <div class="ob-card">
+      <form id="restaurantForm">
+        <div class="form-row-2" style="margin-bottom:16px">
+          <div class="form-group">
+            <label class="form-label">Restaurant Name *</label>
+            <input class="input" type="text" id="r_name" placeholder="e.g. The Spice Garden" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Cuisine Type *</label>
+            <select class="input" id="r_cuisine" required>
+              <option value="">Select cuisine…</option>
+              <option>American</option><option>Italian</option><option>Mexican</option>
+              <option>Chinese</option><option>Japanese</option><option>Indian</option>
+              <option>Thai</option><option>Mediterranean</option><option>French</option>
+              <option>Korean</option><option>Vietnamese</option><option>Greek</option>
+              <option>Middle Eastern</option><option>Spanish</option><option>Caribbean</option>
+              <option>BBQ &amp; Grill</option><option>Seafood</option><option>Steakhouse</option>
+              <option>Vegetarian / Vegan</option><option>Pizza</option><option>Burgers</option>
+              <option>Sushi</option><option>Other</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group" style="margin-bottom:16px">
+          <label class="form-label">Short Description *</label>
+          <textarea class="input" id="r_desc" rows="3" placeholder="What makes your restaurant special? Describe the vibe, signature dishes, experience…" style="resize:vertical" required></textarea>
+        </div>
+
+        <div class="form-row-2" style="margin-bottom:16px">
+          <div class="form-group">
+            <label class="form-label">City *</label>
+            <input class="input" type="text" id="r_city" placeholder="New York" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Full Address *</label>
+            <input class="input" type="text" id="r_address" placeholder="123 Main St, NY 10001" required>
+          </div>
+        </div>
+
+        <div class="form-row-3" style="margin-bottom:16px">
+          <div class="form-group">
+            <label class="form-label">Phone *</label>
+            <input class="input" type="tel" id="r_phone" placeholder="(212) 555-0100" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Opening Hours *</label>
+            <input class="input" type="text" id="r_hours" placeholder="Mon–Sun 11am – 10pm" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Price Range *</label>
+            <select class="input" id="r_price" required>
+              <option value="">Select…</option>
+              <option value="$">$ — Budget friendly</option>
+              <option value="$$">$$ — Moderate</option>
+              <option value="$$$">$$$ — Upscale</option>
+              <option value="$$$$">$$$$ — Fine dining</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-row-2">
+          <div class="form-group">
+            <label class="form-label">Cover Image URL <span style="color:var(--text3)">(optional)</span></label>
+            <input class="input" type="url" id="r_image" placeholder="https://… (or leave blank)">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Website <span style="color:var(--text3)">(optional)</span></label>
+            <input class="input" type="url" id="r_website" placeholder="https://yourrestaurant.com">
+          </div>
+        </div>
+      </form>
+    </div>
+
+    <div class="ob-nav-btns">
+      <div></div>
+      <button class="btn btn-primary" onclick="goStep(2)">Continue → Choose Plan</button>
+    </div>
+  </div>
+
+  <!-- ══ STEP 2 — CHOOSE PLAN ══ -->
+  <div id="step2" style="display:none">
+    <div class="ob-heading">
+      <h2>Start your 14-day free trial</h2>
+      <p>Full Pro access, no credit card required. Cancel anytime.</p>
+    </div>
+
+    <div class="trial-box">
+      <div class="trial-icon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+      </div>
+      <div>
+        <div style="font-weight:700;margin-bottom:2px">14 days free — then choose a plan</div>
+        <div style="font-size:.82rem;color:var(--text2)">Your restaurant goes live immediately. You get full Pro features during the trial. After 14 days, pick a plan to keep going.</div>
+      </div>
+    </div>
+
+    <div class="plans-grid">
+      <!-- STARTER -->
+      <div class="plan-card" id="plan-starter" onclick="selectPlan('starter')">
+        <div class="plan-name">Starter</div>
+        <div class="plan-price">$29<span>/mo</span></div>
+        <div class="plan-trial">Included in 14-day trial</div>
+        <div class="plan-features">
+          <div class="plan-feature yes">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+            Restaurant listing
+          </div>
+          <div class="plan-feature yes">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+            Menu management
+          </div>
+          <div class="plan-feature yes">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+            Online orders
+          </div>
+          <div class="plan-feature yes">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+            Waitlist management
+          </div>
+          <div class="plan-feature">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#475569" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            Live streaming
+          </div>
+          <div class="plan-feature">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#475569" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            Media &amp; videos
+          </div>
+        </div>
+      </div>
+
+      <!-- PRO -->
+      <div class="plan-card selected" id="plan-pro" onclick="selectPlan('pro')">
+        <div class="plan-badge">Most Popular</div>
+        <div class="plan-name">Pro</div>
+        <div class="plan-price">$79<span>/mo</span></div>
+        <div class="plan-trial">Included in 14-day trial ✓</div>
+        <div class="plan-features">
+          <div class="plan-feature yes">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+            Everything in Starter
+          </div>
+          <div class="plan-feature yes">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+            Live streaming studio
+          </div>
+          <div class="plan-feature yes">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+            Face blur technology
+          </div>
+          <div class="plan-feature yes">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+            Media &amp; video gallery
+          </div>
+          <div class="plan-feature yes">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+            Advanced analytics
+          </div>
+          <div class="plan-feature yes">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+            Push notifications
+          </div>
+        </div>
+      </div>
+
+      <!-- ENTERPRISE -->
+      <div class="plan-card" id="plan-enterprise" onclick="selectPlan('enterprise')">
+        <div class="plan-name">Enterprise</div>
+        <div class="plan-price">$199<span>/mo</span></div>
+        <div class="plan-trial">Included in 14-day trial</div>
+        <div class="plan-features">
+          <div class="plan-feature yes">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+            Everything in Pro
+          </div>
+          <div class="plan-feature yes">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+            Multiple locations
+          </div>
+          <div class="plan-feature yes">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+            Custom branding
+          </div>
+          <div class="plan-feature yes">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+            Priority support
+          </div>
+          <div class="plan-feature yes">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+            API access
+          </div>
+          <div class="plan-feature yes">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+            Dedicated account manager
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="ob-nav-btns">
+      <button class="btn btn-ghost" onclick="goStep(1)">← Back</button>
+      <button class="btn btn-primary" onclick="goStep(3)">Review &amp; Go Live →</button>
+    </div>
+  </div>
+
+  <!-- ══ STEP 3 — REVIEW & GO LIVE ══ -->
+  <div id="step3" style="display:none">
+    <div class="ob-heading">
+      <h2>You're almost live! 🚀</h2>
+      <p>Review your details and start your 14-day free trial.</p>
+    </div>
+
+    <div class="ob-card">
+      <div style="font-weight:700;font-size:.9rem;margin-bottom:16px;color:var(--text2);text-transform:uppercase;letter-spacing:.06em;font-size:.72rem">Restaurant Details</div>
+      <div class="review-row">
+        <span class="review-label">Name</span><span class="review-value" id="rv_name">—</span>
+      </div>
+      <div class="review-row">
+        <span class="review-label">Cuisine</span><span class="review-value" id="rv_cuisine">—</span>
+      </div>
+      <div class="review-row">
+        <span class="review-label">City</span><span class="review-value" id="rv_city">—</span>
+      </div>
+      <div class="review-row">
+        <span class="review-label">Address</span><span class="review-value" id="rv_address">—</span>
+      </div>
+      <div class="review-row">
+        <span class="review-label">Hours</span><span class="review-value" id="rv_hours">—</span>
+      </div>
+      <div class="review-row">
+        <span class="review-label">Phone</span><span class="review-value" id="rv_phone">—</span>
+      </div>
+      <div class="review-row">
+        <span class="review-label">Price range</span><span class="review-value" id="rv_price">—</span>
+      </div>
+    </div>
+
+    <div class="ob-card">
+      <div style="font-weight:700;font-size:.72rem;text-transform:uppercase;letter-spacing:.06em;margin-bottom:16px;color:var(--text2)">Trial &amp; Plan</div>
+      <div class="review-row">
+        <span class="review-label">Trial period</span>
+        <span class="review-value" style="color:var(--green)">14 days FREE — starting today</span>
+      </div>
+      <div class="review-row">
+        <span class="review-label">Trial ends</span>
+        <span class="review-value" id="rv_trialEnd">—</span>
+      </div>
+      <div class="review-row">
+        <span class="review-label">Selected plan (after trial)</span>
+        <span class="review-value" id="rv_plan">—</span>
+      </div>
+      <div class="review-row">
+        <span class="review-label">Credit card now?</span>
+        <span class="review-value" style="color:var(--green)">❌ Not required for trial</span>
+      </div>
+    </div>
+
+    <div class="trial-box">
+      <div class="trial-icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      </div>
+      <div style="font-size:.85rem;color:var(--text2)">
+        <strong style="color:var(--text)">What happens after 14 days?</strong><br>
+        Your restaurant will be paused. We'll email you a reminder 3 days before. Add a payment method to keep your listing live — no interruption to customers.
+      </div>
+    </div>
+
+    <div id="ob-error" style="display:none;background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.25);border-radius:var(--r);padding:12px 16px;font-size:.85rem;color:#EF4444;margin-bottom:16px"></div>
+
+    <div class="ob-nav-btns">
+      <button class="btn btn-ghost" onclick="goStep(2)">← Back</button>
+      <button class="btn btn-primary" id="goLiveBtn" onclick="startTrial()" style="min-width:200px">
+        🚀 Start 14-Day Free Trial
+      </button>
+    </div>
+  </div>
+
+</div><!-- /ob-wrap -->
+
+<script src="js/aws-config.js"></script>
+<script src="js/data.js?v=2"></script>
+<script>
+const CFG      = window.LH_CONFIG || {};
+const API_BASE = (CFG.api || {}).baseUrl || '';
+const API_READY = API_BASE && !API_BASE.startsWith('REPLACE');
+
+// ── Auth check ──────────────────────────────────────────
+let SESSION = {};
+try { SESSION = JSON.parse(localStorage.getItem('lh_session') || '{}'); } catch(e) {}
+if (!SESSION.idToken || SESSION.role !== 'owner') {
+  location.href = 'auth.html';
+}
+document.getElementById('ob-user-name').textContent = SESSION.name || SESSION.email || '';
+
+// ── State ──────────────────────────────────────────────
+let currentStep  = 1;
+let selectedPlan = 'pro';
+
+// ── Step navigation ─────────────────────────────────────
+function goStep(n) {
+  if (n === 2) {
+    // Validate step 1
+    const form = document.getElementById('restaurantForm');
+    if (!form.checkValidity()) { form.reportValidity(); return; }
+  }
+  if (n === 3) {
+    populateReview();
+  }
+  document.getElementById('step' + currentStep).style.display = 'none';
+  currentStep = n;
+  document.getElementById('step' + n).style.display = 'block';
+  updateStepIndicator(n);
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function updateStepIndicator(active) {
+  for (let i = 1; i <= 3; i++) {
+    const el = document.getElementById('si-' + i);
+    el.classList.remove('active', 'done');
+    if (i < active)  el.classList.add('done');
+    if (i === active) el.classList.add('active');
+  }
+}
+
+// ── Plan selection ──────────────────────────────────────
+function selectPlan(plan) {
+  selectedPlan = plan;
+  ['starter','pro','enterprise'].forEach(p => {
+    document.getElementById('plan-' + p).classList.toggle('selected', p === plan);
+  });
+}
+
+// ── Populate review step ────────────────────────────────
+const PLAN_LABELS = { starter: 'Starter — $29/mo', pro: 'Pro — $79/mo', enterprise: 'Enterprise — $199/mo' };
+function populateReview() {
+  document.getElementById('rv_name').textContent    = v('r_name')    || '—';
+  document.getElementById('rv_cuisine').textContent = v('r_cuisine') || '—';
+  document.getElementById('rv_city').textContent    = v('r_city')    || '—';
+  document.getElementById('rv_address').textContent = v('r_address') || '—';
+  document.getElementById('rv_hours').textContent   = v('r_hours')   || '—';
+  document.getElementById('rv_phone').textContent   = v('r_phone')   || '—';
+  document.getElementById('rv_price').textContent   = v('r_price')   || '—';
+  document.getElementById('rv_plan').textContent    = PLAN_LABELS[selectedPlan] || selectedPlan;
+  const trialEnd = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000);
+  document.getElementById('rv_trialEnd').textContent = trialEnd.toLocaleDateString('en-US', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+}
+function v(id) { return (document.getElementById(id) || {}).value || ''; }
+
+// ── Start trial (submit) ────────────────────────────────
+async function startTrial() {
+  const btn = document.getElementById('goLiveBtn');
+  const errEl = document.getElementById('ob-error');
+  errEl.style.display = 'none';
+  btn.textContent = '⏳ Setting up your restaurant…';
+  btn.disabled = true;
+
+  const restaurant = {
+    name:       v('r_name'),
+    cuisine:    v('r_cuisine'),
+    description:v('r_desc'),
+    city:       v('r_city'),
+    address:    v('r_address'),
+    phone:      v('r_phone'),
+    hours:      v('r_hours'),
+    priceRange: v('r_price'),
+    imageUrl:   v('r_image'),
+    website:    v('r_website'),
+    ownerName:  SESSION.name || '',
+  };
+
+  if (!API_READY) {
+    // Dev fallback — save to session and go to dashboard
+    const session = { ...SESSION, restaurant: restaurant.name, onboarded: true, planStatus: 'trial' };
+    localStorage.setItem('lh_session', JSON.stringify(session));
+    showSuccess();
+    return;
+  }
+
+  try {
+    const res = await fetch(API_BASE + '/owner/onboard', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': SESSION.idToken },
+      body: JSON.stringify({ restaurant, planType: selectedPlan })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Setup failed');
+    // Update local session
+    const session = { ...SESSION, restaurant: restaurant.name, onboarded: true, planStatus: 'trial', trialEndsAt: data.trialEndsAt };
+    localStorage.setItem('lh_session', JSON.stringify(session));
+    showSuccess();
+  } catch(e) {
+    errEl.textContent = e.message || 'Something went wrong. Please try again.';
+    errEl.style.display = 'block';
+    btn.textContent = '🚀 Start 14-Day Free Trial';
+    btn.disabled = false;
+  }
+}
+
+function showSuccess() {
+  document.getElementById('step3').innerHTML = `
+    <div style="text-align:center;padding:60px 20px">
+      <div style="width:80px;height:80px;border-radius:50%;background:rgba(16,185,129,0.15);display:flex;align-items:center;justify-content:center;margin:0 auto 24px;font-size:2.5rem">🎉</div>
+      <h2 style="font-family:Inter,sans-serif;font-size:2rem;font-weight:800;margin-bottom:12px">You're live!</h2>
+      <p style="color:var(--text2);margin-bottom:8px">Your restaurant is now visible on LiveHushh.</p>
+      <p style="color:var(--text2);margin-bottom:32px;font-size:.9rem">Your 14-day free trial starts today. We'll remind you before it ends.</p>
+      <a href="owner-dashboard.html" class="btn btn-primary" style="min-width:220px;display:inline-flex;align-items:center;justify-content:center;gap:8px">
+        Open Dashboard →
+      </a>
+    </div>`;
+}
+</script>
+<script src="js/theme.js"></script>
+</body>
+</html>

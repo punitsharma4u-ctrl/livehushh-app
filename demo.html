@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Request Demo — LiveHushh</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/styles.css?v=3">
+<style>
+/* ── Layout ── */
+.demo-wrap{display:grid;grid-template-columns:1fr 1fr;gap:80px;align-items:start;padding:120px 0 100px}
+.demo-left{position:sticky;top:100px}
+
+/* ── Feature list ── */
+.demo-feature{display:flex;gap:16px;padding:18px 0;border-bottom:1px solid var(--border)}
+.demo-feature:last-child{border-bottom:none}
+.demo-feat-icon{width:44px;height:44px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:1.3rem;flex-shrink:0}
+
+/* ── Social proof ── */
+.proof-row{display:flex;align-items:center;gap:16px;padding:20px;background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:var(--r-xl);margin-bottom:12px}
+.proof-avatar{width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0}
+.stars{color:var(--gold);font-size:0.9rem;letter-spacing:1px}
+
+/* ── Form card ── */
+.form-card{background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:var(--r-2xl);padding:40px}
+
+/* ── Step indicator ── */
+.step-indicator{display:flex;align-items:center;gap:0;margin-bottom:32px}
+.step{display:flex;align-items:center;gap:10px;flex:1}
+.step-circle{width:32px;height:32px;border-radius:50%;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:0.8rem;font-weight:700;flex-shrink:0;transition:var(--transition)}
+.step-circle.active{background:var(--purple);border-color:var(--purple);color:#fff}
+.step-circle.done{background:rgba(34,197,94,.2);border-color:#22c55e;color:#22c55e}
+.step-label{font-size:0.8rem;font-weight:600;color:var(--muted)}
+.step-line{flex:1;height:1px;background:var(--border);margin:0 8px}
+
+/* ── Success ── */
+.success-screen{display:none;text-align:center;padding:40px 20px}
+.success-icon{width:80px;height:80px;border-radius:50%;background:rgba(34,197,94,.15);border:2px solid rgba(34,197,94,.4);display:flex;align-items:center;justify-content:center;font-size:2.2rem;margin:0 auto 24px}
+
+/* ── Trust badges ── */
+.trust-badges{display:flex;gap:16px;flex-wrap:wrap;margin-top:28px}
+.trust-badge{display:flex;align-items:center;gap:8px;font-size:0.82rem;color:var(--muted)}
+.trust-badge-icon{color:var(--purple)}
+
+/* ── Calendar preview ── */
+.cal-card{background:rgba(232,84,10,.06);border:1px solid rgba(232,84,10,.25);border-radius:var(--r-xl);padding:20px;margin-top:24px}
+.cal-slot{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.06);cursor:pointer;border-radius:8px;transition:var(--transition)}
+.cal-slot:last-child{border-bottom:none}
+.cal-slot:hover{background:rgba(232,84,10,.1);padding-left:8px}
+.cal-slot-dot{width:10px;height:10px;border-radius:50%;background:var(--grad);flex-shrink:0}
+.cal-slot-dot.full{background:rgba(255,255,255,.2)}
+.cal-slot.selected .cal-slot-dot{box-shadow:0 0 0 3px rgba(232,84,10,.4)}
+
+@media(max-width:900px){
+  .demo-wrap{grid-template-columns:1fr;gap:48px}
+  .demo-left{position:static}
+}
+</style>
+</head>
+<body>
+
+<!-- Noise -->
+<div class="noise"></div>
+
+<!-- Nav -->
+<nav class="nav" id="mainNav">
+  <div class="nav-inner">
+    <a href="index.html" class="nav-logo">
+      <span class="lh-logo"><span class="lh-logo-live">live</span><span class="lh-logo-hushh">hushh.</span></span>
+    </a>
+    <div class="nav-links">
+      <a href="for-restaurants.html" class="nav-link">For Restaurants</a>
+      <a href="for-customers.html" class="nav-link">For Customers</a>
+      <a href="demo.html" class="nav-link active">Request Demo</a>
+      <a href="contact.html" class="nav-link">Help</a>
+    </div>
+    <div class="nav-actions">
+      <a href="auth.html" class="btn btn-ghost btn-sm">Sign In</a>
+      <a href="auth.html" class="btn btn-primary btn-sm">Get Started</a>
+    </div>
+  </div>
+</nav>
+
+<!-- Orbs -->
+<div class="orb" style="width:700px;height:700px;top:-250px;right:-200px;background:radial-gradient(circle,rgba(232,84,10,.2),transparent 70%)"></div>
+<div class="orb" style="width:500px;height:500px;bottom:200px;left:-200px;background:radial-gradient(circle,rgba(236,72,153,.12),transparent 70%)"></div>
+
+<!-- Main -->
+<main>
+  <div class="container">
+    <div class="demo-wrap">
+
+      <!-- ── LEFT: Info ── -->
+      <div class="demo-left">
+
+        <!-- Eyebrow -->
+        <div class="pill-purple" style="margin-bottom:24px">🎯 See it in action</div>
+
+        <h1 style="font-family:'Inter',system-ui,sans-serif;font-size:clamp(2rem,4vw,2.8rem);font-weight:800;line-height:1.15;margin-bottom:16px">
+          Get a personalised<br><span class="g-text">demo of LiveHushh</span>
+        </h1>
+        <p style="color:var(--muted);font-size:1.05rem;line-height:1.7;margin-bottom:32px">
+          See exactly how LiveHushh can transform your restaurant — live streaming, waitlist management, analytics, and more. A specialist walks you through everything in 30 minutes.
+        </p>
+
+        <!-- What you'll see -->
+        <div style="font-size:0.78rem;font-weight:700;letter-spacing:.12em;color:var(--muted);margin-bottom:16px">WHAT YOU'LL SEE</div>
+
+        <div class="demo-feature">
+          <div class="demo-feat-icon" style="background:rgba(232,84,10,.18)">📡</div>
+          <div>
+            <div style="font-weight:700;margin-bottom:4px">Live Studio Tour</div>
+            <div style="color:var(--muted);font-size:0.9rem;line-height:1.6">Watch how to go live in under 60 seconds with automatic face blurring and chat engagement tools.</div>
+          </div>
+        </div>
+
+        <div class="demo-feature">
+          <div class="demo-feat-icon" style="background:rgba(245,158,11,.18)">📊</div>
+          <div>
+            <div style="font-weight:700;margin-bottom:4px">Analytics Dashboard</div>
+            <div style="color:var(--muted);font-size:0.9rem;line-height:1.6">Live viewer trends, revenue impact, peak hours, and how your live sessions drive more footfall.</div>
+          </div>
+        </div>
+
+        <div class="demo-feature">
+          <div class="demo-feat-icon" style="background:rgba(34,211,238,.18)">🪑</div>
+          <div>
+            <div style="font-weight:700;margin-bottom:4px">Waitlist & Orders</div>
+            <div style="color:var(--muted);font-size:0.9rem;line-height:1.6">Manage your queue digitally, accept pre-orders, and reduce no-shows — all from one screen.</div>
+          </div>
+        </div>
+
+        <div class="demo-feature">
+          <div class="demo-feat-icon" style="background:rgba(236,72,153,.18)">🎁</div>
+          <div>
+            <div style="font-weight:700;margin-bottom:4px">Flash Deals Engine</div>
+            <div style="color:var(--muted);font-size:0.9rem;line-height:1.6">Push time-sensitive promotions to live viewers and turn browsers into walk-ins instantly.</div>
+          </div>
+        </div>
+
+        <!-- Social proof -->
+        <div style="margin-top:36px;font-size:0.78rem;font-weight:700;letter-spacing:.12em;color:var(--muted);margin-bottom:16px">WHAT OTHERS SAY</div>
+
+        <div class="proof-row">
+          <div class="proof-avatar" style="background:rgba(232,84,10,.2)">🍜</div>
+          <div style="flex:1">
+            <div style="font-size:0.85rem;color:var(--muted);line-height:1.5">"After the demo I signed up the same day. Within a week we had 40% more weekend covers."</div>
+            <div style="font-size:0.82rem;font-weight:600;margin-top:6px">Robert S. <span style="color:var(--muted);font-weight:400">· Spice Caravan, Calgary</span></div>
+          </div>
+          <div class="stars">★★★★★</div>
+        </div>
+
+        <div class="proof-row">
+          <div class="proof-avatar" style="background:rgba(245,158,11,.2)">🍣</div>
+          <div style="flex:1">
+            <div style="font-size:0.85rem;color:var(--muted);line-height:1.5">"The demo was 30 minutes but the ROI was obvious in 10. Best decision we made this year."</div>
+            <div style="font-size:0.82rem;font-weight:600;margin-top:6px">Maria P. <span style="color:var(--muted);font-weight:400">· Ocean Catch, Toronto</span></div>
+          </div>
+          <div class="stars">★★★★★</div>
+        </div>
+
+        <!-- Trust -->
+        <div class="trust-badges">
+          <div class="trust-badge"><span class="trust-badge-icon">🔒</span>No commitment required</div>
+          <div class="trust-badge"><span class="trust-badge-icon">⏱️</span>30 min or less</div>
+          <div class="trust-badge"><span class="trust-badge-icon">🎯</span>Personalised to your restaurant</div>
+          <div class="trust-badge"><span class="trust-badge-icon">✅</span>Free forever for customers</div>
+        </div>
+
+      </div>
+
+      <!-- ── RIGHT: Form ── -->
+      <div>
+        <div class="form-card">
+
+          <!-- Step indicator -->
+          <div class="step-indicator">
+            <div class="step">
+              <div class="step-circle active" id="step1c">1</div>
+              <div class="step-label" id="step1l">Your Details</div>
+            </div>
+            <div class="step-line"></div>
+            <div class="step">
+              <div class="step-circle" id="step2c">2</div>
+              <div class="step-label" id="step2l">Restaurant Info</div>
+            </div>
+            <div class="step-line"></div>
+            <div class="step">
+              <div class="step-circle" id="step3c">3</div>
+              <div class="step-label" id="step3l">Pick a Slot</div>
+            </div>
+          </div>
+
+          <!-- ── STEP 1 ── -->
+          <div id="formStep1">
+            <h3 style="font-family:'Inter',system-ui,sans-serif;font-size:1.3rem;margin-bottom:6px">Tell us about yourself</h3>
+            <p style="color:var(--muted);font-size:0.9rem;margin-bottom:24px">We'll personalise the demo based on your role and needs.</p>
+
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
+              <div class="form-group" style="margin-bottom:0">
+                <label class="form-label">First Name *</label>
+                <input type="text" id="d_fname" class="form-input" placeholder="Robert" required>
+              </div>
+              <div class="form-group" style="margin-bottom:0">
+                <label class="form-label">Last Name *</label>
+                <input type="text" id="d_lname" class="form-input" placeholder="Smith" required>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Work Email *</label>
+              <input type="email" id="d_email" class="form-input" placeholder="you@restaurant.com" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Phone Number *</label>
+              <input type="tel" id="d_phone" class="form-input" placeholder="+1 416 555 0100" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Your Role</label>
+              <select id="d_role" class="form-input">
+                <option>Owner / Founder</option>
+                <option>General Manager</option>
+                <option>Marketing Manager</option>
+                <option>Operations Head</option>
+                <option>Other</option>
+              </select>
+            </div>
+            <button class="btn btn-primary" style="width:100%;justify-content:center" onclick="goStep(2)">Continue →</button>
+          </div>
+
+          <!-- ── STEP 2 ── -->
+          <div id="formStep2" style="display:none">
+            <h3 style="font-family:'Inter',system-ui,sans-serif;font-size:1.3rem;margin-bottom:6px">About your restaurant</h3>
+            <p style="color:var(--muted);font-size:0.9rem;margin-bottom:24px">Help us tailor the demo to your specific setup.</p>
+
+            <div class="form-group">
+              <label class="form-label">Restaurant Name *</label>
+              <input type="text" id="d_rname" class="form-input" placeholder="The Spice Route" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">City</label>
+              <select id="d_city" class="form-input">
+                <option>Toronto</option>
+                <option>Vancouver</option>
+                <option>Calgary</option>
+                <option>Ottawa</option>
+                <option>Montreal</option>
+                <option>Edmonton</option>
+                <option>Winnipeg</option>
+                <option>Other</option>
+              </select>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
+              <div class="form-group" style="margin-bottom:0">
+                <label class="form-label">Cuisine Type</label>
+                <select id="d_cuisine" class="form-input">
+                  <option>North Indian</option>
+                  <option>South Indian</option>
+                  <option>Chinese</option>
+                  <option>Continental</option>
+                  <option>Italian</option>
+                  <option>Japanese</option>
+                  <option>Multi-cuisine</option>
+                  <option>Other</option>
+                </select>
+              </div>
+              <div class="form-group" style="margin-bottom:0">
+                <label class="form-label">Seating Capacity</label>
+                <select id="d_seats" class="form-input">
+                  <option>Under 30</option>
+                  <option>30–60</option>
+                  <option>60–100</option>
+                  <option>100–200</option>
+                  <option>200+</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Number of Locations</label>
+              <select id="d_locs" class="form-input">
+                <option>1 (Single location)</option>
+                <option>2–3</option>
+                <option>4–10</option>
+                <option>10+</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">What matters most to you?</label>
+              <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:8px" id="interestBtns">
+                <button type="button" class="interest-btn" onclick="toggleInterest(this)">Live Streaming</button>
+                <button type="button" class="interest-btn" onclick="toggleInterest(this)">Waitlist Mgmt</button>
+                <button type="button" class="interest-btn" onclick="toggleInterest(this)">Analytics</button>
+                <button type="button" class="interest-btn" onclick="toggleInterest(this)">Flash Deals</button>
+                <button type="button" class="interest-btn" onclick="toggleInterest(this)">Menu & Orders</button>
+              </div>
+            </div>
+            <style>
+            .interest-btn{padding:8px 16px;border-radius:40px;border:1px solid var(--border);background:transparent;color:var(--muted);font-size:0.85rem;cursor:pointer;transition:var(--transition)}
+            .interest-btn.selected{background:rgba(232,84,10,.2);border-color:var(--purple);color:var(--text)}
+            </style>
+            <div style="display:flex;gap:12px">
+              <button class="btn btn-ghost" style="flex:1;justify-content:center" onclick="goStep(1)">← Back</button>
+              <button class="btn btn-primary" style="flex:2;justify-content:center" onclick="goStep(3)">Continue →</button>
+            </div>
+          </div>
+
+          <!-- ── STEP 3 ── -->
+          <div id="formStep3" style="display:none">
+            <h3 style="font-family:'Inter',system-ui,sans-serif;font-size:1.3rem;margin-bottom:6px">Pick your demo slot</h3>
+            <p style="color:var(--muted);font-size:0.9rem;margin-bottom:24px">All times in EST. Slots are 30 minutes with a specialist.</p>
+
+            <!-- Date selector -->
+            <div style="display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;margin-bottom:20px" id="dateRow"></div>
+
+            <!-- Time slots -->
+            <div class="cal-card">
+              <div style="font-size:0.8rem;font-weight:700;letter-spacing:.1em;color:var(--muted);margin-bottom:12px">AVAILABLE SLOTS</div>
+              <div id="timeSlots"></div>
+            </div>
+
+            <div class="form-group" style="margin-top:20px">
+              <label class="form-label">Anything specific you want us to cover?</label>
+              <textarea id="d_notes" class="form-input" rows="3" placeholder="e.g. I want to see how flash deals work during peak hours..." style="resize:vertical"></textarea>
+            </div>
+
+            <div style="display:flex;gap:12px">
+              <button class="btn btn-ghost" style="flex:1;justify-content:center" onclick="goStep(2)">← Back</button>
+              <button class="btn btn-primary" style="flex:2;justify-content:center" onclick="submitDemo()">Book Demo →</button>
+            </div>
+          </div>
+
+          <!-- ── SUCCESS ── -->
+          <div class="success-screen" id="demoSuccess">
+            <div class="success-icon">🎉</div>
+            <h3 style="font-family:'Inter',system-ui,sans-serif;font-size:1.5rem;font-weight:800;margin-bottom:8px">Demo Booked!</h3>
+            <p style="color:var(--muted);margin-bottom:24px" id="successMsg">We've confirmed your slot and sent a calendar invite to your email.</p>
+
+            <div style="background:rgba(232,84,10,.08);border:1px solid rgba(232,84,10,.25);border-radius:var(--r-xl);padding:20px;text-align:left;margin-bottom:24px" id="successSummary"></div>
+
+            <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
+              <a href="index.html" class="btn btn-ghost">Back to Home</a>
+              <a href="for-restaurants.html" class="btn btn-primary">Explore Features →</a>
+            </div>
+
+            <p style="color:var(--muted);font-size:0.85rem;margin-top:20px">Questions? Call us at <strong style="color:var(--text)">+91 98765 43210</strong></p>
+          </div>
+
+        </div>
+
+        <!-- Below form trust -->
+        <div style="text-align:center;margin-top:20px">
+          <div style="display:flex;align-items:center;justify-content:center;gap:8px;color:var(--muted);font-size:0.85rem">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 1L2 4v4c0 3.3 2.5 6.4 6 7 3.5-.6 6-3.7 6-7V4L8 1z" fill="rgba(232,84,10,.3)" stroke="#E8540A" stroke-width="1.2"/><path d="M5.5 8l2 2 3-3" stroke="#E8540A" stroke-width="1.4" stroke-linecap="round"/></svg>
+            No credit card · No commitment · Cancel anytime
+          </div>
+          <div style="color:var(--muted);font-size:0.82rem;margin-top:8px">
+            Joining <strong style="color:var(--text)">500+</strong> restaurants across Canada
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- Footer -->
+<footer style="border-top:1px solid var(--border);padding:48px 0;text-align:center">
+  <div class="container">
+    <a href="index.html" class="nav-logo" style="justify-content:center;margin-bottom:20px;display:flex">
+      <span class="lh-logo"><span class="lh-logo-live">live</span><span class="lh-logo-hushh">hushh.</span></span>
+    </a>
+    <div style="display:flex;gap:24px;justify-content:center;flex-wrap:wrap;margin-bottom:20px">
+      <a href="index.html" style="color:var(--muted);font-size:0.9rem;text-decoration:none">Home</a>
+      <a href="for-restaurants.html" style="color:var(--muted);font-size:0.9rem;text-decoration:none">For Restaurants</a>
+      <a href="for-customers.html" style="color:var(--muted);font-size:0.9rem;text-decoration:none">For Customers</a>
+      <a href="contact.html" style="color:var(--muted);font-size:0.9rem;text-decoration:none">Help</a>
+    </div>
+    <div style="color:var(--muted);font-size:0.85rem">© 2025 LiveHushh</div>
+  </div>
+</footer>
+
+<script>
+// ── Nav scroll ──
+window.addEventListener('scroll',()=>{
+  document.getElementById('mainNav').classList.toggle('scrolled',window.scrollY>50);
+});
+
+// ── Step navigation ──
+let selectedSlot = null;
+let selectedDate = null;
+
+function goStep(n){
+  if(n===2){
+    const fname=document.getElementById('d_fname').value.trim();
+    const email=document.getElementById('d_email').value.trim();
+    const phone=document.getElementById('d_phone').value.trim();
+    if(!fname||!email||!phone){alert('Please fill in all required fields.');return;}
+  }
+  if(n===3){
+    const rname=document.getElementById('d_rname').value.trim();
+    if(!rname){alert('Please enter your restaurant name.');return;}
+    buildCalendar();
+  }
+  [1,2,3].forEach(i=>{
+    document.getElementById('formStep'+i).style.display = i===n ? 'block' : 'none';
+  });
+  // Update step indicators
+  [1,2,3].forEach(i=>{
+    const c=document.getElementById('step'+i+'c');
+    c.classList.remove('active','done');
+    if(i<n) c.classList.add('done'), c.textContent='✓';
+    else if(i===n) c.classList.add('active'), c.textContent=i;
+    else c.textContent=i;
+  });
+}
+
+// ── Interest toggle ──
+function toggleInterest(btn){
+  btn.classList.toggle('selected');
+}
+
+// ── Calendar builder ──
+function buildCalendar(){
+  const dateRow=document.getElementById('dateRow');
+  dateRow.innerHTML='';
+  const days=['Mon','Tue','Wed','Thu','Fri'];
+  const dates=['Apr 28','Apr 29','Apr 30','May 1','May 2'];
+  days.forEach((d,i)=>{
+    const btn=document.createElement('button');
+    btn.type='button';
+    btn.style.cssText='flex-shrink:0;padding:10px 18px;border-radius:12px;border:1px solid var(--border);background:transparent;color:var(--text);cursor:pointer;transition:all .2s;text-align:center;min-width:72px';
+    btn.innerHTML=`<div style="font-size:0.75rem;color:var(--muted);margin-bottom:2px">${d}</div><div style="font-size:0.88rem;font-weight:600">${dates[i]}</div>`;
+    btn.onclick=()=>selectDate(btn,dates[i]);
+    if(i===0) selectDate(btn,dates[i]);
+    dateRow.appendChild(btn);
+  });
+}
+
+function selectDate(btn,date){
+  selectedDate=date;
+  selectedSlot=null;
+  document.querySelectorAll('#dateRow button').forEach(b=>{
+    b.style.background='transparent';
+    b.style.borderColor='var(--border)';
+    b.style.color='var(--text)';
+  });
+  btn.style.background='rgba(232,84,10,.2)';
+  btn.style.borderColor='var(--purple)';
+  buildTimeSlots();
+}
+
+function buildTimeSlots(){
+  const slots=[
+    {time:'9:00 AM',avail:true},{time:'9:30 AM',avail:true},
+    {time:'10:00 AM',avail:false},{time:'10:30 AM',avail:true},
+    {time:'11:00 AM',avail:true},{time:'11:30 AM',avail:false},
+    {time:'2:00 PM',avail:true},{time:'2:30 PM',avail:true},
+    {time:'3:00 PM',avail:true},{time:'4:00 PM',avail:false},
+    {time:'4:30 PM',avail:true},{time:'5:00 PM',avail:true},
+  ];
+  const container=document.getElementById('timeSlots');
+  container.innerHTML='';
+  slots.forEach(s=>{
+    const el=document.createElement('div');
+    el.className='cal-slot'+(s.avail?'':' disabled');
+    el.style.cssText=s.avail?'cursor:pointer':'cursor:not-allowed;opacity:.4';
+    el.innerHTML=`
+      <div class="cal-slot-dot${s.avail?'':' full'}"></div>
+      <div style="flex:1;font-size:0.9rem;font-weight:600">${s.time}</div>
+      <div style="font-size:0.8rem;color:${s.avail?'var(--purple)':'var(--muted)'}">${s.avail?'Available':'Booked'}</div>
+    `;
+    if(s.avail){
+      el.onclick=()=>{
+        selectedSlot=s.time;
+        document.querySelectorAll('.cal-slot').forEach(x=>x.classList.remove('selected'),x=>{
+          if(x) x.style.background='';
+        });
+        document.querySelectorAll('.cal-slot').forEach(x=>x.style.background='');
+        el.style.background='rgba(232,84,10,.12)';
+        el.classList.add('selected');
+      };
+    }
+    container.appendChild(el);
+  });
+}
+
+// ── Submit ──
+async function submitDemo(){
+  if(!selectedSlot){alert('Please pick a time slot.');return;}
+  const fname=document.getElementById('d_fname').value.trim();
+  const email=document.getElementById('d_email').value.trim();
+  const phone=document.getElementById('d_phone').value.trim();
+  const role=document.getElementById('d_role')?.value||'Owner';
+  const rname=document.getElementById('d_rname').value.trim();
+  const city=document.getElementById('d_city')?.value||'';
+
+  const bookBtn = document.querySelector('[onclick="submitDemo()"]');
+  const origText = bookBtn?.innerHTML;
+  if(bookBtn){ bookBtn.innerHTML='Sending…'; bookBtn.disabled=true; }
+
+  try {
+    const res = await fetch('https://formspree.io/f/xpqkbbgw', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      body: JSON.stringify({
+        name:       fname,
+        email:      email,
+        phone:      phone,
+        role:       role,
+        restaurant: rname,
+        city:       city,
+        date:       selectedDate,
+        time:       `${selectedSlot} EST`
+      })
+    });
+    const data = await res.json();
+    if(!res.ok) throw new Error(data.error || 'Failed');
+  } catch(err) {
+    if(bookBtn){ bookBtn.innerHTML=origText; bookBtn.disabled=false; }
+    alert('Could not send booking. Please email us at info@mydineview.com');
+    return;
+  }
+
+  [1,2,3].forEach(i=>document.getElementById('formStep'+i).style.display='none');
+  document.getElementById('demoSuccess').style.display='block';
+  document.getElementById('successMsg').textContent=
+    `We've confirmed your slot and sent a calendar invite to ${email}.`;
+  document.getElementById('successSummary').innerHTML=`
+    <div style="display:grid;gap:10px">
+      <div style="display:flex;justify-content:space-between;font-size:0.9rem">
+        <span style="color:var(--muted)">Name</span>
+        <span style="font-weight:600">${fname}</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:0.9rem">
+        <span style="color:var(--muted)">Restaurant</span>
+        <span style="font-weight:600">${rname}</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:0.9rem">
+        <span style="color:var(--muted)">Date & Time</span>
+        <span style="font-weight:600">${selectedDate} · ${selectedSlot} EST</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:0.9rem">
+        <span style="color:var(--muted)">Duration</span>
+        <span style="font-weight:600">30 minutes</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:0.9rem">
+        <span style="color:var(--muted)">Format</span>
+        <span style="font-weight:600">Zoom call (link in email)</span>
+      </div>
+    </div>
+  `;
+}
+</script>
+<script src="js/theme.js"></script>
+</body>
+</html>

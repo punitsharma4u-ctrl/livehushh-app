@@ -1,0 +1,1602 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Discover Restaurants — LiveHushh</title>
+<link rel="manifest" href="/manifest.webmanifest">
+<meta name="theme-color" content="#06061A">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="LiveHushh">
+<link rel="apple-touch-icon" href="/icons/icon-192.png">
+<link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192.png">
+<link rel="stylesheet" href="css/styles.css?v=3">
+<style>
+/* App shell */
+body{background:var(--bg);display:flex;flex-direction:column;min-height:100vh;overflow-x:hidden}
+.app-nav{position:fixed;top:0;left:0;right:0;height:64px;background:rgba(6,6,26,0.9);backdrop-filter:blur(24px);border-bottom:1px solid var(--border2);z-index:100;display:flex;align-items:center;padding:0 24px;gap:16px}
+.app-nav-logo{display:flex;align-items:center;gap:8px;font-family:'Inter',system-ui,sans-serif;font-size:1.1rem;font-weight:800}
+.app-nav-logo-mark{width:28px;height:28px;border-radius:8px;background:var(--grad);display:flex;align-items:center;justify-content:center}
+.app-main{margin-top:64px;flex:1;padding:28px 24px;max-width:1280px;width:100%;margin-left:auto;margin-right:auto}
+.app-tabs{display:flex;gap:4px;background:rgba(255,255,255,0.04);border:1px solid var(--border2);border-radius:var(--r-full);padding:4px;margin-bottom:28px;width:fit-content}
+.app-tab{padding:9px 20px;border-radius:var(--r-full);font-size:.82rem;font-weight:600;cursor:pointer;transition:all .2s;color:var(--text2);display:flex;align-items:center;gap:7px}
+.app-tab.active{background:var(--grad);color:#fff;box-shadow:0 4px 14px rgba(232,84,10,0.35)}
+.app-tab:hover:not(.active){background:rgba(255,255,255,0.06);color:var(--text)}
+.page{display:none}
+.page.active{display:block}
+
+/* Search + filters */
+.search-row{display:grid;grid-template-columns:1fr auto;gap:12px;margin-bottom:16px;align-items:center}
+.search-wrap{position:relative}
+.search-icon{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--text3)}
+.search-input{padding-left:44px}
+.filter-chips{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:24px}
+.chip{padding:7px 16px;border-radius:var(--r-full);font-size:.8rem;font-weight:500;cursor:pointer;border:1px solid var(--border2);color:var(--text2);background:var(--bg-card);transition:all .2s}
+.chip.active{background:rgba(232,84,10,0.15);border-color:var(--purple);color:var(--purple-l)}
+.chip:hover:not(.active){border-color:var(--border3);color:var(--text)}
+
+/* Restaurant grid */
+.restaurant-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:20px}
+.resto-card{background:var(--bg-card);border:1px solid var(--border2);border-radius:var(--r-xl);overflow:hidden;cursor:pointer;transition:all .3s var(--ease)}
+.resto-card:hover{border-color:var(--border);transform:translateY(-4px);box-shadow:var(--shadow-lg)}
+.resto-thumb{position:relative;height:160px;overflow:hidden;background:linear-gradient(135deg,var(--bg2),var(--bg3))}
+.resto-thumb-img{width:100%;height:100%;object-fit:cover;transition:transform .4s}
+.resto-card:hover .resto-thumb-img{transform:scale(1.05)}
+.resto-thumb-overlay{position:absolute;inset:0;background:linear-gradient(to bottom,transparent 40%,rgba(6,6,26,0.85))}
+.resto-badges{position:absolute;top:12px;left:12px;display:flex;gap:6px;flex-wrap:wrap}
+.resto-info{padding:16px}
+.resto-name{font-family:'Inter',system-ui,sans-serif;font-size:1rem;font-weight:700;margin-bottom:4px}
+.resto-meta{font-size:.8rem;color:var(--text2);display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+.resto-meta span{display:flex;align-items:center;gap:4px}
+.resto-actions{display:flex;gap:8px}
+
+/* Menu page */
+.menu-layout{display:grid;grid-template-columns:1fr 320px;gap:24px;align-items:start}
+.menu-hero{position:relative;height:220px;border-radius:var(--r-xl);overflow:hidden;margin-bottom:24px;background:linear-gradient(135deg,var(--bg2),var(--bg3))}
+.menu-hero-overlay{position:absolute;inset:0;background:linear-gradient(to bottom,transparent 30%,rgba(6,6,26,0.95))}
+.menu-hero-content{position:absolute;bottom:20px;left:24px;right:24px}
+.menu-deal-banner{background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.25);border-radius:var(--r);padding:12px 16px;display:flex;align-items:center;gap:12px;margin-bottom:20px}
+.menu-category-title{font-family:'Inter',system-ui,sans-serif;font-size:1rem;font-weight:700;color:var(--purple-l);margin:20px 0 12px;text-transform:uppercase;letter-spacing:.06em;font-size:.8rem}
+.menu-item{background:var(--bg-card);border:1px solid var(--border2);border-radius:var(--r);padding:16px;display:flex;align-items:center;gap:16px;margin-bottom:10px;transition:all .2s}
+.menu-item:hover{border-color:var(--border);background:var(--bg-card-h)}
+.deal-item{border-color:rgba(245,158,11,0.35)!important;background:rgba(245,158,11,0.04)!important}
+.menu-item-info{flex:1}
+.menu-item-name{font-weight:600;font-size:.95rem;margin-bottom:2px}
+.menu-item-desc{font-size:.78rem;color:var(--text2);margin-bottom:6px}
+.menu-item-price{font-weight:700;color:var(--gold)}
+.qty-control{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,0.05);border:1px solid var(--border2);border-radius:var(--r-full);padding:4px 8px}
+.qty-btn{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1rem;cursor:pointer;transition:all .2s;color:var(--text2)}
+.qty-btn:hover{background:rgba(232,84,10,0.15);color:var(--purple-l)}
+.qty-num{font-weight:600;font-size:.9rem;min-width:16px;text-align:center}
+/* Cart */
+.cart-panel{background:var(--bg-card);border:1px solid var(--border2);border-radius:var(--r-xl);padding:20px;position:sticky;top:88px}
+.cart-title{font-family:'Inter',system-ui,sans-serif;font-size:1.05rem;font-weight:700;margin-bottom:16px}
+.cart-item{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border2);font-size:.875rem}
+.cart-total-row{display:flex;justify-content:space-between;padding-top:14px;font-weight:700}
+.cart-empty{text-align:center;color:var(--text2);padding:24px 0;font-size:.875rem}
+
+/* Live page */
+.live-layout{display:grid;grid-template-columns:1fr 320px;gap:20px;height:calc(100vh - 140px)}
+.live-video-wrap{position:relative;background:#000;border-radius:var(--r-xl);overflow:hidden;height:100%}
+.live-video{width:100%;height:100%;object-fit:cover}
+.live-overlay-top{position:absolute;top:16px;left:16px;right:16px;display:flex;justify-content:space-between;align-items:center}
+.live-overlay-bottom{position:absolute;bottom:16px;left:16px;right:16px}
+.blur-face{position:absolute;backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border-radius:50%;background:rgba(255,255,255,0.05);pointer-events:none}
+.live-stats-bar{display:flex;gap:12px;background:rgba(0,0,0,0.6);backdrop-filter:blur(8px);border-radius:var(--r-full);padding:8px 16px;flex-wrap:wrap}
+.live-stat-item{display:flex;align-items:center;gap:6px;font-size:.8rem}
+/* Chat */
+.chat-panel{background:var(--bg-card);border:1px solid var(--border2);border-radius:var(--r-xl);display:flex;flex-direction:column;overflow:hidden}
+.chat-header{padding:14px 16px;border-bottom:1px solid var(--border2);font-weight:600;font-size:.9rem;display:flex;align-items:center;gap:8px}
+.chat-messages{flex:1;overflow-y:auto;padding:12px 16px;display:flex;flex-direction:column;gap:10px}
+.chat-msg{background:rgba(255,255,255,0.04);border-radius:var(--r);padding:8px 12px;font-size:.82rem}
+.chat-msg-name{font-weight:600;font-size:.75rem;margin-bottom:3px}
+.chat-input-wrap{padding:12px 16px;border-top:1px solid var(--border2);display:flex;gap:8px}
+
+/* Orders page */
+.orders-list{display:flex;flex-direction:column;gap:16px;max-width:700px}
+.order-card{background:var(--bg-card);border:1px solid var(--border2);border-radius:var(--r-xl);padding:20px}
+.order-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.order-timeline{display:flex;gap:0;margin-top:16px}
+.tl-step{flex:1;text-align:center;position:relative}
+.tl-step::before{content:'';position:absolute;top:12px;left:50%;right:-50%;height:2px;background:var(--border2)}
+.tl-step:last-child::before{display:none}
+.tl-step.done::before{background:var(--green)}
+.tl-dot{width:24px;height:24px;border-radius:50%;border:2px solid var(--border2);background:var(--bg);display:flex;align-items:center;justify-content:center;margin:0 auto 6px;position:relative;z-index:1}
+.tl-step.done .tl-dot{border-color:var(--green);background:rgba(16,185,129,0.15)}
+.tl-step.active .tl-dot{border-color:var(--purple);background:rgba(232,84,10,0.15);animation:tl-pulse 1.5s ease-in-out infinite}
+@keyframes tl-pulse{0%,100%{box-shadow:0 0 0 0 rgba(232,84,10,0.4)}50%{box-shadow:0 0 0 8px rgba(232,84,10,0)}}
+.tl-label{font-size:.68rem;color:var(--text2)}
+
+/* Waitlist page */
+.waitlist-card{background:var(--bg-card);border:1px solid var(--border2);border-radius:var(--r-xl);padding:20px;max-width:600px}
+.wl-position{width:80px;height:80px;border-radius:50%;background:rgba(232,84,10,0.1);border:2px solid var(--purple);display:flex;align-items:center;justify-content:center;font-family:'Inter',system-ui,sans-serif;font-size:1.8rem;font-weight:800;color:var(--purple-l);margin:0 auto 12px}
+
+/* Profile */
+.profile-layout{display:grid;grid-template-columns:280px 1fr;gap:24px;max-width:900px}
+.profile-card{background:var(--bg-card);border:1px solid var(--border2);border-radius:var(--r-xl);padding:24px;text-align:center}
+.profile-avatar{width:72px;height:72px;border-radius:50%;background:var(--grad);display:flex;align-items:center;justify-content:center;font-family:'Inter',system-ui,sans-serif;font-size:1.5rem;font-weight:800;color:#fff;margin:0 auto 12px}
+
+/* Modal */
+.modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,0.7);backdrop-filter:blur(4px);z-index:200;display:flex;align-items:center;justify-content:center;padding:20px}
+.modal{background:var(--bg2);border:1px solid var(--border2);border-radius:var(--r-2xl);padding:32px;max-width:460px;width:100%;position:relative}
+.modal-close{position:absolute;top:16px;right:16px;width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,0.06);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text2)}
+.modal-close:hover{background:rgba(255,255,255,0.12);color:var(--text)}
+
+/* Toast */
+#toast-container{position:fixed;bottom:24px;right:24px;z-index:9999;display:flex;flex-direction:column;gap:8px}
+
+/* ── Checkout modal ── */
+.checkout-step{display:none}
+.checkout-step.active{display:block}
+.order-type-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:18px 0}
+.order-type-card{border:2px solid var(--border2);border-radius:var(--r-lg);padding:20px 16px;text-align:center;cursor:pointer;transition:all .25s;background:var(--bg-card)}
+.order-type-card:hover{border-color:var(--purple);background:rgba(232,84,10,0.04)}
+.order-type-card.selected{border-color:var(--purple);background:rgba(232,84,10,0.08);box-shadow:0 0 0 3px rgba(232,84,10,0.12)}
+.order-type-icon{font-size:2rem;margin-bottom:8px}
+.order-type-label{font-weight:700;font-size:.95rem}
+.order-type-sub{font-size:.78rem;color:var(--text2);margin-top:4px}
+.card-input-wrap{position:relative}
+.card-brand{position:absolute;right:12px;top:50%;transform:translateY(-50%);font-size:.72rem;font-weight:700;color:var(--text3);pointer-events:none}
+.pay-progress{position:absolute;left:0;top:0;bottom:0;background:rgba(255,255,255,0.15);border-radius:inherit;width:0%;transition:width 2s linear}
+.wl-clock{display:flex;justify-content:center;align-items:flex-end;gap:4px}
+.wl-clock-seg{text-align:center}
+.wl-clock-num{font-size:2.8rem;font-weight:900;font-variant-numeric:tabular-nums;line-height:1;color:var(--purple-l)}
+.wl-clock-lbl{font-size:.68rem;color:var(--text2);margin-top:2px}
+.wl-clock-sep{font-size:2.4rem;font-weight:900;color:var(--border);line-height:1.15;padding-bottom:8px}
+
+@media(max-width:900px){
+  .menu-layout,.live-layout,.profile-layout{grid-template-columns:1fr}
+  .live-layout{height:auto}
+  .live-video-wrap{height:300px}
+}
+@media(max-width:640px){
+  /* Hide top nav tabs + cart on mobile — use bottom bar instead */
+  .app-nav .app-tabs{display:none}
+  .app-nav .btn-ghost,.app-nav .btn-secondary{display:none}
+  .app-main{margin-bottom:72px;padding:16px 12px}
+  /* Mobile bottom navigation bar */
+  .mobile-bottom-nav{display:flex!important}
+}
+.mobile-bottom-nav{
+  display:none;
+  position:fixed;bottom:0;left:0;right:0;
+  height:64px;
+  background:rgba(6,6,26,0.97);
+  backdrop-filter:blur(24px);
+  border-top:1px solid var(--border2);
+  z-index:200;
+  align-items:center;
+  justify-content:space-around;
+  padding:0 8px;
+}
+.mob-tab{
+  display:flex;flex-direction:column;align-items:center;gap:3px;
+  font-size:.65rem;font-weight:600;color:var(--text3);
+  cursor:pointer;padding:8px 12px;border-radius:var(--r);
+  transition:color .2s;flex:1;
+}
+.mob-tab.active,.mob-tab:hover{color:var(--purple-l)}
+.mob-tab svg{flex-shrink:0}
+</style>
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#E8540A">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="LiveHushh">
+  <link rel="apple-touch-icon" href="/icons/icon-192.png">
+</head>
+<body>
+
+<!-- APP NAV -->
+<nav class="app-nav">
+  <a href="index.html" class="app-nav-logo">
+    <span class="lh-logo"><span class="lh-logo-live">live</span><span class="lh-logo-hushh">hushh.</span></span>
+  </a>
+  <div style="flex:1"></div>
+  <div class="app-tabs">
+    <div class="app-tab active" onclick="showPage('browse')">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+      Browse
+    </div>
+    <div class="app-tab" onclick="showPage('orders')">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+      Orders
+    </div>
+    <div class="app-tab" onclick="showPage('waitlists')">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+      Waitlists
+    </div>
+    <div class="app-tab" onclick="showPage('profile')">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+      Profile
+    </div>
+  </div>
+  <div style="flex:1;display:flex;justify-content:flex-end;gap:8px">
+    <button class="btn btn-ghost btn-sm" onclick="APP.showToast('Cart: '+APP.cartCount()+' items · $'+APP.cartTotal(),'info')">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/></svg>
+      Cart (<span id="cartCountBadge">0</span>)
+    </button>
+    <a href="auth.html" class="btn btn-secondary btn-sm">Sign Out</a>
+  </div>
+</nav>
+
+<div class="app-main">
+
+  <!-- ════════════ BROWSE PAGE ════════════ -->
+  <div id="page-browse" class="page active">
+    <div style="margin-bottom:20px">
+      <h1 class="headline" style="font-size:1.6rem;margin-bottom:4px">Discover Restaurants</h1>
+      <p class="caption">2,400+ restaurants near you · <span class="live-badge" style="display:inline-flex">Live Now</span></p>
+    </div>
+
+    <div class="search-row">
+      <div class="search-wrap">
+        <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input class="input search-input" type="text" placeholder="Search restaurants, cuisines..." oninput="filterRestaurants(this.value)" style="padding-left:44px">
+      </div>
+      <select class="input input-select" style="width:180px" onchange="sortRestaurants(this.value)">
+        <option value="default">Sort: Recommended</option>
+        <option value="rating">Sort: Rating</option>
+        <option value="distance">Sort: Distance</option>
+        <option value="live">Sort: Live First</option>
+      </select>
+    </div>
+
+    <div class="filter-chips" id="filterChips">
+      <div class="chip active" onclick="setFilter('all',this)">All</div>
+      <div class="chip" onclick="setFilter('live',this)">🔴 Live Now</div>
+      <div class="chip" onclick="setFilter('veg',this)">🟢 Pure Veg</div>
+      <div class="chip" onclick="setFilter('open',this)">Open Now</div>
+      <!-- cuisine chips injected dynamically after restaurants load -->
+    </div>
+
+    <!-- Live now banner -->
+    <div style="background:rgba(239,68,68,0.07);border:1px solid rgba(239,68,68,0.2);border-radius:var(--r-xl);padding:14px 20px;display:flex;align-items:center;gap:12px;margin-bottom:24px">
+      <div class="live-badge">Live</div>
+      <span style="font-size:.9rem;font-weight:600">5 restaurants are streaming live right now — <a href="#" style="color:var(--purple-l)" onclick="setFilter('live',document.querySelector('.chip:nth-child(2)'));return false">Watch Now →</a></span>
+    </div>
+
+    <div class="restaurant-grid" id="restaurantGrid"></div>
+  </div>
+
+  <!-- ════════════ MENU PAGE ════════════ -->
+  <div id="page-menu" class="page">
+    <button class="btn btn-ghost btn-sm" onclick="showPage('browse')" style="margin-bottom:20px">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+      Back to Browse
+    </button>
+
+    <div class="menu-layout">
+      <div>
+        <!-- Hero -->
+        <div class="menu-hero" id="menuHero">
+          <div class="menu-hero-overlay"></div>
+          <div class="menu-hero-content">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px" id="menuHeroBadges"></div>
+            <h2 id="menuRestName" class="headline" style="font-size:1.5rem;color:#fff;margin-bottom:4px"></h2>
+            <p id="menuRestMeta" class="caption" style="color:rgba(255,255,255,0.75)"></p>
+          </div>
+        </div>
+
+        <!-- Deal banners (populated dynamically) -->
+        <div id="menuDealsContainer"></div>
+
+        <!-- Menu items -->
+        <div id="menuContent"></div>
+      </div>
+
+      <!-- Cart sidebar -->
+      <div class="cart-panel">
+        <div class="cart-title">
+          🛒 Your Cart <span id="cartCount" style="font-size:.85rem;color:var(--text2);font-weight:400"></span>
+        </div>
+        <div id="cartItems"><div class="cart-empty">Your cart is empty.<br>Add items from the menu!</div></div>
+        <div id="cartSummary" style="display:none">
+          <div class="cart-total-row">
+            <span>Subtotal</span><span id="cartSubtotal"></span>
+          </div>
+
+          <!-- Promo Code -->
+          <div style="margin:10px 0">
+            <div id="promoAppliedBanner" style="display:none;background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.3);border-radius:var(--r);padding:8px 12px;font-size:.8rem;color:var(--green);font-weight:600;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center">
+              <span id="promoAppliedLabel"></span>
+              <button onclick="removePromo()" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:.9rem">✕</button>
+            </div>
+            <div id="promoInputRow" style="display:flex;gap:8px">
+              <input id="promoCodeInput" class="input" type="text" placeholder="Promo code" style="flex:1;font-size:.82rem;padding:8px 12px;text-transform:uppercase" oninput="this.value=this.value.toUpperCase()">
+              <button class="btn btn-secondary btn-sm" onclick="applyPromo()">Apply</button>
+            </div>
+            <div id="promoError" style="font-size:.75rem;color:var(--red);margin-top:4px;display:none"></div>
+          </div>
+
+          <div id="discountRow" style="display:none;justify-content:space-between;padding-top:4px;font-size:.85rem;color:var(--green)">
+            <span id="discountLabel">Promo discount</span><span id="cartDiscount"></span>
+          </div>
+          <div class="cart-total-row" style="font-size:1.1rem;padding-top:12px;margin-top:4px;border-top:1px solid var(--border2)">
+            <span>Total</span><span class="g-text" id="cartTotalDisp"></span>
+          </div>
+          <button class="btn btn-primary w-full" style="margin-top:16px" onclick="openCheckout()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+            Checkout
+          </button>
+          <button class="btn btn-ghost w-full" style="margin-top:8px;font-size:.82rem" onclick="APP.cart=[];removePromo();renderCart()">Clear Cart</button>
+        </div>
+
+        <!-- Waitlist card -->
+        <div style="background:rgba(232,84,10,0.06);border:1px solid rgba(232,84,10,0.2);border-radius:var(--r);padding:14px;margin-top:16px">
+          <div style="font-weight:600;font-size:.875rem;margin-bottom:6px">Join the Waitlist</div>
+          <p class="caption" style="margin-bottom:10px">5 parties ahead. Estimated 25 min wait.</p>
+          <button class="btn btn-secondary btn-sm w-full" onclick="openWaitlistModal()">Join Waitlist</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════ LIVE PAGE ════════════ -->
+  <div id="page-live" class="page">
+    <button class="btn btn-ghost btn-sm" onclick="showPage('menu')" style="margin-bottom:16px">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+      Back to Menu
+    </button>
+
+    <div class="live-layout">
+      <!-- Video -->
+      <div class="live-video-wrap" style="position:relative">
+        <video id="ivsPlayerVideo" class="live-video" autoplay playsinline style="width:100%;height:100%;object-fit:cover"></video>
+        <canvas id="ivsBlurCanvas" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none;display:none"></canvas>
+        <div id="liveNoStream" style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(0,0,0,0.7);display:none">
+          <div style="font-size:2rem;margin-bottom:10px">📡</div>
+          <div style="font-weight:600">Stream not yet started</div>
+          <div style="font-size:.82rem;color:var(--text2);margin-top:4px">The owner hasn't gone live yet</div>
+        </div>
+
+        <!-- Top overlay -->
+        <div class="live-overlay-top">
+          <div class="live-badge" style="font-size:.8rem;padding:6px 14px">LIVE</div>
+          <div class="live-stats-bar">
+            <div class="live-stat-item">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+              <span id="liveViewers">342</span> watching
+            </div>
+            <div class="live-stat-item">
+              <svg width="12" height="12" fill="#10B981" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6"/></svg>
+              <span id="liveDuration">00:00</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Bottom overlay -->
+        <div class="live-overlay-bottom">
+          <div style="background:rgba(0,0,0,0.6);backdrop-filter:blur(8px);border-radius:var(--r);padding:12px 16px;margin-bottom:10px">
+            <div id="liveRestName" class="subhead" style="color:#fff;font-size:1rem;margin-bottom:2px"></div>
+            <div id="liveRestCuisine" class="caption" style="color:rgba(255,255,255,0.7)"></div>
+          </div>
+          <div style="background:rgba(245,158,11,0.15);border:1px solid rgba(245,158,11,0.3);border-radius:var(--r);padding:10px 16px;display:flex;align-items:center;justify-content:space-between">
+            <span style="font-size:.85rem;color:var(--gold);font-weight:600">🔥 Flash Deal: 30% off Mains</span>
+            <button class="btn btn-gold btn-sm" onclick="showPage('menu')">Order Now</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Chat -->
+      <div class="chat-panel">
+        <div class="chat-header">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          Live Chat
+          <span class="pill pill-purple" style="margin-left:auto;font-size:.68rem;padding:3px 8px" id="chatCount">0 chatting</span>
+        </div>
+        <div class="chat-messages" id="chatMessages"></div>
+        <div class="chat-input-wrap">
+          <input class="input" type="text" id="chatInput" placeholder="Say something..." style="font-size:.85rem" onkeydown="if(event.key==='Enter')sendChat()">
+          <button class="btn btn-primary btn-sm" onclick="sendChat()">Send</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════ ORDERS PAGE ════════════ -->
+  <div id="page-orders" class="page">
+    <h2 class="headline" style="font-size:1.4rem;margin-bottom:20px">My Orders</h2>
+    <div class="orders-list" id="ordersList"></div>
+  </div>
+
+  <!-- ════════════ WAITLISTS PAGE ════════════ -->
+  <div id="page-waitlists" class="page">
+    <h2 class="headline" style="font-size:1.4rem;margin-bottom:20px">My Waitlists</h2>
+    <div id="waitlistContent" style="max-width:600px"></div>
+  </div>
+
+  <!-- ════════════ PROFILE PAGE ════════════ -->
+  <div id="page-profile" class="page">
+    <h2 class="headline" style="font-size:1.4rem;margin-bottom:20px">My Profile</h2>
+    <div class="profile-layout">
+      <div class="profile-card">
+        <div class="profile-avatar">A</div>
+        <div style="font-family:'Inter',system-ui,sans-serif;font-size:1.1rem;font-weight:700">James Carter</div>
+        <div class="caption" style="margin:4px 0 16px">james@example.com</div>
+        <div class="pill pill-purple">Customer Account</div>
+        <div style="margin-top:20px;display:flex;flex-direction:column;gap:10px">
+          <div style="display:flex;justify-content:space-between;font-size:.875rem">
+            <span style="color:var(--text2)">Total Orders</span><span style="font-weight:600">12</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:.875rem">
+            <span style="color:var(--text2)">Waitlists Joined</span><span style="font-weight:600">5</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:.875rem">
+            <span style="color:var(--text2)">Live Hours Watched</span><span style="font-weight:600">14h 32m</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:.875rem">
+            <span style="color:var(--text2)">Deals Redeemed</span><span style="font-weight:600;color:var(--green)">8</span>
+          </div>
+        </div>
+        <button class="btn btn-secondary btn-sm w-full" style="margin-top:20px" onclick="APP.showToast('Profile updated','success')">Edit Profile</button>
+      </div>
+      <div>
+        <div class="card" style="margin-bottom:16px">
+          <div style="font-weight:700;margin-bottom:14px">Notification Preferences</div>
+          <div style="display:flex;flex-direction:column;gap:12px">
+            <label style="display:flex;align-items:center;justify-content:space-between;font-size:.875rem">
+              <span>Waitlist updates</span>
+              <input type="checkbox" checked style="accent-color:var(--purple)">
+            </label>
+            <label style="display:flex;align-items:center;justify-content:space-between;font-size:.875rem">
+              <span>Live stream alerts</span>
+              <input type="checkbox" checked style="accent-color:var(--purple)">
+            </label>
+            <label style="display:flex;align-items:center;justify-content:space-between;font-size:.875rem">
+              <span>Deal notifications</span>
+              <input type="checkbox" checked style="accent-color:var(--purple)">
+            </label>
+            <label style="display:flex;align-items:center;justify-content:space-between;font-size:.875rem">
+              <span>Order status updates</span>
+              <input type="checkbox" checked style="accent-color:var(--purple)">
+            </label>
+          </div>
+        </div>
+        <div class="card">
+          <div style="font-weight:700;margin-bottom:14px">Preferred Cuisines</div>
+          <div style="display:flex;flex-wrap:wrap;gap:8px">
+            <span class="chip active">North Indian</span>
+            <span class="chip active">Chinese</span>
+            <span class="chip">Italian</span>
+            <span class="chip">South Indian</span>
+            <span class="chip active">Continental</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- WAITLIST MODAL -->
+<div id="waitlistModal" class="modal-backdrop hidden">
+  <div class="modal">
+    <button class="modal-close" onclick="closeWaitlistModal()">✕</button>
+    <div class="label" style="margin-bottom:12px">Join Waitlist</div>
+    <h3 class="subhead" style="margin-bottom:4px" id="wlModalRest">The Spice Route</h3>
+    <p class="caption" style="margin-bottom:20px">Current wait: ~25 minutes · 5 parties ahead</p>
+    <form onsubmit="joinWaitlist(event)" style="display:flex;flex-direction:column;gap:14px">
+      <div class="form-group">
+        <label class="form-label">Your Name</label>
+        <input class="input" type="text" placeholder="James Carter" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Number of Guests</label>
+        <select class="input input-select" required>
+          <option>1 guest</option><option>2 guests</option><option selected>3 guests</option>
+          <option>4 guests</option><option>5 guests</option><option>6+ guests</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Phone (for SMS alert)</label>
+        <input class="input" type="tel" placeholder="+1 416 555 0100" required>
+      </div>
+      <button type="submit" class="btn btn-primary w-full">Join Waitlist</button>
+    </form>
+  </div>
+</div>
+
+<!-- ══════════ CHECKOUT MODAL ══════════ -->
+<div id="checkoutModal" class="modal-backdrop hidden">
+  <div class="modal" style="max-width:500px;padding:28px;max-height:92vh;overflow-y:auto">
+    <button class="modal-close" onclick="closeCheckout()">✕</button>
+
+    <!-- STEP 1 · Order Type -->
+    <div class="checkout-step active" id="step-type">
+      <h3 style="font-weight:800;font-size:1.1rem;margin-bottom:4px">How would you like to order?</h3>
+      <p class="caption">Choose your preference below</p>
+      <div class="order-type-grid">
+        <div class="order-type-card" id="ot-dinein" onclick="selectOrderType('dinein')">
+          <div class="order-type-icon">🍽️</div>
+          <div class="order-type-label">Dine In</div>
+          <div class="order-type-sub">Eat at the restaurant</div>
+          <div style="margin-top:8px;font-size:.7rem;background:rgba(232,84,10,0.1);color:var(--purple-l);padding:3px 10px;border-radius:var(--r-full);display:inline-block">~25 min · 5 ahead</div>
+        </div>
+        <div class="order-type-card" id="ot-delivery" onclick="selectOrderType('delivery')">
+          <div class="order-type-icon">🛵</div>
+          <div class="order-type-label">Delivery</div>
+          <div class="order-type-sub">Get it at your door</div>
+          <div style="margin-top:8px;font-size:.7rem;background:rgba(34,211,238,0.1);color:var(--cyan);padding:3px 10px;border-radius:var(--r-full);display:inline-block">20–35 min</div>
+        </div>
+      </div>
+
+      <!-- Delivery address -->
+      <div id="delivery-addr-wrap" style="display:none;margin-bottom:14px">
+        <div class="form-group" style="margin-bottom:0">
+          <label class="form-label">Delivery Address</label>
+          <input class="input" id="deliveryAddress" placeholder="e.g. 120 King St W, Toronto, ON">
+        </div>
+      </div>
+
+      <!-- Dine-in waitlist info -->
+      <div id="dinein-info-wrap" style="display:none;margin-bottom:14px">
+        <div style="background:rgba(232,84,10,0.06);border:1px solid rgba(232,84,10,0.2);border-radius:var(--r);padding:14px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+            <span style="font-weight:600;font-size:.875rem">Waitlist Info</span>
+            <span class="pill pill-gold" style="font-size:.68rem;padding:3px 10px">5 parties ahead</span>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:.82rem">
+            <div>
+              <div style="color:var(--text2);font-size:.72rem;margin-bottom:4px">Est. wait time</div>
+              <div style="font-weight:700;font-size:1.1rem;color:var(--purple-l)">~25 min</div>
+            </div>
+            <div>
+              <div style="color:var(--text2);font-size:.72rem;margin-bottom:4px">Table size</div>
+              <select class="input" id="tableSize" style="padding:6px 10px;font-size:.8rem;height:auto">
+                <option>1–2 guests</option><option selected>3–4 guests</option><option>5–6 guests</option><option>7+ guests</option>
+              </select>
+            </div>
+            <div style="grid-column:span 2">
+              <div style="color:var(--text2);font-size:.72rem;margin-bottom:4px">Your name (for the host)</div>
+              <input class="input" id="dineinName" placeholder="Name" style="padding:8px 12px;font-size:.85rem">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <button class="btn btn-primary w-full" id="stepTypeNext" onclick="goToPayment()" disabled style="opacity:.4">
+        Continue to Payment →
+      </button>
+    </div>
+
+    <!-- STEP 2 · Payment -->
+    <div class="checkout-step" id="step-payment">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px">
+        <button onclick="goToStep('type')" style="width:30px;height:30px;border-radius:50%;background:rgba(255,255,255,0.06);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text2);flex-shrink:0;font-size:.9rem">←</button>
+        <div>
+          <h3 style="font-weight:800;font-size:1.05rem;line-height:1">Payment</h3>
+          <div class="caption" id="payStepSubtitle" style="margin-top:2px"></div>
+        </div>
+      </div>
+
+      <!-- Order summary -->
+      <div style="background:var(--bg3);border-radius:var(--r);padding:14px;margin-bottom:18px">
+        <div class="caption" style="text-transform:uppercase;letter-spacing:.06em;font-weight:700;margin-bottom:10px">Order Summary</div>
+        <div id="checkoutItemList" style="display:flex;flex-direction:column;gap:5px;font-size:.84rem"></div>
+        <div style="border-top:1px solid var(--border2);margin-top:10px;padding-top:10px;display:flex;justify-content:space-between;font-weight:700;font-size:.95rem">
+          <span>Total</span><span class="g-text" id="checkoutTotal"></span>
+        </div>
+        <div id="checkoutTypeTag" style="margin-top:8px;font-size:.75rem;color:var(--text2)"></div>
+      </div>
+
+      <!-- Card form -->
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <div class="form-group" style="margin-bottom:0">
+          <label class="form-label">Name on Card</label>
+          <input class="input" id="cardName" placeholder="James Carter" autocomplete="cc-name">
+        </div>
+        <div class="form-group card-input-wrap" style="margin-bottom:0">
+          <label class="form-label">Card Number</label>
+          <input class="input" id="cardNum" placeholder="1234 5678 9012 3456" maxlength="19" autocomplete="cc-number" oninput="fmtCard(this)" style="padding-right:64px">
+          <span class="card-brand" id="cardBrandIcon" style="top:calc(50% + 14px)">💳</span>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div class="form-group" style="margin-bottom:0">
+            <label class="form-label">Expiry</label>
+            <input class="input" id="cardExp" placeholder="MM / YY" maxlength="7" autocomplete="cc-exp" oninput="fmtExp(this)">
+          </div>
+          <div class="form-group" style="margin-bottom:0">
+            <label class="form-label">CVV</label>
+            <input class="input" id="cardCvv" placeholder="•••" maxlength="4" type="password" autocomplete="cc-csc">
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;font-size:.72rem;color:var(--text3)">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          256-bit SSL · Payments powered by Stripe
+          <svg width="28" height="12" viewBox="0 0 60 25" fill="none"><rect width="60" height="25" rx="4" fill="#635BFF"/><text x="8" y="18" font-family="Inter,sans-serif" font-size="11" font-weight="700" fill="#fff">stripe</text></svg>
+        </div>
+      </div>
+
+      <button class="btn btn-primary w-full" id="payBtn" style="margin-top:18px;position:relative;overflow:hidden" onclick="processPayment()">
+        <div class="pay-progress" id="payProgress"></div>
+        <span id="payBtnLabel" style="position:relative;z-index:1">Pay <span id="payAmountLabel"></span></span>
+      </button>
+    </div>
+
+    <!-- STEP 3 · Success -->
+    <div class="checkout-step" id="step-success">
+
+      <!-- Delivery success -->
+      <div id="success-delivery" style="display:none;text-align:center">
+        <div style="width:72px;height:72px;border-radius:50%;background:rgba(16,185,129,0.15);border:2px solid var(--green);display:flex;align-items:center;justify-content:center;margin:0 auto 16px">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        </div>
+        <h3 style="font-weight:800;font-size:1.1rem;margin-bottom:6px">Order Confirmed! 🎉</h3>
+        <p class="caption" style="margin-bottom:16px">Estimated delivery: <strong style="color:var(--text)">25–35 min</strong></p>
+        <div class="pill pill-green" style="margin:0 auto 16px;width:fit-content">Order #<span id="deliveryOrderNum"></span></div>
+        <div id="deliveryDiscountNote" style="display:none;background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.2);border-radius:var(--r);padding:8px 14px;margin-bottom:16px;font-size:.8rem;color:var(--gold)">✓ Live discount of 30% applied!</div>
+        <!-- Delivery timeline -->
+        <div style="display:flex;justify-content:space-between;margin-bottom:20px;position:relative">
+          <div style="position:absolute;top:11px;left:10%;right:10%;height:2px;background:var(--grad);z-index:0"></div>
+          <div style="text-align:center;z-index:1" v-for="s in 4">
+            <div style="width:22px;height:22px;border-radius:50%;background:var(--purple);border:2px solid var(--purple-l);margin:0 auto 5px;display:flex;align-items:center;justify-content:center"><svg width="10" height="10" viewBox="0 0 16 16" fill="none"><path d="M3 8l3 3 7-7" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg></div>
+            <div style="font-size:.62rem;color:var(--text2)">Confirmed</div>
+          </div>
+          <div style="text-align:center;z-index:1">
+            <div style="width:22px;height:22px;border-radius:50%;background:var(--bg3);border:2px solid var(--border2);margin:0 auto 5px;animation:tl-pulse 1.5s ease-in-out infinite"></div>
+            <div style="font-size:.62rem;color:var(--text2)">Preparing</div>
+          </div>
+          <div style="text-align:center;z-index:1">
+            <div style="width:22px;height:22px;border-radius:50%;background:var(--bg3);border:2px solid var(--border2);margin:0 auto 5px"></div>
+            <div style="font-size:.62rem;color:var(--text2)">On the way</div>
+          </div>
+          <div style="text-align:center;z-index:1">
+            <div style="width:22px;height:22px;border-radius:50%;background:var(--bg3);border:2px solid var(--border2);margin:0 auto 5px"></div>
+            <div style="font-size:.62rem;color:var(--text2)">Delivered</div>
+          </div>
+        </div>
+        <button class="btn btn-primary w-full" onclick="closeCheckout();showPage('orders')">Track My Order</button>
+        <button class="btn btn-ghost w-full" style="margin-top:8px" onclick="closeCheckout()">Continue Browsing</button>
+      </div>
+
+      <!-- Dine-in success -->
+      <div id="success-dinein" style="display:none;text-align:center">
+        <div style="width:72px;height:72px;border-radius:50%;background:rgba(232,84,10,0.12);border:2px solid var(--purple);display:flex;align-items:center;justify-content:center;margin:0 auto 14px;font-size:2rem">🍽️</div>
+        <h3 style="font-weight:800;font-size:1.1rem;margin-bottom:6px">You're on the Waitlist!</h3>
+        <p class="caption" style="margin-bottom:12px">Order pre-paid · Table confirmed on arrival</p>
+        <div class="pill pill-gold" style="margin:0 auto 18px;width:fit-content">Position #<span id="wlSuccessPos"></span></div>
+
+        <!-- Live countdown -->
+        <div style="background:rgba(232,84,10,0.06);border:1px solid rgba(232,84,10,0.18);border-radius:var(--r-lg);padding:20px;margin-bottom:16px">
+          <div class="caption" style="margin-bottom:12px">Estimated time until your table</div>
+          <div class="wl-clock">
+            <div class="wl-clock-seg">
+              <div class="wl-clock-num" id="wlMins">25</div>
+              <div class="wl-clock-lbl">min</div>
+            </div>
+            <div class="wl-clock-sep">:</div>
+            <div class="wl-clock-seg">
+              <div class="wl-clock-num" id="wlSecs">00</div>
+              <div class="wl-clock-lbl">sec</div>
+            </div>
+          </div>
+          <div style="margin-top:14px;background:rgba(255,255,255,0.06);border-radius:var(--r-full);height:6px;overflow:hidden">
+            <div id="wlProgressBar" style="background:var(--grad);height:100%;border-radius:var(--r-full);width:0%;transition:width 1s linear"></div>
+          </div>
+          <div class="caption" style="margin-top:8px" id="wlPositionText"></div>
+        </div>
+
+        <p class="caption" style="margin-bottom:16px">We'll send you an alert <strong>3 min before</strong> your table is ready.<br>Track live progress in the <strong>Waitlists</strong> tab.</p>
+        <button class="btn btn-primary w-full" onclick="closeCheckout();showPage('waitlists')">View My Waitlist →</button>
+        <button class="btn btn-ghost w-full" style="margin-top:8px" onclick="closeCheckout()">Continue Browsing</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ORDER SUCCESS MODAL -->
+<div id="orderModal" class="modal-backdrop hidden">
+  <div class="modal" style="text-align:center">
+    <button class="modal-close" onclick="closeOrderModal()">✕</button>
+    <div style="width:64px;height:64px;border-radius:50%;background:rgba(16,185,129,0.15);border:2px solid var(--green);display:flex;align-items:center;justify-content:center;margin:0 auto 16px">
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+    </div>
+    <h3 class="subhead" style="margin-bottom:6px">Order Placed! 🎉</h3>
+    <p class="caption" style="margin-bottom:20px">Your order has been sent to the restaurant. Estimated ready time: <strong style="color:var(--text)">20-25 minutes</strong></p>
+    <div class="pill pill-green" style="margin:0 auto 12px;width:fit-content">Order #<span id="orderNum">1043</span></div>
+    <div id="orderDiscountNote" style="display:none;background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.2);border-radius:var(--r);padding:8px 14px;margin:0 auto 20px;font-size:.8rem;color:var(--gold)">✓ Live discount of 30% applied!</div>
+    <button class="btn btn-primary w-full" onclick="closeOrderModal();showPage('orders')">Track My Order</button>
+    <button class="btn btn-ghost w-full" style="margin-top:8px" onclick="closeOrderModal()">Continue Browsing</button>
+  </div>
+</div>
+
+<div id="toast-container"></div>
+
+<!-- IVS Player SDK -->
+<script src="https://player.live-video.net/1.24.0/amazon-ivs-player.min.js"></script>
+<!-- TensorFlow face blur for live viewer -->
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.10.0/dist/tf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/blazeface@0.0.7/dist/blazeface.js"></script>
+<script src="js/aws-config.js"></script>
+<script src="js/data.js?v=2"></script>
+<script>
+/* ── API helper ──────────────────────────────────────────────────────────────
+   When LH_CONFIG.api.baseUrl is set, fetch live data from the Lambda API.
+   Otherwise, fall back to APP (static mock data from data.js).
+   ──────────────────────────────────────────────────────────────────────── */
+const _API = (() => {
+  const base = ((window.LH_CONFIG || {}).api || {}).baseUrl || '';
+  const ready = base && !base.startsWith('REPLACE');
+  function token() {
+    try { return (JSON.parse(localStorage.getItem('lh_session') || '{}')).idToken || ''; } catch { return ''; }
+  }
+  async function get(path) {
+    if (!ready) return null;
+    const r = await fetch(base + path, { headers: { Authorization: token() } });
+    return r.ok ? r.json() : null;
+  }
+  async function post(path, body) {
+    if (!ready) return null;
+    const r = await fetch(base + path, { method:'POST', headers:{ 'Content-Type':'application/json', Authorization: token() }, body: JSON.stringify(body) });
+    return r.ok ? r.json() : null;
+  }
+  async function del(path) {
+    if (!ready) return null;
+    const r = await fetch(base + path, { method:'DELETE', headers:{ Authorization: token() } });
+    return r.ok ? r.json() : null;
+  }
+  return { ready, get, post, del };
+})();
+
+let currentRestaurantId = null;
+let liveInterval = null;
+let chatInterval = null;
+let liveSeconds = 0;
+let activeFilter = 'all';
+
+const chatNames = ['Ryan K.','Emily S.','Alex T.','Sophie M.','David P.','Rachel G.','Kevin L.','Amanda B.'];
+const chatLines = [
+  "What's today's special?","Looks amazing! 😍","Is the butter chicken spicy?",
+  "Table for 4 — joining waitlist now!","On my way! 🚗","How long is the wait?",
+  "Just ordered the Paneer Tikka!","Great ambiance ✨","The dal makhani looks incredible",
+  "Are you open on Sunday?","Can we do a birthday booking?","Just joined the waitlist!",
+  "The live stream quality is great 👏","Rush hour vibes!","Ordering from home — genius idea"
+];
+
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.app-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('page-'+name).classList.add('active');
+
+  const tabMap = {browse:0, orders:1, waitlists:2, profile:3};
+  const tabs = document.querySelectorAll('.app-tab');
+  if (tabMap[name] !== undefined) tabs[tabMap[name]].classList.add('active');
+
+  if (name === 'live') startLive();
+  else stopLive();
+
+  if (name === 'orders') renderOrders();
+  if (name === 'waitlists') renderWaitlists();
+}
+
+/* ── BROWSE ── */
+function renderRestaurants(list) {
+  const grid = document.getElementById('restaurantGrid');
+  grid.innerHTML = '';
+  list.forEach(r => {
+    const isLive = APP.liveSessions.some(s => s.restaurantId === r.id && s.status === 'live');
+    const col = ['#E8540A','#F59E0B','#22D3EE','#10B981','#F59E0B','#3B82F6'][Math.floor(Math.random()*6)];
+    grid.innerHTML += `
+      <div class="resto-card" onclick="openRestaurant('${r.id}')">
+        <div class="resto-thumb" style="background:linear-gradient(135deg,${col}22,${col}44)">
+          ${r.image ? `<img class="resto-thumb-img" src="${r.image}" alt="${r.name}" onerror="this.style.display='none'">` : ''}
+          <div class="resto-thumb-overlay"></div>
+          <div class="resto-badges">
+            ${isLive ? '<span class="live-badge">Live</span>' : ''}
+            ${r.isVeg ? '<span class="pill pill-green" style="font-size:.65rem;padding:3px 8px">🟢 Veg</span>' : ''}
+          </div>
+        </div>
+        <div class="resto-info">
+          <div class="resto-name">${r.name}</div>
+          <div class="resto-meta">
+            <span><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> ${r.cuisine}</span>
+            <span><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="10" r="3"/><path d="M12 21.7C17.3 17 20 13 20 10a8 8 0 1 0-16 0c0 3 2.7 6.9 8 11.7z"/></svg> ${r.distance} km</span>
+            <span style="color:var(--gold)">★ ${r.rating}</span>
+            <span class="${r.isOpen ? 'pill-green' : 'pill-red'}" style="font-size:.72rem;color:${r.isOpen ? 'var(--green)' : 'var(--red)'}">${r.isOpen ? 'Open' : 'Closed'}</span>
+          </div>
+          <div class="resto-actions">
+            <button class="btn btn-primary btn-sm" style="flex:1" onclick="event.stopPropagation();openRestaurant('${r.id}')">View Menu</button>
+            ${isLive ? `<button class="btn btn-danger btn-sm" onclick="event.stopPropagation();openLive('${r.id}')">Watch Live</button>` : ''}
+          </div>
+        </div>
+      </div>`;
+  });
+  if (!list.length) grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:48px;color:var(--text2)">No restaurants found matching your filters</div>';
+}
+
+function openRestaurant(id) {
+  currentRestaurantId = id;
+  const r = APP.getRestaurant(id) || APP.restaurants.find(x => String(x._id) === String(id) || String(x.id) === String(id));
+  if (!r) { APP.showToast('Restaurant not found', 'error'); return; }
+  document.getElementById('menuRestName').textContent = r.name;
+  document.getElementById('menuRestMeta').textContent =
+    [r.cuisine, r.city || r.address, r.hours, r.priceRange].filter(Boolean).join(' · ');
+  const isLive = APP.liveSessions.some(s => s.restaurantId === id && s.status === 'live');
+  document.getElementById('menuHeroBadges').innerHTML =
+    (isLive ? '<span class="live-badge">Live</span>' : '') +
+    (r.isVeg ? '<span class="pill pill-green" style="font-size:.72rem;padding:4px 10px">🟢 Pure Veg</span>' : '') +
+    `<span class="pill pill-dark" style="font-size:.72rem;padding:4px 10px">${r.cuisine || 'Restaurant'}</span>`;
+  if (r.image) {
+    document.getElementById('menuHero').style.background = `url('${r.image}') center/cover`;
+  } else {
+    const col = ['#E8540A','#F59E0B','#22D3EE','#10B981'][Math.floor(Math.random()*4)];
+    document.getElementById('menuHero').style.background = `linear-gradient(135deg,${col}33,#0f0f35)`;
+  }
+  renderMenuContent(r, []);
+  renderCart();
+  showPage('menu');
+
+  // Load live deals for this restaurant asynchronously
+  _API.get('/deals?restaurantId=' + (r.id || r._id)).then(deals => {
+    const active = (deals || []).filter(d => {
+      if (!d.active) return false;
+      if (d.expiresAt && new Date(d.expiresAt) < new Date()) return false;
+      return true;
+    });
+    renderMenuDeals(active);
+    renderMenuContent(r, active); // re-render menu with deal highlights
+  }).catch(() => {});
+}
+
+function renderMenuDeals(deals) {
+  const container = document.getElementById('menuDealsContainer');
+  if (!deals || !deals.length) { container.innerHTML = ''; return; }
+  container.innerHTML = deals.map(d => {
+    const scopeText = !d.appliesTo || d.appliesTo === 'all'
+      ? 'All items'
+      : (d.appliesToLabel || 'Selected items');
+    return `
+    <div class="menu-deal-banner" style="margin-bottom:10px;flex-direction:column;align-items:flex-start;gap:6px">
+      <div style="display:flex;align-items:center;gap:10px;width:100%">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="#F59E0B"><polygon points="12,2 15.1,8.3 22,9.3 17,14.1 18.2,21 12,17.8 5.8,21 7,14.1 2,9.3 8.9,8.3"/></svg>
+        <div style="flex:1">
+          <div style="font-size:.82rem;font-weight:700;color:var(--gold)">${d.title}${d.discount ? ' — ' + d.discount + '% off' : ''}</div>
+          ${d.desc ? `<div class="caption">${d.desc}</div>` : ''}
+        </div>
+        <div class="live-badge">Live</div>
+      </div>
+      <div style="font-size:.75rem;color:var(--text3);padding-left:28px">Applies to: <span style="color:var(--gold)">${scopeText}</span>${d.expiresAt ? ' · Ends ' + new Date(d.expiresAt).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}) : ''}</div>
+    </div>`;
+  }).join('');
+}
+
+let ivsPlayer = null;
+let ivsBlurModel = null;
+let ivsBlurInterval = null;
+
+async function openLive(id) {
+  currentRestaurantId = id;
+  const r = APP.getRestaurant(id) || APP.restaurants.find(x => String(x.id||x._id) === String(id));
+  if (!r) return;
+  document.getElementById('liveRestName').textContent = r.name;
+  document.getElementById('liveRestCuisine').textContent = [r.cuisine, r.city].filter(Boolean).join(' · ');
+  document.getElementById('wlModalRest').textContent = r.name;
+  showPage('live');
+
+  // Get live session for this restaurant
+  const sessions = await _API.get('/live/sessions').catch(() => []) || [];
+  const session = sessions.find(s => s.restaurantId === String(r.id || r._id));
+  const videoEl = document.getElementById('ivsPlayerVideo');
+
+  if (session && session.playbackUrl) {
+    document.getElementById('liveNoStream').style.display = 'none';
+    // Init IVS Player if available
+    if (typeof IVSPlayer !== 'undefined' && IVSPlayer.isPlayerSupported) {
+      if (ivsPlayer) { ivsPlayer.delete(); ivsPlayer = null; }
+      ivsPlayer = IVSPlayer.create();
+      ivsPlayer.attachHTMLVideoElement(videoEl);
+      ivsPlayer.load(session.playbackUrl);
+      ivsPlayer.play();
+      ivsPlayer.addEventListener(IVSPlayer.PlayerEventType.ERROR, () => {
+        document.getElementById('liveNoStream').style.display = 'flex';
+      });
+    } else {
+      // Fallback: try native HLS
+      videoEl.src = session.playbackUrl;
+      videoEl.play().catch(() => {});
+    }
+    // Start face blur on player output
+    startViewerFaceBlur(videoEl);
+  } else {
+    videoEl.src = '';
+    document.getElementById('liveNoStream').style.display = 'flex';
+  }
+}
+
+async function startViewerFaceBlur(videoEl) {
+  if (ivsBlurInterval) clearInterval(ivsBlurInterval);
+  const canvas = document.getElementById('ivsBlurCanvas');
+  const ctx    = canvas.getContext('2d');
+  try {
+    if (!ivsBlurModel) ivsBlurModel = await blazeface.load();
+    canvas.style.display = 'block';
+    ivsBlurInterval = setInterval(async () => {
+      if (videoEl.readyState < 2) return;
+      canvas.width  = videoEl.videoWidth  || canvas.clientWidth;
+      canvas.height = videoEl.videoHeight || canvas.clientHeight;
+      ctx.drawImage(videoEl, 0, 0, canvas.width, canvas.height);
+      const preds = await ivsBlurModel.estimateFaces(videoEl, false).catch(() => []);
+      preds.forEach(p => {
+        const [x1,y1] = p.topLeft, [x2,y2] = p.bottomRight;
+        ctx.save();
+        ctx.filter = 'blur(20px)';
+        ctx.drawImage(videoEl, x1-8, y1-8, x2-x1+16, y2-y1+16, x1-8, y1-8, x2-x1+16, y2-y1+16);
+        ctx.restore();
+      });
+    }, 250);
+  } catch(e) { canvas.style.display = 'none'; }
+}
+
+function renderMenuContent(r, deals) {
+  const content = document.getElementById('menuContent');
+  const menu = Array.isArray(r.menu) ? r.menu : [];
+  if (!menu.length) {
+    content.innerHTML = `<div style="text-align:center;padding:60px 20px;color:var(--text2)">
+      <div style="font-size:2.5rem;margin-bottom:14px">🍽️</div>
+      <div style="font-weight:600;font-size:1.05rem;margin-bottom:6px">Menu coming soon</div>
+      <div style="font-size:.85rem">${r.name} hasn't added their menu yet. Check back later!</div>
+    </div>`;
+    return;
+  }
+
+  // Build a map of itemId → best deal discount for highlighting
+  const activeDeal = (deals || []);
+  function getDealForItem(itemId, catIndex) {
+    for (const d of activeDeal) {
+      if (!d.discount) continue;
+      if (!d.appliesTo || d.appliesTo === 'all') return d;
+      if (typeof d.appliesTo === 'object') {
+        if (d.appliesTo.type === 'category' && d.appliesTo.categoryIndex === catIndex) return d;
+        if (d.appliesTo.type === 'items' && (d.appliesTo.itemIds || []).includes(String(itemId))) return d;
+      }
+    }
+    return null;
+  }
+
+  content.innerHTML = menu.map((cat, ci) => `
+    <div class="menu-category-title">${cat.category || 'Menu'}</div>
+    ${(cat.items || []).map(item => {
+      const deal = getDealForItem(item.id, ci);
+      const discountedPrice = deal ? (item.price * (1 - deal.discount / 100)).toFixed(2) : null;
+      const dealTag = deal ? `<span style="background:rgba(245,158,11,0.15);border:1px solid rgba(245,158,11,0.3);border-radius:4px;padding:2px 7px;font-size:.72rem;color:var(--gold);font-weight:700;margin-left:6px">${deal.discount}% off</span>` : '';
+      const priceHtml = deal
+        ? `<span style="text-decoration:line-through;color:var(--text3);font-size:.85rem;margin-right:6px">$${item.price}</span><span style="color:var(--gold);font-weight:700">$${discountedPrice}</span>`
+        : `$${item.price}`;
+      const photoHtml = item.photo
+        ? `<img src="${item.photo}" style="width:56px;height:56px;border-radius:8px;object-fit:cover;flex-shrink:0" loading="lazy">`
+        : '';
+      return `
+      <div class="menu-item${deal ? ' deal-item' : ''}" id="item-${item.id}">
+        ${photoHtml}
+        <div class="menu-item-info" style="flex:1;min-width:0">
+          <div class="menu-item-name">${item.name} ${item.veg ? '🟢' : '🔴'}${dealTag}</div>
+          <div class="menu-item-desc">${item.desc || 'Freshly prepared'}</div>
+          <div class="menu-item-price">${priceHtml}</div>
+        </div>
+        <div class="qty-control">
+          <div class="qty-btn" onclick="changeQty('${item.id}',-1,'${r.id}',${discountedPrice||item.price},'${item.name}')">−</div>
+          <div class="qty-num" id="qty-${item.id}">0</div>
+          <div class="qty-btn" onclick="changeQty('${item.id}',1,'${r.id}',${discountedPrice||item.price},'${item.name}')">+</div>
+        </div>
+      </div>`;
+    }).join('')}
+  `).join('');
+}
+
+function changeQty(itemId, delta, restId, price, name) {
+  if (delta > 0) APP.addToCart({id:itemId, name, price}, restId);
+  else APP.removeFromCart(itemId);
+  const inCart = APP.cart.filter(c => c.id === itemId).length;
+  const el = document.getElementById('qty-'+itemId);
+  if (el) el.textContent = inCart;
+  renderCart();
+}
+
+/* ── Promo Codes ── */
+let appliedPromo = null; // { code, discount, type, id, desc }
+
+async function applyPromo() {
+  const code  = (document.getElementById('promoCodeInput').value || '').trim().toUpperCase();
+  const errEl = document.getElementById('promoError');
+  const bannerEl = document.getElementById('promoAppliedBanner');
+  errEl.style.display = 'none';
+  if (!code) return;
+  try {
+    const res = await _API.get('/promos?code=' + encodeURIComponent(code));
+    if (res && res.valid) {
+      appliedPromo = { ...res, code };
+      bannerEl.style.display = 'flex';
+      document.getElementById('promoAppliedLabel').textContent =
+        `✅ ${code} — ${res.type==='flat'?'$'+res.discount+' off':res.discount+'% off'} applied!`;
+      document.getElementById('promoInputRow').style.display = 'none';
+      APP.showToast('Promo applied!', 'success');
+      renderCart();
+    }
+  } catch(e) {
+    errEl.textContent = e.message || 'Invalid promo code';
+    errEl.style.display = 'block';
+  }
+}
+
+function removePromo() {
+  appliedPromo = null;
+  document.getElementById('promoAppliedBanner').style.display = 'none';
+  document.getElementById('promoInputRow').style.display = 'flex';
+  document.getElementById('promoCodeInput').value = '';
+  renderCart();
+}
+
+function closeOrderModal() {
+  const modal = document.getElementById('orderModal');
+  modal.classList.add('hidden');
+  document.body.classList.remove('no-scroll');
+}
+
+function renderCart() {
+  const cartItems = document.getElementById('cartItems');
+  const cartSummary = document.getElementById('cartSummary');
+  const countBadge = document.getElementById('cartCountBadge');
+  countBadge.textContent = APP.cartCount();
+  if (!APP.cart.length) {
+    cartItems.innerHTML = '<div class="cart-empty">Your cart is empty.<br>Add items from the menu!</div>';
+    cartSummary.style.display = 'none';
+    document.getElementById('cartCount').textContent = '';
+    return;
+  }
+  const grouped = {};
+  APP.cart.forEach(i => { if (!grouped[i.id]) grouped[i.id] = {name:i.name,price:i.price,qty:0}; grouped[i.id].qty++; });
+  cartItems.innerHTML = Object.values(grouped).map(i =>
+    `<div class="cart-item"><span>${i.name} ×${i.qty}</span><span style="font-weight:600">$${i.price*i.qty}</span></div>`
+  ).join('');
+  const sub = APP.cartTotal();
+  const disc = appliedPromo ? (appliedPromo.type==='flat' ? appliedPromo.discount : Math.round(sub * appliedPromo.discount / 100)) : 0;
+  document.getElementById('cartSubtotal').textContent = '$'+sub;
+  const discRow = document.getElementById('discountRow');
+  if (disc > 0) {
+    discRow.style.display = 'flex';
+    document.getElementById('cartDiscount').textContent = '-$'+disc;
+  } else {
+    discRow.style.display = 'none';
+  }
+  document.getElementById('cartTotalDisp').textContent = '$'+(sub-disc);
+  document.getElementById('cartCount').textContent = `(${APP.cartCount()} items)`;
+  cartSummary.style.display = 'block';
+}
+
+/* ═══════════════════════════════════
+   CHECKOUT FLOW
+═══════════════════════════════════ */
+let selectedOrderType = null;
+let wlCountdownInterval = null;
+let wlTotalSecs = 0;
+
+function openCheckout() {
+  if (!APP.cart.length) { APP.showToast('Add items to your cart first!', 'error'); return; }
+  // Reset state
+  selectedOrderType = null;
+  ['ot-dinein','ot-delivery'].forEach(id => document.getElementById(id).classList.remove('selected'));
+  document.getElementById('delivery-addr-wrap').style.display = 'none';
+  document.getElementById('dinein-info-wrap').style.display = 'none';
+  document.getElementById('stepTypeNext').disabled = true;
+  document.getElementById('stepTypeNext').style.opacity = '.4';
+  // Reset payment fields
+  ['cardName','cardNum','cardExp','cardCvv'].forEach(id => { const el = document.getElementById(id); if(el) el.value = ''; });
+  document.getElementById('cardBrandIcon').textContent = '💳';
+  document.getElementById('payProgress').style.width = '0%';
+  document.getElementById('payProgress').style.transition = 'none';
+  document.getElementById('payBtnLabel').innerHTML = 'Pay <span id="payAmountLabel"></span>';
+  document.getElementById('payBtn').disabled = false;
+  goToStep('type');
+  document.getElementById('checkoutModal').classList.remove('hidden');
+  document.body.classList.add('no-scroll');
+}
+
+function closeCheckout() {
+  document.getElementById('checkoutModal').classList.add('hidden');
+  document.body.classList.remove('no-scroll');
+}
+
+function goToStep(step) {
+  document.querySelectorAll('.checkout-step').forEach(s => s.classList.remove('active'));
+  document.getElementById('step-'+step).classList.add('active');
+}
+
+function selectOrderType(type) {
+  selectedOrderType = type;
+  document.getElementById('ot-dinein').classList.toggle('selected', type === 'dinein');
+  document.getElementById('ot-delivery').classList.toggle('selected', type === 'delivery');
+  document.getElementById('delivery-addr-wrap').style.display = type === 'delivery' ? 'block' : 'none';
+  document.getElementById('dinein-info-wrap').style.display = type === 'dinein' ? 'block' : 'none';
+  const btn = document.getElementById('stepTypeNext');
+  btn.disabled = false;
+  btn.style.opacity = '1';
+}
+
+function goToPayment() {
+  if (!selectedOrderType) return;
+  const sub = APP.cartTotal();
+  const disc = appliedPromo ? (appliedPromo.type==='flat' ? appliedPromo.discount : Math.round(sub * appliedPromo.discount / 100)) : 0;
+  const total = sub - disc;
+
+  // Build item list
+  document.getElementById('checkoutItemList').innerHTML =
+    APP.cart.map(i => `<div style="display:flex;justify-content:space-between"><span>${i.name} ×${i.qty}</span><span>$${(i.price*i.qty).toFixed(2)}</span></div>`).join('') +
+    (appliedPromo && disc > 0 ? `<div style="display:flex;justify-content:space-between;color:var(--green);font-size:.82rem"><span>Promo: ${appliedPromo.code}</span><span>-$${disc.toFixed(2)}</span></div>` : '');
+
+  document.getElementById('checkoutTotal').textContent = '$' + total.toFixed(2);
+  document.getElementById('payAmountLabel').textContent = '$' + total.toFixed(2);
+  document.getElementById('checkoutTypeTag').textContent =
+    selectedOrderType === 'dinein'
+      ? '🍽️ Dine In · ' + (document.getElementById('tableSize').value)
+      : '🛵 Delivery · ' + (document.getElementById('deliveryAddress').value || 'Address TBD');
+  document.getElementById('payStepSubtitle').textContent =
+    selectedOrderType === 'dinein' ? '🍽️ Dine In' : '🛵 Delivery';
+  goToStep('payment');
+}
+
+function fmtCard(el) {
+  let v = el.value.replace(/\D/g,'').substring(0,16);
+  el.value = v.replace(/(.{4})/g,'$1 ').trim();
+  const icon = document.getElementById('cardBrandIcon');
+  if (v.startsWith('4')) icon.textContent = 'VISA';
+  else if (/^5[1-5]/.test(v)) icon.textContent = 'MC';
+  else if (/^3[47]/.test(v)) icon.textContent = 'AMEX';
+  else icon.textContent = '💳';
+}
+
+function fmtExp(el) {
+  let v = el.value.replace(/\D/g,'').substring(0,4);
+  if (v.length >= 3) v = v.substring(0,2) + ' / ' + v.substring(2);
+  el.value = v;
+}
+
+function processPayment() {
+  const name = document.getElementById('cardName').value.trim();
+  const num  = document.getElementById('cardNum').value.replace(/\s/g,'');
+  const exp  = document.getElementById('cardExp').value.trim();
+  const cvv  = document.getElementById('cardCvv').value.trim();
+  if (!name)          { APP.showToast('Enter name on card', 'error'); return; }
+  if (num.length < 15){ APP.showToast('Enter a valid card number', 'error'); return; }
+  if (!exp)           { APP.showToast('Enter expiry date', 'error'); return; }
+  if (!cvv)           { APP.showToast('Enter CVV', 'error'); return; }
+
+  const btn = document.getElementById('payBtn');
+  btn.disabled = true;
+  document.getElementById('payBtnLabel').innerHTML = '<span style="position:relative;z-index:1">Processing…</span>';
+  const prog = document.getElementById('payProgress');
+  prog.style.transition = 'width 2s linear';
+  prog.style.width = '100%';
+
+  setTimeout(() => {
+    const sub   = APP.cartTotal();
+    const disc  = liveDiscountApplied ? Math.round(sub * 0.3) : 0;
+    const total = sub - disc;
+    const num2  = 1043 + Math.floor(Math.random()*900);
+    const now   = new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+
+    const orderDoc = {
+      id: 'ord-'+num2,
+      restaurantId: currentRestaurantId,
+      items: [...APP.cart],
+      status: 'placed',
+      total: total,
+      type: selectedOrderType,
+      time: now
+    };
+    APP.orders.unshift(orderDoc);
+    _API.post('/orders', orderDoc).catch(() => {});
+
+    if (selectedOrderType === 'delivery') {
+      document.getElementById('deliveryOrderNum').textContent = num2;
+      document.getElementById('deliveryDiscountNote').style.display = (appliedPromo && disc > 0) ? 'block' : 'none';
+      document.getElementById('success-delivery').style.display = 'block';
+      document.getElementById('success-dinein').style.display   = 'none';
+    } else {
+      // Dine-in — add to waitlist + start countdown
+      const waitMins = 25;
+      wlTotalSecs = waitMins * 60;
+      const pos = APP.waitlist.length + 6;
+      document.getElementById('wlSuccessPos').textContent    = pos;
+      document.getElementById('wlPositionText').textContent  = (pos - 1) + ' parties ahead of you';
+      document.getElementById('success-delivery').style.display = 'none';
+      document.getElementById('success-dinein').style.display   = 'block';
+      startWlCountdown();
+      const wlDoc = {
+        restaurantId: currentRestaurantId,
+        guests: document.getElementById('tableSize').value,
+        name: document.getElementById('dineinName').value || 'You',
+        position: pos,
+        waitSecs: wlTotalSecs,
+        joinedAt: now,
+        startedAt: Date.now(),
+        estimatedWait: waitMins + ' min'
+      };
+      APP.waitlist.unshift(wlDoc);
+      _API.post('/waitlist', wlDoc).then(r => { if (r && r.id) wlDoc._apiId = r.id; }).catch(() => {});
+    }
+
+    goToStep('success');
+    APP.cart = [];
+    removePromo();
+    renderCart();
+    btn.disabled = false;
+  }, 2000);
+}
+
+function startWlCountdown() {
+  if (wlCountdownInterval) clearInterval(wlCountdownInterval);
+  let remaining = wlTotalSecs;
+  const mEl  = document.getElementById('wlMins');
+  const sEl  = document.getElementById('wlSecs');
+  const barEl = document.getElementById('wlProgressBar');
+  function tick() {
+    if (remaining <= 0) {
+      clearInterval(wlCountdownInterval);
+      APP.showToast("🎉 Your table is ready! Head to the host.", 'success', 8000);
+      return;
+    }
+    remaining--;
+    if (mEl) mEl.textContent = String(Math.floor(remaining/60)).padStart(2,'0');
+    if (sEl) sEl.textContent = String(remaining%60).padStart(2,'0');
+    const pct = ((wlTotalSecs - remaining) / wlTotalSecs) * 100;
+    if (barEl) barEl.style.width = pct + '%';
+  }
+  tick();
+  wlCountdownInterval = setInterval(tick, 1000);
+}
+
+/* Keep old placeOrder as alias (no longer called from UI) */
+function placeOrder() { openCheckout(); }
+
+/* ── FILTERS ── */
+function setFilter(filter, el) {
+  document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  activeFilter = filter;
+  applyFilters();
+}
+function filterRestaurants(q) { applyFilters(q); }
+function sortRestaurants(by) { applyFilters(undefined, by); }
+
+function injectCuisineChips(restaurants) {
+  const wrap = document.getElementById('filterChips');
+  if (!wrap) return;
+  // Remove any previously injected cuisine chips (has data-cuisine attr)
+  wrap.querySelectorAll('[data-cuisine]').forEach(el => el.remove());
+  // Collect unique cuisines
+  const cuisines = [...new Set(
+    restaurants
+      .map(r => (r.cuisine || '').trim())
+      .filter(c => c && c.toLowerCase() !== 'restaurant')
+  )].sort();
+  cuisines.forEach(c => {
+    const chip = document.createElement('div');
+    chip.className = 'chip';
+    chip.setAttribute('data-cuisine', c);
+    chip.textContent = c;
+    chip.onclick = function() { setFilter(c, chip); };
+    wrap.appendChild(chip);
+  });
+}
+
+function applyFilters(q, sortBy) {
+  let list = [...APP.restaurants];
+  const query = q || document.querySelector('.search-input').value;
+  if (query) list = list.filter(r => r.name.toLowerCase().includes(query.toLowerCase()) || (r.cuisine||'').toLowerCase().includes(query.toLowerCase()));
+  if (activeFilter === 'live') list = list.filter(r => APP.liveSessions.some(s => s.restaurantId === r.id && s.status === 'live'));
+  else if (activeFilter === 'veg') list = list.filter(r => r.isVeg);
+  else if (activeFilter === 'open') list = list.filter(r => r.isOpen);
+  else if (activeFilter !== 'all') list = list.filter(r => (r.cuisine||'').toLowerCase() === activeFilter.toLowerCase());
+  const sort = sortBy || 'default';
+  if (sort === 'rating') list.sort((a,b) => b.rating - a.rating);
+  else if (sort === 'distance') list.sort((a,b) => a.distance - b.distance);
+  else if (sort === 'live') list.sort((a,b) => {
+    const la = APP.liveSessions.some(s=>s.restaurantId===a.id&&s.status==='live');
+    const lb = APP.liveSessions.some(s=>s.restaurantId===b.id&&s.status==='live');
+    return lb-la;
+  });
+  renderRestaurants(list);
+}
+
+/* ── LIVE ── */
+function startLive() {
+  liveSeconds = 0;
+  let viewers = 300 + Math.floor(Math.random()*200);
+  document.getElementById('liveViewers').textContent = viewers;
+  liveInterval = setInterval(() => {
+    liveSeconds++;
+    const m = String(Math.floor(liveSeconds/60)).padStart(2,'0');
+    const s = String(liveSeconds%60).padStart(2,'0');
+    document.getElementById('liveDuration').textContent = m+':'+s;
+    viewers += Math.floor(Math.random()*6) - 2;
+    if (viewers < 100) viewers = 100;
+    document.getElementById('liveViewers').textContent = viewers;
+  }, 1000);
+
+  const chat = document.getElementById('chatMessages');
+  chat.innerHTML = '';
+  let chatters = 0;
+  chatInterval = setInterval(() => {
+    const name = chatNames[Math.floor(Math.random()*chatNames.length)];
+    const msg = chatLines[Math.floor(Math.random()*chatLines.length)];
+    const colors = ['#F4844A','#F472B6','#22D3EE','#34D399','#FBBF24'];
+    const col = colors[Math.floor(Math.random()*colors.length)];
+    const div = document.createElement('div');
+    div.className = 'chat-msg';
+    div.innerHTML = `<div class="chat-msg-name" style="color:${col}">${name}</div>${msg}`;
+    chat.appendChild(div);
+    chat.scrollTop = chat.scrollHeight;
+    chatters = Math.min(chatters+1, 38);
+    document.getElementById('chatCount').textContent = chatters + ' chatting';
+    if (chat.children.length > 40) chat.removeChild(chat.firstChild);
+  }, 1800);
+}
+
+function stopLive() {
+  clearInterval(liveInterval);
+  clearInterval(chatInterval);
+}
+
+function sendChat() {
+  const input = document.getElementById('chatInput');
+  const val = input.value.trim();
+  if (!val) return;
+  const chat = document.getElementById('chatMessages');
+  const div = document.createElement('div');
+  div.className = 'chat-msg';
+  div.style.background = 'rgba(232,84,10,0.1)';
+  div.style.borderLeft = '2px solid var(--purple)';
+  div.innerHTML = `<div class="chat-msg-name" style="color:var(--purple-l)">You</div>${val}`;
+  chat.appendChild(div);
+  chat.scrollTop = chat.scrollHeight;
+  input.value = '';
+}
+
+/* ── ORDERS ── */
+function renderOrders() {
+  const list = document.getElementById('ordersList');
+  const statuses = ['placed','preparing','out_for_delivery','delivered'];
+  const labels = ['Order Placed','Preparing','Out for Delivery','Delivered'];
+  list.innerHTML = APP.orders.slice(0,5).map(o => {
+    const r = APP.getRestaurant(o.restaurantId);
+    const si = statuses.indexOf(o.status);
+    return `
+      <div class="order-card">
+        <div class="order-header">
+          <div>
+            <div style="font-weight:700;font-size:.95rem">${r ? r.name : 'Restaurant'}</div>
+            <div class="caption">${o.items.length} items · $${o.total}</div>
+          </div>
+          <span class="pill ${o.status==='delivered'?'pill-green':o.status==='placed'?'pill-gold':'pill-blue'}" style="font-size:.72rem">
+            ${o.status.replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase())}
+          </span>
+        </div>
+        <div style="font-size:.82rem;color:var(--text2);margin-bottom:12px">
+          ${o.items.slice(0,3).map(i=>i.name).join(', ')}${o.items.length>3?'...':''}
+        </div>
+        <div class="order-timeline">
+          ${statuses.map((s,i) => `
+            <div class="tl-step ${i<=si?'done':''} ${i===si?'active':''}">
+              <div class="tl-dot">
+                ${i<=si ? '<svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M3 8l3 3 7-7" stroke="#10B981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>' : ''}
+              </div>
+              <div class="tl-label">${labels[i].replace(' ','\n')}</div>
+            </div>
+          `).join('')}
+        </div>
+      </div>`;
+  }).join('') || '<div class="card" style="text-align:center;padding:40px;color:var(--text2)">No orders yet. <a href="#" onclick="showPage(\'browse\')">Browse restaurants →</a></div>';
+}
+
+/* ── WAITLISTS ── */
+function openWaitlistModal() { document.getElementById('waitlistModal').classList.remove('hidden'); }
+function closeWaitlistModal() { document.getElementById('waitlistModal').classList.add('hidden'); }
+function joinWaitlist(e) {
+  e.preventDefault();
+  closeWaitlistModal();
+  APP.showToast('Joined waitlist! You\'ll get an SMS when ready.', 'success', 4000);
+  renderWaitlists();
+}
+function renderWaitlists() {
+  const c = document.getElementById('waitlistContent');
+  if (!APP.waitlist.length) {
+    c.innerHTML = '<div class="card" style="text-align:center;padding:40px;color:var(--text2)">You haven\'t joined any waitlists yet.<br><br><a href="#" onclick="showPage(\'browse\')" style="color:var(--purple-l)">Browse restaurants →</a></div>';
+    return;
+  }
+  c.innerHTML = APP.waitlist.slice(0,5).map((w,i) => {
+    const r = APP.getRestaurant(w.restaurantId);
+    const pos = w.position || (i + 1);
+    const waitSecs = w.waitSecs || 1500;
+    const elapsed = Math.round((Date.now() - (w.startedAt || Date.now())) / 1000);
+    const remaining = Math.max(0, waitSecs - elapsed);
+    const pct = Math.min(100, ((waitSecs - remaining) / waitSecs) * 100);
+    const remMins = Math.floor(remaining / 60);
+    const remSecs = remaining % 60;
+    // Store start time on first render
+    if (!w.startedAt) w.startedAt = Date.now();
+    return `
+      <div class="waitlist-card" style="margin-bottom:16px" id="wl-card-${i}">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+          <div>
+            <div style="font-weight:700;font-size:.95rem">${r ? r.name : 'Restaurant'}</div>
+            <div class="caption">${w.guests} · ${w.name ? w.name + ' · ' : ''}Joined ${w.joinedAt || 'just now'}</div>
+          </div>
+          <span class="pill ${pos===1?'pill-green':'pill-gold'}" style="font-size:.72rem;padding:3px 10px">#${pos} in queue</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:16px">
+          <div class="wl-position" style="font-size:1.6rem">${pos}</div>
+          <div style="flex:1">
+            <div class="caption" style="margin-bottom:6px">Time remaining</div>
+            <div style="display:flex;align-items:baseline;gap:4px">
+              <span style="font-size:1.6rem;font-weight:900;font-variant-numeric:tabular-nums;color:${remaining<300?'var(--red)':remaining<600?'var(--gold)':'var(--green)'}" id="wl-time-${i}">${String(remMins).padStart(2,'0')}:${String(remSecs).padStart(2,'0')}</span>
+              <span class="caption">remaining</span>
+            </div>
+            <div style="margin-top:8px;background:rgba(255,255,255,0.06);border-radius:var(--r-full);height:6px;overflow:hidden">
+              <div id="wl-bar-${i}" style="background:var(--grad);height:100%;border-radius:var(--r-full);width:${pct}%;transition:width 1s linear"></div>
+            </div>
+          </div>
+        </div>
+        <div style="display:flex;gap:10px;margin-top:14px;flex-wrap:wrap">
+          <button class="btn btn-secondary btn-sm" onclick="APP.showToast('Restaurant has been notified 👋','success')">Notify I\'m Here</button>
+          <button class="btn btn-ghost btn-sm" style="color:var(--red)" onclick="leaveWaitlist(${i})">Leave Queue</button>
+        </div>
+      </div>`;
+  }).join('');
+
+  // Start per-entry countdown tickers
+  APP.waitlist.slice(0,5).forEach((w, i) => {
+    if (!w.startedAt) w.startedAt = Date.now();
+    if (w._tickerSet) return;
+    w._tickerSet = true;
+    const timer = setInterval(() => {
+      const elapsed2 = Math.round((Date.now() - w.startedAt) / 1000);
+      const rem2 = Math.max(0, (w.waitSecs || 1500) - elapsed2);
+      const m = String(Math.floor(rem2/60)).padStart(2,'0');
+      const s = String(rem2%60).padStart(2,'0');
+      const el = document.getElementById('wl-time-'+i);
+      const bar = document.getElementById('wl-bar-'+i);
+      if (!el) { clearInterval(timer); w._tickerSet = false; return; }
+      el.textContent = m + ':' + s;
+      el.style.color = rem2 < 300 ? 'var(--red)' : rem2 < 600 ? 'var(--gold)' : 'var(--green)';
+      const pct2 = Math.min(100, (((w.waitSecs||1500) - rem2) / (w.waitSecs||1500)) * 100);
+      if (bar) bar.style.width = pct2 + '%';
+      if (rem2 <= 0) {
+        clearInterval(timer);
+        APP.showToast('🎉 Your table at ' + (APP.getRestaurant(w.restaurantId)||{name:'the restaurant'}).name + ' is ready!', 'success', 8000);
+      }
+    }, 1000);
+  });
+}
+
+function leaveWaitlist(i) {
+  const w = APP.waitlist[i];
+  if (w && w._tickerSet) { w._tickerSet = false; }
+  if (w && w._apiId) { _API.del('/waitlist/' + w._apiId).catch(() => {}); }
+  APP.waitlist.splice(i, 1);
+  renderWaitlists();
+  APP.showToast('You\'ve left the waitlist', 'info');
+}
+
+/* ── INIT ── */
+(async () => {
+  const grid = document.getElementById('restaurantGrid');
+
+  if (!_API.ready) {
+    grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:60px 20px;color:var(--text2)"><div style="font-size:2rem;margin-bottom:12px">⚙️</div><div style="font-weight:600;margin-bottom:6px">API not configured</div><div style="font-size:.85rem">Fill in js/aws-config.js with your API Gateway URL.</div></div>';
+    return;
+  }
+
+  // Show loading state
+  grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:60px 20px;color:var(--text2)"><div style="font-size:1.5rem;margin-bottom:8px">⏳</div>Loading restaurants…</div>';
+
+  try {
+    const [restaurants, orders] = await Promise.all([
+      _API.get('/restaurants'),
+      _API.get('/orders'),
+    ]);
+
+    APP.restaurants = restaurants || [];
+    APP.orders      = orders      || [];
+
+    const wl = await _API.get('/waitlist');
+    APP.waitlist = wl || [];
+
+  } catch(e) {
+    grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:60px 20px;color:var(--red)"><div style="font-size:2rem;margin-bottom:12px">⚠️</div><div style="font-weight:600">Could not load restaurants</div><div style="font-size:.85rem;margin-top:6px">Check your internet connection and try again.</div><button class="btn btn-primary btn-sm" style="margin-top:16px" onclick="location.reload()">Retry</button></div>';
+    return;
+  }
+
+  renderRestaurants(APP.restaurants);
+  injectCuisineChips(APP.restaurants);
+
+  // Poll for new restaurants every 60 seconds
+  setInterval(async () => {
+    const fresh = await _API.get('/restaurants').catch(() => null);
+    if (fresh && fresh.length) {
+      APP.restaurants = fresh;
+      renderRestaurants(APP.restaurants);
+    }
+  }, 60000);
+
+  // ── Service Worker + Push Notifications ──────────────────────────────
+  if ('serviceWorker' in navigator && 'PushManager' in window) {
+    try {
+      const reg = await navigator.serviceWorker.register('/sw.js');
+      // Ask the API for the VAPID public key
+      const subInfo = await _API.post('/push/subscribe', { subscription: { endpoint: '__probe__' } }).catch(() => null);
+      const vapidKey = (subInfo || {}).publicKey || '';
+      if (vapidKey) {
+        let sub = await reg.pushManager.getSubscription();
+        if (!sub) {
+          const perm = await Notification.requestPermission();
+          if (perm === 'granted') {
+            sub = await reg.pushManager.subscribe({
+              userVisibleOnly: true,
+              applicationServerKey: urlBase64ToUint8Array(vapidKey),
+            });
+          }
+        }
+        if (sub) {
+          // Get location for radius filtering
+          const loc = await new Promise(res => {
+            navigator.geolocation.getCurrentPosition(
+              p => res({ lat: p.coords.latitude, lng: p.coords.longitude }),
+              () => res({}), { timeout: 5000 }
+            );
+          }).catch(() => ({}));
+          await _API.post('/push/subscribe', { subscription: sub.toJSON(), ...loc });
+        }
+      }
+    } catch(e) { console.log('Push setup failed:', e.message); }
+  }
+
+  // Handle push notification tap → open live page
+  navigator.serviceWorker && navigator.serviceWorker.addEventListener('message', e => {
+    if (e.data && e.data.type === 'OPEN_LIVE') openLive(e.data.restaurantId);
+  });
+})();
+
+function urlBase64ToUint8Array(base64String) {
+  const pad = '='.repeat((4 - base64String.length % 4) % 4);
+  const base64 = (base64String + pad).replace(/-/g, '+').replace(/_/g, '/');
+  const raw = atob(base64);
+  return Uint8Array.from([...raw].map(c => c.charCodeAt(0)));
+}
+</script>
+<script src="js/theme.js"></script>
+
+<!-- Mobile bottom navigation -->
+<nav class="mobile-bottom-nav" id="mobileBottomNav">
+  <div class="mob-tab active" id="mobtab-browse" onclick="showPage('browse');setMobTab('browse')">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+    Browse
+  </div>
+  <div class="mob-tab" id="mobtab-orders" onclick="showPage('orders');setMobTab('orders')">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+    Orders
+  </div>
+  <div class="mob-tab" id="mobtab-waitlists" onclick="showPage('waitlists');setMobTab('waitlists')">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+    Waitlist
+  </div>
+  <div class="mob-tab" id="mobtab-profile" onclick="showPage('profile');setMobTab('profile')">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+    Profile
+  </div>
+  <div class="mob-tab" onclick="location.href='auth.html'">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+    Sign Out
+  </div>
+</nav>
+<script>
+function setMobTab(name) {
+  document.querySelectorAll('.mob-tab').forEach(t => t.classList.remove('active'));
+  const el = document.getElementById('mobtab-'+name);
+  if (el) el.classList.add('active');
+}
+</script>
+<script>if("serviceWorker"in navigator){navigator.serviceWorker.register("/service-worker.js").then(()=>console.log("SW registered")).catch(e=>console.warn("SW error",e));}</script>
+</body>
+</html>
