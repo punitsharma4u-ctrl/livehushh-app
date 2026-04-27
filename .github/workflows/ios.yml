@@ -49,7 +49,23 @@ jobs:
       - name: Install Fastlane
         run: gem install fastlane --no-document
 
-      # ── 7. Patch Xcode project signing ────────────────────────────────────
+      # ── 7. Patch Info.plist privacy strings (after cap sync) ──────────────
+      - name: Add privacy purpose strings to Info.plist
+        run: |
+          INFO_PLIST="ios/App/App/Info.plist"
+          add_or_set() {
+            /usr/libexec/PlistBuddy -c "Add :$1 string '$2'" "$INFO_PLIST" 2>/dev/null || \
+            /usr/libexec/PlistBuddy -c "Set :$1 '$2'" "$INFO_PLIST"
+          }
+          add_or_set NSCameraUsageDescription "LiveHushh needs camera access to let you take photos and videos."
+          add_or_set NSPhotoLibraryUsageDescription "LiveHushh needs photo library access to let you select photos."
+          add_or_set NSPhotoLibraryAddUsageDescription "LiveHushh needs permission to save photos to your library."
+          add_or_set NSLocationWhenInUseUsageDescription "LiveHushh needs your location to show relevant local content."
+          add_or_set NSLocationAlwaysAndWhenInUseUsageDescription "LiveHushh needs your location to show relevant local content."
+          add_or_set NSMicrophoneUsageDescription "LiveHushh needs microphone access to record audio with videos."
+          echo "✅ Privacy strings applied to Info.plist"
+
+      # ── 8. Patch Xcode project signing ────────────────────────────────────
       - name: Set Xcode signing settings
         run: node scripts/fix-signing.js
 
