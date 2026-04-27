@@ -49,33 +49,9 @@ jobs:
       - name: Install Fastlane
         run: gem install fastlane --no-document
 
-      # ── 7. Patch Xcode project signing via xcodeproj gem ──────────────────
+      # ── 7. Patch Xcode project signing ────────────────────────────────────
       - name: Set Xcode signing settings
-        run: |
-          gem install xcodeproj --no-document
-          ruby - <<'RUBYEOF'
-require 'xcodeproj'
-project = Xcodeproj::Project.open('ios/App/App.xcodeproj')
-project.targets.each do |target|
-  next unless target.name == 'App'
-  # Set build settings
-  target.build_configurations.each do |config|
-    config.build_settings['DEVELOPMENT_TEAM']               = '464BK7HBM4'
-    config.build_settings['CODE_SIGN_STYLE']                = 'Manual'
-    config.build_settings['CODE_SIGN_IDENTITY']             = 'Apple Distribution'
-    config.build_settings['PROVISIONING_PROFILE_SPECIFIER'] = 'livehushh AppStore'
-    puts "Set #{config.name}: DEVELOPMENT_TEAM=#{config.build_settings['DEVELOPMENT_TEAM']}"
-  end
-  # Set TargetAttributes (required by Xcode Signing & Capabilities)
-  project.root_object.attributes['TargetAttributes'] ||= {}
-  project.root_object.attributes['TargetAttributes'][target.uuid] ||= {}
-  project.root_object.attributes['TargetAttributes'][target.uuid]['DevelopmentTeam']    = '464BK7HBM4'
-  project.root_object.attributes['TargetAttributes'][target.uuid]['ProvisioningStyle']  = 'Manual'
-  puts "Set TargetAttributes for #{target.name}"
-end
-project.save
-puts "✅ Project saved successfully"
-RUBYEOF
+        run: node scripts/fix-signing.js
 
       # ── 7. Code signing ────────────────────────────────────────────────────
       - name: Install Apple certificate & provisioning profile
