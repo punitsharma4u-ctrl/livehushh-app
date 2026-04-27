@@ -42,9 +42,19 @@ jobs:
       # ── 6. Patch Xcode project with Team ID & manual signing ──────────────
       - name: Set Xcode signing settings
         run: |
-          sed -i '' 's/DEVELOPMENT_TEAM = "";/DEVELOPMENT_TEAM = 464BK7HBM4;/g' ios/App/App.xcodeproj/project.pbxproj
-          sed -i '' 's/CODE_SIGN_STYLE = Automatic;/CODE_SIGN_STYLE = Manual;/g' ios/App/App.xcodeproj/project.pbxproj
-          echo "✅ Patched project.pbxproj with team ID"
+          PBXPROJ="ios/App/App.xcodeproj/project.pbxproj"
+          echo "=== Current DEVELOPMENT_TEAM lines ==="
+          grep -n "DEVELOPMENT_TEAM" "$PBXPROJ" || echo "NOT FOUND"
+          echo "=== Current CODE_SIGN_STYLE lines ==="
+          grep -n "CODE_SIGN_STYLE" "$PBXPROJ" || echo "NOT FOUND"
+
+          # Try all possible empty formats
+          sed -i '' 's/DEVELOPMENT_TEAM = "";/DEVELOPMENT_TEAM = 464BK7HBM4;/g' "$PBXPROJ"
+          sed -i '' 's/DEVELOPMENT_TEAM = ;/DEVELOPMENT_TEAM = 464BK7HBM4;/g' "$PBXPROJ"
+          sed -i '' 's/CODE_SIGN_STYLE = Automatic;/CODE_SIGN_STYLE = Manual;/g' "$PBXPROJ"
+
+          echo "=== After patch ==="
+          grep -n "DEVELOPMENT_TEAM" "$PBXPROJ" || echo "STILL NOT FOUND"
 
       # ── 7. Ruby + Fastlane ─────────────────────────────────────────────────
       - name: Setup Ruby
