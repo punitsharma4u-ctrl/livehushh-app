@@ -45,5 +45,17 @@
 	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>LiveHushh needs camera access to let you take photos and videos.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>LiveHushh needs photo library access to let you select photos and videos.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>LiveHushh needs permission to save photos to your library.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>LiveHushh needs your location to show relevant local content.</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>LiveHushh needs your location to show relevant local content.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>LiveHushh needs microphone access to record audio with videos.</string>
 </dict>
 </plist>
