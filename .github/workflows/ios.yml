@@ -1,0 +1,90 @@
+name: iOS Build → TestFlight
+
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:   # lets you trigger manually from GitHub website
+
+jobs:
+  build-ios:
+    runs-on: macos-latest
+    timeout-minutes: 60
+
+    steps:
+      # ── 1. Get the code ────────────────────────────────────────────────────
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # ── 2. Node.js ─────────────────────────────────────────────────────────
+      - name: Setup Node.js 18
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      # ── 3. Install npm packages ────────────────────────────────────────────
+      - name: Install dependencies
+        run: npm ci
+
+      # ── 4. Add & sync iOS platform ─────────────────────────────────────────
+      - name: Add iOS platform (if not present)
+        run: npx cap add ios 2>/dev/null || true
+
+      - name: Sync Capacitor to iOS
+        run: npx cap sync ios
+
+      # ── 5. Install CocoaPods ───────────────────────────────────────────────
+      - name: Install CocoaPods
+        run: |
+          cd ios/App
+          pod install --repo-update
+
+      # ── 6. Ruby + Fastlane ─────────────────────────────────────────────────
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.2'
+          bundler-cache: true
+
+      - name: Install Fastlane
+        run: gem install fastlane --no-document
+
+      # ── 7. Code signing ────────────────────────────────────────────────────
+      - name: Install Apple certificate & provisioning profile
+        env:
+          CERTIFICATE_P12_BASE64:      ${{ secrets.CERTIFICATE_P12_BASE64 }}
+          CERTIFICATE_PASSWORD:        ${{ secrets.CERTIFICATE_PASSWORD }}
+          PROVISIONING_PROFILE_BASE64: ${{ secrets.PROVISIONING_PROFILE_BASE64 }}
+          KEYCHAIN_PASSWORD:           ${{ secrets.KEYCHAIN_PASSWORD }}
+        run: |
+          # Create temp keychain
+          security create-keychain -p "$KEYCHAIN_PASSWORD" build.keychain
+          security default-keychain -s build.keychain
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" build.keychain
+          security set-keychain-settings -t 3600 -u build.keychain
+
+          # Import certificate
+          echo "$CERTIFICATE_P12_BASE64" | base64 --decode > certificate.p12
+          security import certificate.p12 -k build.keychain -P "$CERTIFICATE_PASSWORD" -T /usr/bin/codesign
+          security set-key-partition-list -S apple-tool:,apple: -s -k "$KEYCHAIN_PASSWORD" build.keychain
+
+          # Install provisioning profile
+          mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
+          echo "$PROVISIONING_PROFILE_BASE64" | base64 --decode > ~/Library/MobileDevice/Provisioning\ Profiles/livehushh.mobileprovision
+
+      # ── 8. Build & upload to TestFlight ────────────────────────────────────
+      - name: Build iOS & upload to TestFlight
+        env:
+          APP_STORE_CONNECT_API_KEY_ID:    ${{ secrets.ASC_KEY_ID }}
+          APP_STORE_CONNECT_API_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          APP_STORE_CONNECT_API_KEY:       ${{ secrets.ASC_PRIVATE_KEY }}
+        run: fastlane ios beta
+
+      # ── 9. Save IPA as artifact (downloadable from GitHub) ─────────────────
+      - name: Upload IPA artifact
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: LiveHushh-iOS
+          path: '*.ipa'
+          retention-days: 30
