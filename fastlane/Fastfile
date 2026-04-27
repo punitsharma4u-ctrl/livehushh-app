@@ -27,8 +27,7 @@ platform :ios do
       scheme:        "App",
       configuration: "Release",
       export_method: "app-store",
-      xcargs:        "DEVELOPMENT_TEAM=464BK7HBM4 CODE_SIGN_STYLE=Manual PROVISIONING_PROFILE_SPECIFIER='livehushh AppStore'",
-      export_options: {
+export_options: {
         teamID: "464BK7HBM4",
         provisioningProfiles: {
           "com.livehushh.app" => "livehushh AppStore"

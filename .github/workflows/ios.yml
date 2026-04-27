@@ -39,24 +39,7 @@ jobs:
           cd ios/App
           pod install --repo-update
 
-      # ── 6. Patch Xcode project with Team ID & manual signing ──────────────
-      - name: Set Xcode signing settings
-        run: |
-          PBXPROJ="ios/App/App.xcodeproj/project.pbxproj"
-          echo "=== Current DEVELOPMENT_TEAM lines ==="
-          grep -n "DEVELOPMENT_TEAM" "$PBXPROJ" || echo "NOT FOUND"
-          echo "=== Current CODE_SIGN_STYLE lines ==="
-          grep -n "CODE_SIGN_STYLE" "$PBXPROJ" || echo "NOT FOUND"
-
-          # Try all possible empty formats
-          sed -i '' 's/DEVELOPMENT_TEAM = "";/DEVELOPMENT_TEAM = 464BK7HBM4;/g' "$PBXPROJ"
-          sed -i '' 's/DEVELOPMENT_TEAM = ;/DEVELOPMENT_TEAM = 464BK7HBM4;/g' "$PBXPROJ"
-          sed -i '' 's/CODE_SIGN_STYLE = Automatic;/CODE_SIGN_STYLE = Manual;/g' "$PBXPROJ"
-
-          echo "=== After patch ==="
-          grep -n "DEVELOPMENT_TEAM" "$PBXPROJ" || echo "STILL NOT FOUND"
-
-      # ── 7. Ruby + Fastlane ─────────────────────────────────────────────────
+      # ── 6. Ruby + Fastlane ─────────────────────────────────────────────────
       - name: Setup Ruby
         uses: ruby/setup-ruby@v1
         with:
@@ -65,6 +48,26 @@ jobs:
 
       - name: Install Fastlane
         run: gem install fastlane --no-document
+
+      # ── 7. Patch Xcode project signing via xcodeproj gem ──────────────────
+      - name: Set Xcode signing settings
+        run: |
+          gem install xcodeproj --no-document
+          ruby - <<'EOF'
+          require 'xcodeproj'
+          project = Xcodeproj::Project.open('ios/App/App.xcodeproj')
+          project.targets.each do |target|
+            next unless target.name == 'App'
+            target.build_configurations.each do |config|
+              config.build_settings['DEVELOPMENT_TEAM']              = '464BK7HBM4'
+              config.build_settings['CODE_SIGN_STYLE']               = 'Manual'
+              config.build_settings['CODE_SIGN_IDENTITY']            = 'Apple Distribution'
+              config.build_settings['PROVISIONING_PROFILE_SPECIFIER']= 'livehushh AppStore'
+            end
+          end
+          project.save
+          puts "✅ Saved Xcode project with team ID 464BK7HBM4"
+          EOF
 
       # ── 7. Code signing ────────────────────────────────────────────────────
       - name: Install Apple certificate & provisioning profile
