@@ -27,18 +27,17 @@ content = content.replace(
 content = content.replace(/DEVELOPMENT_TEAM = "";/g, `DEVELOPMENT_TEAM = ${TEAM_ID};`);
 content = content.replace(/DEVELOPMENT_TEAM = ;/g, `DEVELOPMENT_TEAM = ${TEAM_ID};`);
 
-// 5. Fix TargetAttributes - set DevelopmentTeam and ProvisioningStyle
+// 5. Fix TargetAttributes - set DevelopmentTeam and ProvisioningStyle = Manual
 content = content.replace(/ProvisioningStyle = Automatic;/g, 'ProvisioningStyle = Manual;');
-// Add DevelopmentTeam in TargetAttributes if missing
+// Add DevelopmentTeam before ProvisioningStyle if not already there
 content = content.replace(
-  /(TargetAttributes = \{[^}]*?[0-9A-F]{24} = \{)([^}]*?)(ProvisioningStyle = Manual;)/gs,
-  (match, open, middle, ps) => {
-    if (!middle.includes('DevelopmentTeam')) {
-      return `${open}\n\t\t\t\t\tDevelopmentTeam = ${TEAM_ID};${middle}${ps}`;
-    }
-    return match;
+  /(\t+)(ProvisioningStyle = Manual;)/g,
+  (match, tabs, ps) => {
+    return `${tabs}DevelopmentTeam = ${TEAM_ID};\n${tabs}${ps}`;
   }
 );
+// Avoid duplicate DevelopmentTeam entries
+content = content.replace(/(\t+DevelopmentTeam = [^;]+;\n)+/g, `\t\t\t\t\tDevelopmentTeam = ${TEAM_ID};\n`);
 
 fs.writeFileSync(PBXPROJ, content, 'utf8');
 
