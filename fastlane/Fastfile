@@ -21,17 +21,6 @@ platform :ios do
       xcodeproj: "ios/App/App.xcodeproj"
     )
 
-    # Configure code signing in Xcode project
-    update_code_signing_settings(
-      use_automatic_signing: false,
-      team_id:               "464BK7HBM4",
-      code_sign_identity:    "Apple Distribution",
-      bundle_identifier:     "com.livehushh.app",
-      profile_name:          "livehushh AppStore",
-      targets:               ["App"],
-      path:                  "ios/App/App.xcodeproj"
-    )
-
     # Build the app
     build_app(
       workspace:     "ios/App/App.xcworkspace",

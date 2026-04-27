@@ -39,7 +39,14 @@ jobs:
           cd ios/App
           pod install --repo-update
 
-      # ── 6. Ruby + Fastlane ─────────────────────────────────────────────────
+      # ── 6. Patch Xcode project with Team ID & manual signing ──────────────
+      - name: Set Xcode signing settings
+        run: |
+          sed -i '' 's/DEVELOPMENT_TEAM = "";/DEVELOPMENT_TEAM = 464BK7HBM4;/g' ios/App/App.xcodeproj/project.pbxproj
+          sed -i '' 's/CODE_SIGN_STYLE = Automatic;/CODE_SIGN_STYLE = Manual;/g' ios/App/App.xcodeproj/project.pbxproj
+          echo "✅ Patched project.pbxproj with team ID"
+
+      # ── 7. Ruby + Fastlane ─────────────────────────────────────────────────
       - name: Setup Ruby
         uses: ruby/setup-ruby@v1
         with:
