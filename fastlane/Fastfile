@@ -26,6 +26,7 @@ platform :ios do
       workspace:     "ios/App/App.xcworkspace",
       scheme:        "App",
       configuration: "Release",
+      xcargs:        "CODE_SIGN_STYLE=Manual DEVELOPMENT_TEAM=464BK7HBM4 CODE_SIGN_IDENTITY='Apple Distribution'",
       export_method: "app-store",
 export_options: {
         teamID: "464BK7HBM4",
