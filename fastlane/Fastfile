@@ -2,10 +2,8 @@ default_platform(:ios)
 
 platform :ios do
 
-  desc "Build and upload to TestFlight"
-  lane :beta do
-
-    # App Store Connect API key (avoids 2FA issues)
+  desc "Upload existing IPA to TestFlight"
+  lane :upload do
     api_key = app_store_connect_api_key(
       key_id:        ENV["APP_STORE_CONNECT_API_KEY_ID"],
       issuer_id:     ENV["APP_STORE_CONNECT_API_ISSUER_ID"],
@@ -14,40 +12,31 @@ platform :ios do
       duration:      1200,
       in_house:      false,
     )
-
-    # Auto-increment build number so TestFlight accepts each upload
-    increment_build_number(
-      build_number: Time.now.strftime("%Y%m%d%H%M"),
-      xcodeproj: "ios/App/App.xcodeproj"
-    )
-
-    # Build the app
-    build_app(
-      workspace:     "ios/App/App.xcworkspace",
-      scheme:        "App",
-      configuration: "Release",
-      xcargs:        "CODE_SIGN_STYLE=Manual DEVELOPMENT_TEAM=464BK7HBM4 CODE_SIGN_IDENTITY='Apple Distribution'",
-      export_method: "app-store",
-export_options: {
-        teamID: "464BK7HBM4",
-        provisioningProfiles: {
-          "com.livehushh.app" => "livehushh AppStore"
-        },
-        signingStyle: "manual",
-        signingCertificate: "Apple Distribution"
-      },
-      output_directory: ".",
-      output_name:      "LiveHushh.ipa",
-      clean:            true,
-    )
-
-    # Upload to TestFlight
     upload_to_testflight(
-      api_key:             api_key,
+      api_key:                           api_key,
+      ipa:                               "LiveHushh.ipa",
       skip_waiting_for_build_processing: true,
       notify_external_testers:           false,
     )
+    puts "✅ Uploaded to TestFlight successfully!"
+  end
 
+  desc "Build and upload to TestFlight (legacy)"
+  lane :beta do
+    api_key = app_store_connect_api_key(
+      key_id:        ENV["APP_STORE_CONNECT_API_KEY_ID"],
+      issuer_id:     ENV["APP_STORE_CONNECT_API_ISSUER_ID"],
+      key_content:   ENV["APP_STORE_CONNECT_API_KEY"],
+      is_key_content_base64: false,
+      duration:      1200,
+      in_house:      false,
+    )
+    upload_to_testflight(
+      api_key:                           api_key,
+      ipa:                               "LiveHushh.ipa",
+      skip_waiting_for_build_processing: true,
+      notify_external_testers:           false,
+    )
     puts "✅ Uploaded to TestFlight successfully!"
   end
 
