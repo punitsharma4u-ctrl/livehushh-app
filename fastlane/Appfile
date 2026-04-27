@@ -1,3 +1,3 @@
 app_identifier("com.livehushh.app")   # Your app's bundle ID
-apple_id("")                           # Your Apple ID email — fill in after account approved
-team_id("")                            # Your Apple Developer Team ID — fill in after account approved
+apple_id("marketingkwikplus@gmail.com") # Your Apple ID email
+team_id("464BK7HBM4")                  # Your Apple Developer Team ID
