@@ -830,16 +830,30 @@ function openRestaurant(id) {
   renderCart();
   showPage('menu');
 
-  // Load live deals for this restaurant asynchronously
-  _API.get('/deals?restaurantId=' + (r.id || r._id)).then(deals => {
-    const active = (deals || []).filter(d => {
+  // Load banner from localStorage if available
+  const savedBanner = localStorage.getItem('lh_banner');
+  if (savedBanner) {
+    document.getElementById('menuHero').style.background = `url('${savedBanner}') center/cover`;
+  }
+
+  // Load live deals — from API or shared localStorage
+  const loadDeals = async () => {
+    let deals = [];
+    try { deals = await _API.get('/deals?restaurantId=' + (r.id || r._id)) || []; } catch(e) {}
+    if (!deals.length) {
+      // Fallback: read from shared localStorage
+      const all = JSON.parse(localStorage.getItem('lh_shared_deals') || '[]');
+      deals = all.filter(d => !d.restaurantId || String(d.restaurantId) === String(r.id || r._id));
+    }
+    const active = deals.filter(d => {
       if (!d.active) return false;
       if (d.expiresAt && new Date(d.expiresAt) < new Date()) return false;
       return true;
     });
     renderMenuDeals(active);
-    renderMenuContent(r, active); // re-render menu with deal highlights
-  }).catch(() => {});
+    renderMenuContent(r, active);
+  };
+  loadDeals();
 }
 
 function renderMenuDeals(deals) {
@@ -1006,7 +1020,15 @@ async function applyPromo() {
   errEl.style.display = 'none';
   if (!code) return;
   try {
-    const res = await _API.get('/promos?code=' + encodeURIComponent(code));
+    let res = null;
+    // Try API first
+    try { res = await _API.get('/promos?code=' + encodeURIComponent(code)); } catch(e) {}
+    // Fallback: check shared localStorage promos
+    if (!res || !res.valid) {
+      const promos = JSON.parse(localStorage.getItem('lh_shared_promos') || '[]');
+      const found = promos.find(p => p.code === code && p.active !== false);
+      if (found) res = { ...found, valid: true };
+    }
     if (res && res.valid) {
       appliedPromo = { ...res, code };
       bannerEl.style.display = 'flex';
@@ -1015,6 +1037,9 @@ async function applyPromo() {
       document.getElementById('promoInputRow').style.display = 'none';
       APP.showToast('Promo applied!', 'success');
       renderCart();
+    } else {
+      errEl.textContent = 'Invalid or expired promo code';
+      errEl.style.display = 'block';
     }
   } catch(e) {
     errEl.textContent = e.message || 'Invalid promo code';
@@ -1216,6 +1241,10 @@ function processPayment() {
         estimatedWait: waitMins + ' min'
       };
       APP.waitlist.unshift(wlDoc);
+      // Save to shared localStorage so restaurant can see it
+      const sharedWl = JSON.parse(localStorage.getItem('lh_shared_waitlist') || '[]');
+      sharedWl.unshift(wlDoc);
+      localStorage.setItem('lh_shared_waitlist', JSON.stringify(sharedWl));
       _API.post('/waitlist', wlDoc).then(r => { if (r && r.id) wlDoc._apiId = r.id; }).catch(() => {});
     }
 
@@ -1505,9 +1534,19 @@ function leaveWaitlist(i) {
     const wl = await _API.get('/waitlist');
     APP.waitlist = wl || [];
 
-  } catch(e) {
-    grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:60px 20px;color:var(--red)"><div style="font-size:2rem;margin-bottom:12px">⚠️</div><div style="font-weight:600">Could not load restaurants</div><div style="font-size:.85rem;margin-top:6px">Check your internet connection and try again.</div><button class="btn btn-primary btn-sm" style="margin-top:16px" onclick="location.reload()">Retry</button></div>';
-    return;
+  } catch(e) {}
+
+  // Supplement with shared localStorage data (from owner dashboard)
+  if (!APP.restaurants.length) {
+    const sharedRests = JSON.parse(localStorage.getItem('lh_shared_restaurants') || '[]');
+    if (sharedRests.length) APP.restaurants = sharedRests;
+  }
+  if (!APP.waitlist.length) {
+    APP.waitlist = JSON.parse(localStorage.getItem('lh_shared_waitlist') || '[]');
+  }
+
+  if (!APP.restaurants.length) {
+    grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:60px 20px;color:var(--text2)"><div style="font-size:2rem;margin-bottom:12px">🍽️</div><div style="font-weight:600">No restaurants yet</div><div style="font-size:.85rem;margin-top:6px">Restaurant owners can add their restaurant from the owner dashboard.</div></div>';
   }
 
   renderRestaurants(APP.restaurants);

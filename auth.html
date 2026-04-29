@@ -603,6 +603,12 @@ async function _localSignUp(firstName, lastName, email, pass, rname, btn) {
   users.push(newUser);
   saveUsers(users);
   localStorage.setItem('lh_session', JSON.stringify(newUser));
+  // Register in shared users so admin can see real users
+  try {
+    const sharedUsers = JSON.parse(localStorage.getItem('lh_shared_users') || '[]');
+    sharedUsers.unshift({ name: newUser.name, email, role: signupRole === 'owner' ? 'Owner' : 'Customer', city: '—', joined: new Date().toLocaleDateString(), last: 'Today', status: 'active' });
+    localStorage.setItem('lh_shared_users', JSON.stringify(sharedUsers));
+  } catch(e) {}
   logToSheets({
     tab: signupRole === 'owner' ? 'Owners' : 'Customers',
     name: newUser.name, email, role: signupRole,

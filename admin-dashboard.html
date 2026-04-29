@@ -594,7 +594,9 @@ async function renderPromos() {
   const grid = document.getElementById('promosGrid');
   grid.innerHTML = '<div style="color:var(--text3);font-size:.85rem;padding:20px">Loading…</div>';
   let promos = [];
-  try { promos = await adminApi('GET', '/promos'); } catch(e) { grid.innerHTML = `<div style="color:var(--red);padding:20px">Error: ${e.message}</div>`; return; }
+  try { promos = await adminApi('GET', '/promos'); } catch(e) {}
+  // Supplement with shared localStorage promos
+  if (!promos.length) promos = JSON.parse(localStorage.getItem('lh_shared_promos') || '[]');
   if (!promos.length) {
     grid.innerHTML = '<div style="color:var(--text3);font-size:.85rem;padding:20px;grid-column:1/-1">No promo codes yet. Create one to start promoting the app.</div>';
     return;
@@ -626,18 +628,25 @@ async function createPromo(e) {
   e.preventDefault();
   const code = document.getElementById('pm_code').value.trim().toUpperCase();
   const body = {
+    id: Date.now(),
     code,
     desc:     document.getElementById('pm_desc').value.trim(),
     type:     document.getElementById('pm_type').value,
     discount: parseFloat(document.getElementById('pm_discount').value),
     maxUses:  document.getElementById('pm_maxUses').value ? parseInt(document.getElementById('pm_maxUses').value) : null,
+    active: true,
+    uses: 0,
+    createdAt: new Date().toISOString()
   };
-  try {
-    await adminApi('POST', '/promos', body);
-    closePromoModal();
-    showToast('Promo code created!', 'success');
-    renderPromos();
-  } catch(e) { showToast(e.message || 'Failed', 'error'); }
+  // Save to shared localStorage so customers can use it
+  const promos = JSON.parse(localStorage.getItem('lh_shared_promos') || '[]');
+  promos.unshift(body);
+  localStorage.setItem('lh_shared_promos', JSON.stringify(promos));
+  // Also try API
+  try { await adminApi('POST', '/promos', body); } catch(e) {}
+  closePromoModal();
+  showToast('Promo code created! Customers can now use it at checkout.', 'success');
+  renderPromos();
 }
 
 async function togglePromo(id, current, el) {
@@ -716,7 +725,7 @@ function initOverview() {
 }
 
 /* ── RESTAURANTS ── */
-const restRows = [
+const _demoRestRows = [
   {name:'The Spice Garden',city:'Toronto',plan:'Pro',sessions:7,mrr:'$299',status:'active'},
   {name:'Seoul Kitchen',city:'Vancouver',plan:'Pro',sessions:12,mrr:'$299',status:'active'},
   {name:'Pasta Republic',city:'Calgary',plan:'Enterprise',sessions:18,mrr:'$799',status:'active'},
@@ -724,8 +733,16 @@ const restRows = [
   {name:'Curry Palace',city:'Montreal',plan:'Enterprise',sessions:22,mrr:'$799',status:'active'},
   {name:'Old Town Bistro',city:'Edmonton',plan:'Starter',sessions:1,mrr:'$99',status:'suspended'},
 ];
+function getRestRows() {
+  const real = JSON.parse(localStorage.getItem('lh_shared_restaurants') || '[]').map(r => ({
+    name: r.name, city: r.city||'—', plan: r.activePlan||'Starter', sessions: r.sessions||0,
+    mrr: r.activePlan==='Pro'?'$299':r.activePlan==='Enterprise'?'$799':'$99', status: r.planStatus||'trial'
+  }));
+  return [...real, ..._demoRestRows.filter(d => !real.find(r => r.name===d.name))];
+}
 function renderRestaurants(filter='') {
-  const rows = filter ? restRows.filter(r=>r.name.toLowerCase().includes(filter.toLowerCase())||r.city.toLowerCase().includes(filter.toLowerCase())) : restRows;
+  const restRows = getRestRows();
+  const rows = filter ? restRows.filter(r=>r.name.toLowerCase().includes(filter.toLowerCase())||(r.city||'').toLowerCase().includes(filter.toLowerCase())) : restRows;
   const planCol = {Starter:'pill-purple',Pro:'pill-cyan',Enterprise:'pill-gold'};
   document.getElementById('restaurantTbody').innerHTML = rows.map((r,i)=>`
     <tr>
@@ -747,7 +764,9 @@ function addRestaurant(e) { e.preventDefault(); document.getElementById('addRest
 
 /* ── SUBSCRIPTIONS ── */
 function renderSubscriptions() {
-  const subs = [
+  // Load real subscriptions from shared localStorage
+  const realSubs = JSON.parse(localStorage.getItem('lh_shared_subscriptions') || '[]');
+  const demoSubs = [
     {name:'The Spice Garden',plan:'Pro',mrr:'$299',start:'Mar 2024',next:'Mar 2025',status:'active'},
     {name:'Seoul Kitchen',plan:'Pro',mrr:'$299',start:'Jan 2024',next:'Jan 2025',status:'active'},
     {name:'Pasta Republic',plan:'Enterprise',mrr:'$799',start:'Oct 2023',next:'Oct 2025',status:'active'},
@@ -755,6 +774,7 @@ function renderSubscriptions() {
     {name:'Curry Palace',plan:'Enterprise',mrr:'$799',start:'Jun 2023',next:'Jun 2025',status:'active'},
     {name:'Old Town Bistro',plan:'Starter',mrr:'$99',start:'Dec 2024',next:'—',status:'cancelled'},
   ];
+  const subs = [...realSubs, ...demoSubs.filter(d => !realSubs.find(r => r.name === d.name))];
   const planCol = {Starter:'pill-purple',Pro:'pill-cyan',Enterprise:'pill-gold'};
   const stCol = {active:'pill-green',trial:'pill-gold',cancelled:'pill-red'};
   document.getElementById('subsTbody').innerHTML = subs.map(s=>`
@@ -774,24 +794,25 @@ function renderSubscriptions() {
 
 /* ── USERS ── */
 function renderUsers() {
-  const users = [
+  // Load real users from shared localStorage, supplement with demo data
+  const realUsers = JSON.parse(localStorage.getItem('lh_shared_users') || '[]');
+  const demoUsers = [
     {name:'James Carter',role:'Customer',city:'Toronto',joined:'Jan 2025',last:'Today',orders:12,status:'active'},
     {name:'Emily Clarke',role:'Owner',city:'Toronto',joined:'Mar 2024',last:'Today',orders:0,status:'active'},
-    {name:'Ryan Mitchell',role:'Customer',city:'Vancouver',joined:'Feb 2025',last:'Yesterday',orders:8,status:'active'},
-    {name:'Sophie Allen',role:'Customer',city:'Calgary',joined:'Dec 2024',last:'3 days ago',orders:4,status:'active'},
-    {name:'David Parker',role:'Owner',city:'Ottawa',joined:'Jun 2024',last:'Today',orders:0,status:'active'},
     {name:'Admin User',role:'Admin',city:'—',joined:'Jan 2024',last:'Now',orders:0,status:'active'},
   ];
+  // Merge: real users first, then demo users not already in real
+  const allUsers = [...realUsers, ...demoUsers.filter(d => !realUsers.find(r => r.name === d.name))];
   const roleCol = {Customer:'pill-purple',Owner:'pill-gold',Admin:'pill-cyan'};
-  document.getElementById('usersTbody').innerHTML = users.map(u=>`
+  document.getElementById('usersTbody').innerHTML = allUsers.map(u=>`
     <tr>
       <td><span style="font-weight:600">${u.name}</span></td>
       <td><span class="pill ${roleCol[u.role]||'pill-purple'}" style="font-size:.7rem">${u.role}</span></td>
-      <td class="caption">${u.city}</td>
-      <td class="caption">${u.joined}</td>
-      <td class="caption">${u.last}</td>
-      <td>${u.orders || '—'}</td>
-      <td><span class="pill pill-green" style="font-size:.7rem">${u.status}</span></td>
+      <td class="caption">${u.city||'—'}</td>
+      <td class="caption">${u.joined||'—'}</td>
+      <td class="caption">${u.last||'—'}</td>
+      <td>${u.orders||'—'}</td>
+      <td><span class="pill pill-green" style="font-size:.7rem">${u.status||'active'}</span></td>
     </tr>`).join('');
 }
 

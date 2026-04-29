@@ -941,11 +941,32 @@ async function createDeal(e) {
   }
 
   const expiresAt = expiryHrs > 0 ? new Date(Date.now() + expiryHrs * 3600 * 1000).toISOString() : null;
+  const resto = APP.restaurants[0] || {};
+  const deal = {
+    id: Date.now(), title, desc, discount, appliesTo, appliesToLabel, expiresAt,
+    active: true, restaurantId: resto.id || 'local', restaurantName: resto.name || 'My Restaurant',
+    createdAt: new Date().toISOString()
+  };
 
   const btn = e.target.querySelector('button[type=submit]');
   btn.disabled = true; btn.textContent = 'Pushing…';
   try {
-    await _API.post('/deals', { title, desc, discount, appliesTo, appliesToLabel, expiresAt });
+    // Save to shared localStorage so customers can see it
+    const deals = JSON.parse(localStorage.getItem('lh_shared_deals') || '[]');
+    deals.unshift(deal);
+    localStorage.setItem('lh_shared_deals', JSON.stringify(deals));
+
+    // Also try API
+    _API.post('/deals', deal).catch(() => {});
+
+    // Send browser notification to customers
+    if ('Notification' in window && Notification.permission === 'granted') {
+      new Notification('🔥 New Deal from ' + (resto.name || 'LiveHushh'), {
+        body: title + (discount ? ' — ' + discount + '% off' : ''),
+        icon: '/icons/icon-192.png'
+      });
+    }
+
     closeDealModal();
     APP.showToast('🔥 Deal pushed live! Customers can see it now.', 'success', 4000);
     renderDeals();
@@ -1238,6 +1259,25 @@ async function saveRestaurantProfile() {
     APP.restaurants.unshift({ id: 'rest_' + Date.now(), ...profile });
   }
 
+  // Save to shared localStorage so customers can see this restaurant
+  const sharedRests = JSON.parse(localStorage.getItem('lh_shared_restaurants') || '[]');
+  const rid = APP.restaurants[0].id || 'rest_local';
+  const existing = sharedRests.findIndex(r => r.id === rid);
+  const fullProfile = { ...APP.restaurants[0], id: rid, image: localStorage.getItem('lh_banner') || null };
+  if (existing >= 0) sharedRests[existing] = fullProfile;
+  else sharedRests.unshift(fullProfile);
+  localStorage.setItem('lh_shared_restaurants', JSON.stringify(sharedRests));
+
+  // Register owner in shared users
+  const sess = JSON.parse(localStorage.getItem('lh_session') || '{}');
+  if (sess.email) {
+    const users = JSON.parse(localStorage.getItem('lh_shared_users') || '[]');
+    const ui = users.findIndex(u => u.email === sess.email);
+    const userEntry = { name: sess.name || sess.firstName || 'Owner', email: sess.email, role: 'Owner', city: profile.city || '—', joined: sess.joinedAt ? new Date(sess.joinedAt).toLocaleDateString() : new Date().toLocaleDateString(), last: 'Today', status: 'active', restaurantName: profile.name };
+    if (ui >= 0) users[ui] = userEntry; else users.unshift(userEntry);
+    localStorage.setItem('lh_shared_users', JSON.stringify(users));
+  }
+
   // Refresh sidebar restaurant name
   const planLabel = (APP.restaurants[0].planStatus === 'trial') ? 'Free Trial'
                   : (APP.restaurants[0].planStatus === 'active') ? 'Active Plan'
@@ -1270,24 +1310,42 @@ function filterOrders(f, el) {
 
 /* ── WAITLIST ── */
 function renderWaitlistPanel() {
-  document.getElementById('waitlistPanel').innerHTML = APP.waitlist.map((w,i) => {
-    const r = APP.getRestaurant(w.restaurantId);
-    return `
-      <div class="wl-table-row">
-        <div class="wl-pos-badge">${i+1}</div>
-        <div style="flex:1">
-          <div style="font-weight:600;font-size:.9rem">${w.name || 'Guest ' + (i+1)}</div>
-          <div class="caption">${w.guests} guests · Joined ${w.joinedAt||'recently'}</div>
-        </div>
-        <div style="display:flex;gap:8px">
-          <button class="btn btn-primary btn-sm" onclick="seatGuest(${i})">Seat Now</button>
-          <button class="btn btn-ghost btn-sm" style="color:var(--red)" onclick="removeGuest(${i})">Remove</button>
-        </div>
-      </div>`;
-  }).join('') || '<div style="padding:32px;text-align:center;color:var(--text2)">No guests in queue</div>';
+  // Merge API waitlist with shared localStorage waitlist
+  const shared = JSON.parse(localStorage.getItem('lh_shared_waitlist') || '[]');
+  const resto = APP.restaurants[0] || {};
+  const rid = String(resto.id || '');
+  // Filter to this restaurant's entries (or show all if no restaurantId set)
+  const localEntries = shared.filter(w => !rid || String(w.restaurantId) === rid || !w.restaurantId);
+  // Merge: use API data if available, supplement with local
+  const merged = APP.waitlist.length ? APP.waitlist : localEntries;
+  if (!merged.length) {
+    document.getElementById('waitlistPanel').innerHTML = '<div style="padding:32px;text-align:center;color:var(--text2)">No guests in queue</div>';
+    return;
+  }
+  document.getElementById('waitlistPanel').innerHTML = merged.map((w,i) => `
+    <div class="wl-table-row">
+      <div class="wl-pos-badge">${i+1}</div>
+      <div style="flex:1">
+        <div style="font-weight:600;font-size:.9rem">${w.name || 'Guest ' + (i+1)}</div>
+        <div class="caption">${w.guests} guests · Joined ${w.joinedAt||'recently'} · Wait: ${w.estimatedWait||'~25 min'}</div>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-primary btn-sm" onclick="seatGuest(${i})">Seat Now</button>
+        <button class="btn btn-ghost btn-sm" style="color:var(--red)" onclick="removeGuest(${i})">Remove</button>
+      </div>
+    </div>`).join('');
+  APP.waitlist = merged;
 }
 
-function seatGuest(idx) { APP.waitlist.splice(idx,1); renderWaitlistPanel(); APP.showToast('Guest seated! Table assigned.','success'); }
+function seatGuest(idx) {
+  APP.waitlist.splice(idx,1);
+  // Also update shared localStorage
+  const shared = JSON.parse(localStorage.getItem('lh_shared_waitlist') || '[]');
+  if (shared.length > idx) shared.splice(idx,1);
+  localStorage.setItem('lh_shared_waitlist', JSON.stringify(shared));
+  renderWaitlistPanel();
+  APP.showToast('Guest seated! Table assigned.','success');
+}
 function removeGuest(idx) { APP.waitlist.splice(idx,1); renderWaitlistPanel(); APP.showToast('Guest removed from queue.','info'); }
 
 /* ── DEALS ── */
@@ -1583,6 +1641,54 @@ function initMediaPage() {
     }
   }, 30000);
 })();
+
+// ── Subscription / Plan ────────────────────────────────────────────────────────
+const PLANS = [
+  { id:'starter', name:'Starter', price:'$99', mrr:99, features:['1 live stream/day','Basic analytics','Email support'] },
+  { id:'pro',     name:'Pro',     price:'$299', mrr:299, features:['Unlimited streams','Deal notifications','Priority support','3 videos/day'] },
+  { id:'enterprise', name:'Enterprise', price:'$799', mrr:799, features:['Everything in Pro','Unlimited videos','Dedicated manager','Custom branding'] },
+];
+
+function showUpgradeModal() {
+  const overlay = document.getElementById('expiredOverlay');
+  const cards = document.getElementById('upgradeCards');
+  cards.innerHTML = PLANS.map(p => `
+    <div style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:16px;padding:20px;text-align:center;cursor:pointer" onclick="choosePlan('${p.id}','${p.name}',${p.mrr})">
+      <div style="font-weight:800;font-size:1.1rem;margin-bottom:4px">${p.name}</div>
+      <div style="font-size:1.6rem;font-weight:900;color:#E8540A;margin-bottom:12px">${p.price}<span style="font-size:.75rem;font-weight:400;color:rgba(255,255,255,0.5)">/mo</span></div>
+      ${p.features.map(f=>`<div style="font-size:.78rem;color:rgba(255,255,255,0.65);margin-bottom:4px">✓ ${f}</div>`).join('')}
+      <button class="btn btn-primary btn-sm" style="width:100%;margin-top:12px">Choose ${p.name}</button>
+    </div>`).join('');
+  overlay.style.display = 'flex';
+}
+
+function choosePlan(planId, planName, mrr) {
+  // Save subscription to localStorage
+  const sub = { planId, planName, mrr, status: 'active', startDate: new Date().toISOString(), nextBilling: new Date(Date.now() + 30*24*3600*1000).toISOString() };
+  localStorage.setItem('lh_owner_subscription', JSON.stringify(sub));
+
+  // Update restaurant planStatus
+  if (APP.restaurants[0]) {
+    APP.restaurants[0].planStatus = 'active';
+    APP.restaurants[0].activePlan = planName;
+    const sharedRests = JSON.parse(localStorage.getItem('lh_shared_restaurants') || '[]');
+    const ri = sharedRests.findIndex(r => r.id === (APP.restaurants[0].id || 'rest_local'));
+    if (ri >= 0) { sharedRests[ri].planStatus = 'active'; sharedRests[ri].activePlan = planName; }
+    localStorage.setItem('lh_shared_restaurants', JSON.stringify(sharedRests));
+  }
+
+  // Update subscription list for admin
+  const subs = JSON.parse(localStorage.getItem('lh_shared_subscriptions') || '[]');
+  const sess = JSON.parse(localStorage.getItem('lh_session') || '{}');
+  const resto = APP.restaurants[0] || {};
+  const subEntry = { name: resto.name || sess.name || 'Restaurant', plan: planName, mrr: '$'+mrr, start: new Date().toLocaleDateString(), next: new Date(Date.now()+365*24*3600*1000).toLocaleDateString(), status:'active' };
+  subs.unshift(subEntry);
+  localStorage.setItem('lh_shared_subscriptions', JSON.stringify(subs));
+
+  document.getElementById('expiredOverlay').style.display = 'none';
+  document.getElementById('ownerPlanLine').textContent = `${resto.name || 'My Restaurant'} · ${planName} Plan`;
+  APP.showToast(`🎉 ${planName} plan activated! You're live on LiveHushh.`, 'success', 5000);
+}
 
 // ── Sign Out & Delete Account ────────────────────────────────────────────────
 function handleOwnerSignOut(e) {
