@@ -723,7 +723,7 @@ body.theme-light .auth-logo .lh-logo-live{color:#F8FAFC}
 .app-nav-logo::before,
 .sidebar-logo::before {
   content: 'lh.';
-  display: inline-flex;
+  display: flex;
   align-items: center;
   justify-content: center;
   width: 34px;
@@ -738,6 +738,7 @@ body.theme-light .auth-logo .lh-logo-live{color:#F8FAFC}
   letter-spacing: -.03em;
   box-shadow: 0 4px 14px rgba(232,84,10,0.45);
   flex-shrink: 0;
+  line-height: 1;
 }
 /* Smaller mark in sidebar and app-nav */
 .sidebar-logo::before {
