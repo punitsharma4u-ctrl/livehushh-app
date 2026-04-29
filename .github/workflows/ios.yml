@@ -39,9 +39,17 @@ jobs:
       - name: Sync Capacitor to iOS
         run: npx cap sync ios
 
-      # ── 4b. Generate app icons from icon.png ───────────────────────────────
-      - name: Generate iOS app icons
-        run: npx @capacitor/assets generate --ios 2>/dev/null || true
+      # ── 4b. Set app icon from icon.png ────────────────────────────────────
+      - name: Set app icon
+        run: |
+          ICON_SRC="icon.png"
+          ICON_DEST="ios/App/App/Assets.xcassets/AppIcon.appiconset/AppIcon-512@2x.png"
+          if [ -f "$ICON_SRC" ]; then
+            sips -z 1024 1024 "$ICON_SRC" --out "$ICON_DEST"
+            echo "✅ App icon set (1024x1024)"
+          else
+            echo "⚠️ icon.png not found, using existing icon"
+          fi
 
       # ── 5. Install CocoaPods ───────────────────────────────────────────────
       - name: Install CocoaPods
