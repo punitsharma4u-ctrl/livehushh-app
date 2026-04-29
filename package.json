@@ -3,28 +3,29 @@
   "version": "1.0.0",
   "description": "LiveHushh — Restaurant live-streaming platform",
   "scripts": {
-    "start":           "npx serve . -l 3000",
-    "build":           "echo 'Static site — no build step'",
-    "deploy":          "amplify publish",
-    "cap:add:ios":     "npx cap add ios",
+    "start": "npx serve . -l 3000",
+    "build": "echo 'Static site — no build step'",
+    "deploy": "amplify publish",
+    "cap:add:ios": "npx cap add ios",
     "cap:add:android": "npx cap add android",
-    "cap:sync":        "npx cap sync",
-    "cap:open:ios":    "npx cap open ios",
-    "cap:open:android":"npx cap open android"
+    "cap:sync": "npx cap sync",
+    "cap:open:ios": "npx cap open ios",
+    "cap:open:android": "npx cap open android"
   },
   "dependencies": {
-    "@capacitor/core":               "^6.2.1",
-    "@capacitor/ios":                "^6.2.1",
-    "@capacitor/android":            "^6.2.1",
+    "@capacitor/android": "^6.2.1",
+    "@capacitor/camera": "^6.1.3",
+    "@capacitor/core": "^6.2.1",
+    "@capacitor/geolocation": "^6.1.1",
+    "@capacitor/ios": "^6.2.1",
     "@capacitor/push-notifications": "^6.0.5",
-    "@capacitor/camera":             "^6.1.3",
-    "@capacitor/geolocation":        "^6.1.1",
-    "@capacitor/status-bar":         "^6.0.3",
-    "@capacitor/splash-screen":      "^6.0.4"
+    "@capacitor/splash-screen": "^6.0.4",
+    "@capacitor/status-bar": "^6.0.3"
   },
   "devDependencies": {
     "@aws-amplify/cli": "^12.0.0",
-    "@capacitor/cli":   "^6.2.1",
-    "serve":            "^14.0.0"
+    "@capacitor/assets": "^3.0.5",
+    "@capacitor/cli": "^6.2.1",
+    "serve": "^14.0.0"
   }
 }
