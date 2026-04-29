@@ -144,6 +144,11 @@ body{background:var(--bg);display:flex;min-height:100vh;overflow-x:hidden}
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
       Promo Codes
     </div>
+    <div class="nav-item" onclick="showPage('approvals',this)" id="navApprovals">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+      Pending Approvals
+      <span class="pill pill-gold" style="margin-left:auto;font-size:.62rem;padding:2px 7px" id="pendingBadge">0</span>
+    </div>
     <div class="nav-group-label">Finance</div>
     <div class="nav-item" onclick="showPage('revenue',this)">
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
@@ -528,6 +533,20 @@ body{background:var(--bg);display:flex;min-height:100vh;overflow-x:hidden}
       </div>
     </div>
 
+    <!-- PENDING APPROVALS PAGE -->
+    <div id="page-approvals" class="page">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;flex-wrap:wrap;gap:12px">
+        <div>
+          <h2 style="font-family:'Inter',sans-serif;font-weight:800;font-size:1.3rem">Pending Restaurant Approvals</h2>
+          <p style="font-size:.82rem;color:var(--text2);margin-top:4px">Review and approve new restaurant owner signups. Approved owners receive a 2-month free trial.</p>
+        </div>
+        <button class="btn btn-secondary btn-sm" onclick="renderPendingApprovals()">↻ Refresh</button>
+      </div>
+      <div id="pendingApprovalsList" style="display:flex;flex-direction:column;gap:14px">
+        <div class="caption" style="text-align:center;padding:48px 0">Loading…</div>
+      </div>
+    </div>
+
   </div>
 </main>
 
@@ -558,7 +577,7 @@ function showPage(name, el) {
   document.getElementById('page-'+name).classList.add('active');
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   if (el) el.classList.add('active');
-  const labels = {overview:'Dashboard Overview',restaurants:'Restaurants',subscriptions:'Subscriptions',users:'Users',videos:'Video Uploads',promos:'Promo Codes',revenue:'Revenue',forecast:'Forecast',analytics:'Platform Analytics',settings:'Settings'};
+  const labels = {overview:'Dashboard Overview',restaurants:'Restaurants',subscriptions:'Subscriptions',users:'Users',videos:'Video Uploads',promos:'Promo Codes',revenue:'Revenue',forecast:'Forecast',analytics:'Platform Analytics',settings:'Settings',approvals:'Pending Approvals'};
   document.getElementById('pageTitle').textContent = labels[name] || name;
 
   if (name==='overview') initOverview();
@@ -570,6 +589,7 @@ function showPage(name, el) {
   if (name==='analytics') initAnalytics();
   if (name==='videos') renderVideosPanel('all');
   if (name==='promos') renderPromos();
+  if (name==='approvals') renderPendingApprovals();
 }
 
 /* ── ADMIN API helper ──────────────────────────────────────────────────── */
@@ -1006,12 +1026,88 @@ function escH(s) {
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
+/* ── PENDING APPROVALS ──────────────────────────────────────────────────────── */
+function getPendingOwners() {
+  const users = JSON.parse(localStorage.getItem('lh_shared_users') || '[]');
+  return users.filter(u => u.role === 'Owner' && u.status === 'pending');
+}
+
+function renderPendingApprovals() {
+  const pending = getPendingOwners();
+  // Update badge
+  document.getElementById('pendingBadge').textContent = pending.length;
+
+  const container = document.getElementById('pendingApprovalsList');
+  if (!container) return;
+  if (!pending.length) {
+    container.innerHTML = '<div style="text-align:center;padding:60px 20px"><div style="font-size:2.5rem;margin-bottom:16px">✅</div><div style="font-weight:700;font-size:1.1rem;margin-bottom:8px">No pending approvals</div><div style="color:var(--text2);font-size:.875rem">All restaurant owners have been reviewed.</div></div>';
+    return;
+  }
+  container.innerHTML = pending.map((u, i) => `
+    <div style="background:var(--bg-card);border:1px solid rgba(245,158,11,0.3);border-radius:var(--r-xl);padding:20px 24px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px">
+      <div>
+        <div style="font-weight:700;font-size:1rem">${escH(u.name)}</div>
+        <div style="font-size:.82rem;color:var(--text2);margin-top:2px">${escH(u.email)}</div>
+        ${u.restaurantName && u.restaurantName !== '—' ? `<div style="font-size:.82rem;margin-top:4px"><span style="color:var(--text3)">Restaurant:</span> <strong>${escH(u.restaurantName)}</strong></div>` : ''}
+        <div style="font-size:.75rem;color:var(--text3);margin-top:4px">Signed up: ${u.joined || 'recently'}</div>
+      </div>
+      <div style="display:flex;gap:10px;flex-shrink:0">
+        <button class="btn btn-sm" style="background:rgba(16,185,129,0.12);border:1px solid rgba(16,185,129,0.35);color:#10B981" onclick="approveOwner('${escH(u.email)}','${escH(u.name)}')">✓ Approve</button>
+        <button class="btn btn-sm btn-ghost" style="color:var(--red)" onclick="rejectOwner('${escH(u.email)}','${escH(u.name)}')">✕ Reject</button>
+      </div>
+    </div>`).join('');
+}
+
+function approveOwner(email, name) {
+  const users = JSON.parse(localStorage.getItem('lh_shared_users') || '[]');
+  const idx = users.findIndex(u => u.email === email);
+  if (idx < 0) { APP.showToast('User not found', 'error'); return; }
+
+  const trialStart = new Date().toISOString();
+  const trialEnd   = new Date(Date.now() + 60 * 24 * 3600 * 1000).toISOString(); // 60 days
+  users[idx] = { ...users[idx], status: 'trial', trialStart, trialEnd };
+  localStorage.setItem('lh_shared_users', JSON.stringify(users));
+
+  // Also update lh_users (local auth store) so owner session picks up new status
+  try {
+    const localUsers = JSON.parse(localStorage.getItem('lh_users') || '[]');
+    const li = localUsers.findIndex(u => u.email === email);
+    if (li >= 0) { localUsers[li].approvalStatus = 'trial'; localUsers[li].trialStart = trialStart; localUsers[li].trialEnd = trialEnd; localStorage.setItem('lh_users', JSON.stringify(localUsers)); }
+  } catch(e) {}
+
+  APP.showToast(`✅ ${name} approved — 2-month free trial started`, 'success', 4000);
+  renderPendingApprovals();
+  renderUsers();
+}
+
+function rejectOwner(email, name) {
+  if (!confirm(`Reject application from ${name}? This will remove their pending account.`)) return;
+  const users = JSON.parse(localStorage.getItem('lh_shared_users') || '[]');
+  const filtered = users.filter(u => u.email !== email);
+  localStorage.setItem('lh_shared_users', JSON.stringify(filtered));
+
+  try {
+    const localUsers = JSON.parse(localStorage.getItem('lh_users') || '[]');
+    localStorage.setItem('lh_users', JSON.stringify(localUsers.filter(u => u.email !== email)));
+  } catch(e) {}
+
+  APP.showToast(`${name}'s application has been rejected.`, 'info');
+  renderPendingApprovals();
+  renderUsers();
+}
+
 /* ── INIT ── */
 initOverview();
 renderRestaurants();
 renderSubscriptions();
 renderUsers();
 renderVideosPanel('all');
+// Show pending badge on load
+(function() {
+  const cnt = getPendingOwners().length;
+  const badge = document.getElementById('pendingBadge');
+  if (badge) badge.textContent = cnt;
+})();
 </script>
 <script src="js/theme.js"></script>
 <script>if("serviceWorker"in navigator){navigator.serviceWorker.register("/service-worker.js").then(()=>console.log("SW registered")).catch(e=>console.warn("SW error",e));}</script>

@@ -207,7 +207,7 @@ body{background:var(--bg);display:flex;min-height:100vh;overflow-x:hidden}
     </div>
   </nav>
   <div class="sidebar-footer">
-    <a href="auth.html" class="btn btn-ghost btn-sm w-full" onclick="handleOwnerSignOut(event)">Sign Out</a>
+    <a href="auth.html?role=owner" class="btn btn-ghost btn-sm w-full" onclick="handleOwnerSignOut(event)">Sign Out</a>
     <button class="btn btn-sm w-full" style="margin-top:8px;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);color:#EF4444" onclick="confirmOwnerDeleteAccount()">Delete Account</button>
   </div>
 </aside>
@@ -942,9 +942,14 @@ async function createDeal(e) {
 
   const expiresAt = expiryHrs > 0 ? new Date(Date.now() + expiryHrs * 3600 * 1000).toISOString() : null;
   const resto = APP.restaurants[0] || {};
+  const _sess = JSON.parse(localStorage.getItem('lh_session') || '{}');
+  // Use stable restaurant id — prefer saved id, then email-based key for cross-page consistency
+  const stableId = resto.id && resto.id !== 'r1' && resto.id !== 'r2' && resto.id !== 'r3'
+    ? resto.id
+    : (_sess.email ? 'email_' + _sess.email : 'local');
   const deal = {
     id: Date.now(), title, desc, discount, appliesTo, appliesToLabel, expiresAt,
-    active: true, restaurantId: resto.id || 'local', restaurantName: resto.name || 'My Restaurant',
+    active: true, restaurantId: stableId, restaurantName: resto.name || _sess.restaurant || 'My Restaurant',
     createdAt: new Date().toISOString()
   };
 
@@ -1213,6 +1218,13 @@ function renderOwnerOrders(filter) {
 
 /* ── RESTAURANT PROFILE SAVE ───────────────────────────────────────────── */
 function loadRestaurantProfile() {
+  // First try to load owner's own restaurant from shared localStorage
+  const _sessR = JSON.parse(localStorage.getItem('lh_session') || '{}');
+  const sharedR = JSON.parse(localStorage.getItem('lh_shared_restaurants') || '[]');
+  const myOwned = sharedR.find(r => r.ownerEmail === _sessR.email);
+  if (myOwned && (!APP.restaurants[0] || APP.restaurants[0].ownerEmail !== _sessR.email)) {
+    APP.restaurants[0] = myOwned;
+  }
   const r = APP.restaurants[0] || {};
   // Field names from normalizeRestaurant() in Lambda
   document.getElementById('prof_name').value    = r.name        || '';
@@ -1252,24 +1264,26 @@ async function saveRestaurantProfile() {
     if (!saved) { APP.showToast('Save failed — check connection', 'error'); return; }
   }
 
-  // Update local state
-  if (APP.restaurants[0]) {
+  // Update local state — use email-based stable ID for cross-page consistency
+  const sess = JSON.parse(localStorage.getItem('lh_session') || '{}');
+  const stableRestId = 'rest_' + (sess.email || 'local').replace(/[^a-z0-9]/gi, '_');
+  if (APP.restaurants[0] && APP.restaurants[0].ownerEmail === sess.email) {
     Object.assign(APP.restaurants[0], profile);
   } else {
-    APP.restaurants.unshift({ id: 'rest_' + Date.now(), ...profile });
+    // Replace any demo restaurant with owner's real one
+    APP.restaurants = [{ id: stableRestId, ...profile, ownerEmail: sess.email }];
   }
 
   // Save to shared localStorage so customers can see this restaurant
   const sharedRests = JSON.parse(localStorage.getItem('lh_shared_restaurants') || '[]');
-  const rid = APP.restaurants[0].id || 'rest_local';
-  const existing = sharedRests.findIndex(r => r.id === rid);
-  const fullProfile = { ...APP.restaurants[0], id: rid, image: localStorage.getItem('lh_banner') || null };
+  const rid = stableRestId;
+  const existing = sharedRests.findIndex(r => r.id === rid || r.ownerEmail === sess.email);
+  const fullProfile = { ...APP.restaurants[0], id: rid, image: localStorage.getItem('lh_banner') || null, ownerEmail: sess.email || '' };
   if (existing >= 0) sharedRests[existing] = fullProfile;
   else sharedRests.unshift(fullProfile);
   localStorage.setItem('lh_shared_restaurants', JSON.stringify(sharedRests));
 
   // Register owner in shared users
-  const sess = JSON.parse(localStorage.getItem('lh_session') || '{}');
   if (sess.email) {
     const users = JSON.parse(localStorage.getItem('lh_shared_users') || '[]');
     const ui = users.findIndex(u => u.email === sess.email);
@@ -1353,7 +1367,22 @@ async function renderDeals() {
   const panel = document.getElementById('dealsPanel');
   panel.innerHTML = '<div style="color:var(--text3);font-size:.875rem;padding:12px">Loading deals…</div>';
   let deals = [];
-  try { deals = await _API.get('/deals'); } catch(e) { deals = []; }
+  try { if (_API.ready) deals = await _API.get('/deals') || []; } catch(e) { deals = []; }
+
+  if (!deals.length) {
+    // Load from shared localStorage, filtered to this owner's restaurant
+    const _s = JSON.parse(localStorage.getItem('lh_session') || '{}');
+    const stableId = 'rest_' + (_s.email || 'local').replace(/[^a-z0-9]/gi, '_');
+    const all = JSON.parse(localStorage.getItem('lh_shared_deals') || '[]');
+    const restName = (APP.restaurants[0] || {}).name;
+    deals = all.filter(d => {
+      if (!d.restaurantId || d.restaurantId === 'local') return true;
+      if (d.restaurantId === stableId) return true;
+      if (d.restaurantId === 'email_' + (_s.email||'').replace(/[^a-z0-9]/gi,'_')) return true;
+      if (restName && d.restaurantName && d.restaurantName.toLowerCase() === restName.toLowerCase()) return true;
+      return false;
+    });
+  }
 
   if (!deals.length) {
     panel.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:48px 20px;color:var(--text2)">
@@ -1568,15 +1597,50 @@ function initMediaPage() {
   // ── Auth check ──────────────────────────────────────────────────────────
   let SESSION = {};
   try { SESSION = JSON.parse(localStorage.getItem('lh_session') || '{}'); } catch(e) {}
-  if (!SESSION.idToken || SESSION.role !== 'owner') { location.href = 'auth.html'; return; }
+  if (!SESSION.role || SESSION.role !== 'owner') { location.href = 'auth.html?role=owner'; return; }
 
   // ── Sidebar owner info from session ─────────────────────────────────────
   const ownerName = SESSION.name || SESSION.email || 'Owner';
   document.getElementById('ownerDisplayName').textContent = ownerName;
   document.getElementById('ownerAvatarLetter').textContent = ownerName.charAt(0).toUpperCase();
 
+  // ── Check approval status for owners ────────────────────────────────────────
+  const sharedUsersAll = JSON.parse(localStorage.getItem('lh_shared_users') || '[]');
+  const mySharedUser = sharedUsersAll.find(u => u.email === SESSION.email);
+  if (mySharedUser && mySharedUser.status === 'pending') {
+    // Show pending approval screen
+    document.querySelector('main').innerHTML = `
+      <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:80vh;text-align:center;padding:40px">
+        <div style="width:72px;height:72px;border-radius:50%;background:rgba(245,158,11,0.15);border:2px solid rgba(245,158,11,0.4);display:flex;align-items:center;justify-content:center;margin:0 auto 24px">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#F59E0B" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        </div>
+        <h2 style="font-family:'Inter',sans-serif;font-size:1.6rem;font-weight:800;margin-bottom:12px">Awaiting Admin Approval</h2>
+        <p style="color:var(--text2);max-width:480px;line-height:1.7;margin-bottom:8px">Your restaurant account has been submitted and is currently under review. Our team typically approves accounts within 24 hours.</p>
+        <p style="color:var(--text2);font-size:.85rem;margin-bottom:32px">Once approved, you will receive <strong style="color:var(--text)">2 months free</strong> to explore all features.</p>
+        <div style="background:var(--bg-card);border:1px solid var(--border2);border-radius:var(--r-xl);padding:24px;max-width:400px;width:100%;margin-bottom:24px">
+          <div style="font-size:.8rem;color:var(--text3);margin-bottom:8px">SUBMITTED ACCOUNT</div>
+          <div style="font-weight:600">${SESSION.name || SESSION.email}</div>
+          <div style="font-size:.85rem;color:var(--text2)">${SESSION.email}</div>
+          ${SESSION.restaurant ? `<div style="font-size:.85rem;color:var(--text2);margin-top:4px">Restaurant: ${SESSION.restaurant}</div>` : ''}
+        </div>
+        <button class="btn btn-ghost btn-sm" onclick="localStorage.removeItem('lh_session');location.href='auth.html?role=owner'">Sign Out</button>
+      </div>`;
+    return;
+  }
+
   if (!_API.ready) {
-    APP.showToast('API not configured — data will not sync', 'error');
+    // Load restaurant data from shared localStorage (saved when owner set up profile)
+    const sharedRests = JSON.parse(localStorage.getItem('lh_shared_restaurants') || '[]');
+    const myRests = sharedRests.filter(r => r.ownerEmail === SESSION.email);
+    if (myRests.length) {
+      APP.restaurants = myRests;
+    }
+    // Load deals for this restaurant
+    const allDeals = JSON.parse(localStorage.getItem('lh_shared_deals') || '[]');
+    const rid = (APP.restaurants[0] || {}).id;
+    if (rid) {
+      APP.deals = allDeals.filter(d => String(d.restaurantId) === String(rid));
+    }
   } else {
     try {
       const [restaurants, orders] = await Promise.all([
@@ -1593,6 +1657,16 @@ function initMediaPage() {
       }
     } catch(e) {
       APP.showToast('Failed to load data from API', 'error');
+    }
+  }
+
+  // ── Check trial / plan status ─────────────────────────────────────────────
+  if (mySharedUser && mySharedUser.status === 'trial' && mySharedUser.trialEnd) {
+    const daysLeft = Math.ceil((new Date(mySharedUser.trialEnd) - Date.now()) / 86400000);
+    if (daysLeft <= 0) {
+      APP.showToast('⚠️ Your free trial has expired. Please choose a plan to continue.', 'error', 6000);
+    } else if (daysLeft <= 14) {
+      APP.showToast(`⏳ Free trial: ${daysLeft} day${daysLeft===1?'':'s'} remaining`, 'info', 5000);
     }
   }
 
@@ -1695,7 +1769,7 @@ function handleOwnerSignOut(e) {
   e.preventDefault();
   if (!confirm('Are you sure you want to sign out?')) return;
   localStorage.removeItem('lh_session');
-  location.href = 'auth.html';
+  location.href = 'auth.html?role=owner';
 }
 
 function confirmOwnerDeleteAccount() {
@@ -1727,7 +1801,7 @@ async function deleteOwnerAccount() {
   localStorage.clear();
   sessionStorage.clear();
   alert('Your account has been deleted.');
-  location.href = 'auth.html';
+  location.href = 'auth.html?role=owner';
 }
 </script>
 <script src="js/theme.js"></script>

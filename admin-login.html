@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Admin — LiveHushh</title>
+<link rel="stylesheet" href="css/styles.css?v=3">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--bg);font-family:'Inter',sans-serif;color:var(--text)}
+.wrap{width:100%;max-width:380px;padding:40px 20px}
+.logo{display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:36px}
+.logo-mark{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,#22D3EE,#E8540A);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.logo-text{font-family:'Inter',system-ui,sans-serif;font-size:1.2rem;font-weight:800}
+.box{background:var(--bg-card);border:1px solid var(--border2);border-radius:var(--r-2xl);padding:36px 32px}
+h1{font-family:'Inter',system-ui,sans-serif;font-size:1.4rem;font-weight:800;margin-bottom:6px}
+.sub{font-size:.85rem;color:var(--text2);margin-bottom:28px}
+.badge{display:inline-flex;align-items:center;gap:6px;background:rgba(34,211,238,0.1);border:1px solid rgba(34,211,238,0.25);border-radius:var(--r-full);padding:4px 12px;font-size:.7rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#22D3EE;margin-bottom:20px}
+.field{margin-bottom:16px}
+label{display:block;font-size:.8rem;font-weight:600;margin-bottom:6px;color:var(--text2)}
+.input{width:100%;padding:11px 14px;background:rgba(255,255,255,0.04);border:1.5px solid var(--border2);border-radius:var(--r);font-size:.9rem;color:var(--text);outline:none;transition:border-color .2s}
+.input:focus{border-color:rgba(34,211,238,0.5)}
+.err{display:none;background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.25);border-radius:var(--r);padding:10px 14px;font-size:.82rem;color:#EF4444;margin-bottom:14px}
+.btn-admin{width:100%;padding:13px;background:linear-gradient(135deg,#22D3EE,#0E7490);color:#fff;border:none;border-radius:var(--r);font-size:.9rem;font-weight:700;cursor:pointer;transition:opacity .2s;margin-top:4px}
+.btn-admin:hover{opacity:.88}
+.note{text-align:center;font-size:.75rem;color:var(--text3);margin-top:20px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="logo">
+    <div class="logo-mark">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+    </div>
+    <span class="logo-text">LiveHushh</span>
+  </div>
+
+  <div class="box">
+    <div class="badge">
+      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      Admin Access Only
+    </div>
+    <h1>Admin Login</h1>
+    <p class="sub">This page is not publicly linked. Authorised personnel only.</p>
+
+    <div id="errBox" class="err"></div>
+
+    <form onsubmit="doLogin(event)">
+      <div class="field">
+        <label>Email</label>
+        <input class="input" type="email" id="em" placeholder="admin@livehushh.com" required autocomplete="username">
+      </div>
+      <div class="field">
+        <label>Password</label>
+        <input class="input" type="password" id="pw" placeholder="••••••••" required autocomplete="current-password">
+      </div>
+      <button class="btn-admin" type="submit" id="submitBtn">Sign In to Admin Dashboard</button>
+    </form>
+  </div>
+  <p class="note">© 2025 LiveHushh · Internal use only</p>
+</div>
+
+<script src="js/data.js?v=2"></script>
+<script>
+// Redirect if already logged in as admin
+try {
+  const s = JSON.parse(localStorage.getItem('lh_session') || '{}');
+  if (s.role === 'admin') location.href = 'admin-dashboard.html';
+} catch(e) {}
+
+function doLogin(e) {
+  e.preventDefault();
+  const email = document.getElementById('em').value.trim().toLowerCase();
+  const pass  = document.getElementById('pw').value;
+  const errEl = document.getElementById('errBox');
+  const btn   = document.getElementById('submitBtn');
+
+  errEl.style.display = 'none';
+  btn.disabled = true;
+  btn.textContent = 'Signing in…';
+
+  // Admin credentials (hardcoded — no public exposure)
+  const ADMIN_EMAIL = 'admin@livehushh.com';
+  const ADMIN_PASS  = 'Admin@LH2025';
+
+  if (email === ADMIN_EMAIL && pass === ADMIN_PASS) {
+    localStorage.setItem('lh_session', JSON.stringify({ name: 'Admin', role: 'admin', email }));
+    location.href = 'admin-dashboard.html';
+    return;
+  }
+
+  // Show error after short delay (anti-brute-force UX)
+  setTimeout(() => {
+    errEl.textContent = 'Invalid credentials. Access denied.';
+    errEl.style.display = 'block';
+    btn.disabled = false;
+    btn.textContent = 'Sign In to Admin Dashboard';
+  }, 800);
+}
+</script>
+<script src="js/theme.js"></script>
+</body>
+</html>

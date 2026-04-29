@@ -217,7 +217,7 @@ body{background:var(--bg);display:flex;flex-direction:column;min-height:100vh;ov
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/></svg>
       Cart (<span id="cartCountBadge">0</span>)
     </button>
-    <a href="auth.html" class="btn btn-secondary btn-sm">Sign Out</a>
+    <a href="auth.html?role=customer" class="btn btn-secondary btn-sm">Sign Out</a>
   </div>
 </nav>
 
@@ -412,9 +412,9 @@ body{background:var(--bg);display:flex;flex-direction:column;min-height:100vh;ov
     <h2 class="headline" style="font-size:1.4rem;margin-bottom:20px">My Profile</h2>
     <div class="profile-layout">
       <div class="profile-card">
-        <div class="profile-avatar">A</div>
-        <div style="font-family:'Inter',system-ui,sans-serif;font-size:1.1rem;font-weight:700">James Carter</div>
-        <div class="caption" style="margin:4px 0 16px">james@example.com</div>
+        <div class="profile-avatar" id="profileInitial">?</div>
+        <div style="font-family:'Inter',system-ui,sans-serif;font-size:1.1rem;font-weight:700" id="profileName">—</div>
+        <div class="caption" style="margin:4px 0 16px" id="profileEmail">—</div>
         <div class="pill pill-purple">Customer Account</div>
         <div style="margin-top:20px;display:flex;flex-direction:column;gap:10px">
           <div style="display:flex;justify-content:space-between;font-size:.875rem">
@@ -841,9 +841,16 @@ function openRestaurant(id) {
     let deals = [];
     try { deals = await _API.get('/deals?restaurantId=' + (r.id || r._id)) || []; } catch(e) {}
     if (!deals.length) {
-      // Fallback: read from shared localStorage
+      // Fallback: read from shared localStorage — match by restaurantId, ownerEmail, or restaurantName
       const all = JSON.parse(localStorage.getItem('lh_shared_deals') || '[]');
-      deals = all.filter(d => !d.restaurantId || String(d.restaurantId) === String(r.id || r._id));
+      const rid = String(r.id || r._id || '');
+      deals = all.filter(d => {
+        if (!d.restaurantId || d.restaurantId === 'local') return true; // show untagged deals
+        if (String(d.restaurantId) === rid) return true;
+        if (r.ownerEmail && d.restaurantId === 'email_' + r.ownerEmail.replace(/[^a-z0-9]/gi,'_')) return true;
+        if (d.restaurantName && r.name && d.restaurantName.toLowerCase() === r.name.toLowerCase()) return true;
+        return false;
+      });
     }
     const active = deals.filter(d => {
       if (!d.active) return false;
@@ -1514,13 +1521,37 @@ function leaveWaitlist(i) {
 (async () => {
   const grid = document.getElementById('restaurantGrid');
 
-  if (!_API.ready) {
-    grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:60px 20px;color:var(--text2)"><div style="font-size:2rem;margin-bottom:12px">⚙️</div><div style="font-weight:600;margin-bottom:6px">API not configured</div><div style="font-size:.85rem">Fill in js/aws-config.js with your API Gateway URL.</div></div>';
-    return;
-  }
+  // Populate profile from session
+  try {
+    const sess = JSON.parse(localStorage.getItem('lh_session') || '{}');
+    const displayName = sess.name || sess.firstName || sess.email || 'Guest';
+    const el_name = document.getElementById('profileName');
+    const el_email = document.getElementById('profileEmail');
+    const el_initial = document.getElementById('profileInitial');
+    if (el_name) el_name.textContent = displayName;
+    if (el_email) el_email.textContent = sess.email || '';
+    if (el_initial) el_initial.textContent = displayName.charAt(0).toUpperCase();
+  } catch(e) {}
 
   // Show loading state
   grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:60px 20px;color:var(--text2)"><div style="font-size:1.5rem;margin-bottom:8px">⏳</div>Loading restaurants…</div>';
+
+  if (!_API.ready) {
+    // No API — load from shared localStorage directly
+    const sharedRests = JSON.parse(localStorage.getItem('lh_shared_restaurants') || '[]');
+    if (sharedRests.length) {
+      APP.restaurants = sharedRests;
+    }
+    APP.waitlist = JSON.parse(localStorage.getItem('lh_shared_waitlist') || '[]');
+
+    if (!APP.restaurants.length) {
+      grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:60px 20px;color:var(--text2)"><div style="font-size:2rem;margin-bottom:12px">🍽️</div><div style="font-weight:600">No restaurants yet</div><div style="font-size:.85rem;margin-top:6px">Restaurant owners can add their restaurant from the owner dashboard.</div></div>';
+    } else {
+      renderRestaurants(APP.restaurants);
+      injectCuisineChips(APP.restaurants);
+    }
+    return;
+  }
 
   try {
     const [restaurants, orders] = await Promise.all([
@@ -1536,10 +1567,14 @@ function leaveWaitlist(i) {
 
   } catch(e) {}
 
-  // Supplement with shared localStorage data (from owner dashboard)
-  if (!APP.restaurants.length) {
-    const sharedRests = JSON.parse(localStorage.getItem('lh_shared_restaurants') || '[]');
-    if (sharedRests.length) APP.restaurants = sharedRests;
+  // Always merge shared localStorage restaurants (from owner dashboard) with any API data
+  const sharedRests = JSON.parse(localStorage.getItem('lh_shared_restaurants') || '[]');
+  if (sharedRests.length) {
+    // Merge: add shared restaurants not already in APP.restaurants, prefer API data when both exist
+    sharedRests.forEach(sr => {
+      const exists = APP.restaurants.find(r => r.id === sr.id || (sr.ownerEmail && r.ownerEmail === sr.ownerEmail));
+      if (!exists) APP.restaurants.push(sr);
+    });
   }
   if (!APP.waitlist.length) {
     APP.waitlist = JSON.parse(localStorage.getItem('lh_shared_waitlist') || '[]');
@@ -1610,7 +1645,7 @@ function urlBase64ToUint8Array(base64String) {
 function handleSignOut() {
   if (!confirm('Are you sure you want to sign out?')) return;
   localStorage.removeItem('lh_session');
-  location.href = 'auth.html';
+  location.href = 'auth.html?role=customer';
 }
 
 // ── Delete Account ────────────────────────────────────────────────────────────
@@ -1648,7 +1683,7 @@ async function deleteAccount() {
   localStorage.clear();
   sessionStorage.clear();
   APP.showToast('Your account has been deleted.', 'success');
-  setTimeout(() => { location.href = 'auth.html'; }, 1500);
+  setTimeout(() => { location.href = 'auth.html?role=customer'; }, 1500);
 }
 </script>
 <script src="js/theme.js"></script>
@@ -1671,7 +1706,7 @@ async function deleteAccount() {
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
     Profile
   </div>
-  <div class="mob-tab" onclick="location.href='auth.html'">
+  <div class="mob-tab" onclick="location.href='auth.html?role=customer'">
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
     Sign Out
   </div>

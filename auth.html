@@ -485,11 +485,9 @@ function handleLogin(e) {
   const errEl  = document.getElementById('loginError');
   errEl.style.display = 'none';
 
-  // Admin shortcut (always local)
-  if (currentRole === 'admin' && email === 'admin@livehushh.com' && pass === 'Admin@LH2025') {
-    localStorage.setItem('lh_session', JSON.stringify({ name:'Admin', role:'admin', email }));
-    APP.showToast('Welcome, Admin!', 'success');
-    setTimeout(() => location.href = 'admin-dashboard.html', 700);
+  // Admin: redirect to dedicated admin-login.html instead of handling here
+  if (currentRole === 'admin') {
+    location.href = 'admin-login.html';
     return;
   }
 
@@ -591,6 +589,8 @@ async function _localSignUp(firstName, lastName, email, pass, rname, btn) {
     APP.showToast('An account with this email already exists — please sign in.', 'error');
     btn.innerHTML = 'Create Account'; btn.disabled = false; return;
   }
+  // Owners start as pending approval; customers are active immediately
+  const approvalStatus = signupRole === 'owner' ? 'pending' : 'active';
   const newUser = {
     id: 'u_' + Date.now(),
     firstName, lastName,
@@ -598,7 +598,8 @@ async function _localSignUp(firstName, lastName, email, pass, rname, btn) {
     email, password: pass,
     role: signupRole,
     restaurant: rname.trim(),
-    joinedAt: new Date().toISOString()
+    joinedAt: new Date().toISOString(),
+    approvalStatus
   };
   users.push(newUser);
   saveUsers(users);
@@ -606,7 +607,7 @@ async function _localSignUp(firstName, lastName, email, pass, rname, btn) {
   // Register in shared users so admin can see real users
   try {
     const sharedUsers = JSON.parse(localStorage.getItem('lh_shared_users') || '[]');
-    sharedUsers.unshift({ name: newUser.name, email, role: signupRole === 'owner' ? 'Owner' : 'Customer', city: '—', joined: new Date().toLocaleDateString(), last: 'Today', status: 'active' });
+    sharedUsers.unshift({ name: newUser.name, email, role: signupRole === 'owner' ? 'Owner' : 'Customer', city: '—', joined: new Date().toLocaleDateString(), last: 'Today', status: approvalStatus, restaurantName: rname || '—', id: newUser.id });
     localStorage.setItem('lh_shared_users', JSON.stringify(sharedUsers));
   } catch(e) {}
   logToSheets({
@@ -704,6 +705,43 @@ function _redirect(role, isNewSignup) {
   if (isNewSignup)           { location.href = 'owner-onboarding.html'; return; }
   location.href = 'owner-dashboard.html';
 }
+
+// ── Role-based URL routing ─────────────────────────────────────────────────────
+// Usage: auth.html?role=customer  or  auth.html?role=owner  (home page uses no param)
+(function initRoleRouting() {
+  const _urlRole = new URLSearchParams(location.search).get('role'); // 'customer', 'owner', or null
+
+  // Always hide admin from public auth.html (admin has separate admin-login.html)
+  ['role-admin','srole-admin'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = 'none';
+  });
+  // Adjust role-grid to 2-col now that admin is hidden
+  document.querySelectorAll('.role-grid').forEach(g => g.style.gridTemplateColumns = 'repeat(2,1fr)');
+
+  if (_urlRole === 'customer') {
+    // Hide owner role cards, lock to customer
+    ['role-owner','srole-owner'].forEach(id => { const el = document.getElementById(id); if (el) el.style.display = 'none'; });
+    document.querySelectorAll('.role-grid').forEach(g => g.style.gridTemplateColumns = '1fr');
+    selectRole('customer');
+    selectSignupRole('customer');
+    // Update titles
+    document.querySelectorAll('.auth-subtitle').forEach(el => {
+      if (el.textContent.includes('Sign in')) el.textContent = 'Sign in to your customer account';
+      if (el.textContent.includes('Join')) el.textContent = 'Create your free customer account';
+    });
+  } else if (_urlRole === 'owner') {
+    // Hide customer role cards, lock to owner
+    ['role-customer','srole-customer'].forEach(id => { const el = document.getElementById(id); if (el) el.style.display = 'none'; });
+    document.querySelectorAll('.role-grid').forEach(g => g.style.gridTemplateColumns = '1fr');
+    selectRole('owner');
+    selectSignupRole('owner');
+    document.querySelectorAll('.auth-subtitle').forEach(el => {
+      if (el.textContent.includes('Sign in')) el.textContent = 'Sign in to your restaurant owner account';
+      if (el.textContent.includes('Join')) el.textContent = 'List your restaurant on LiveHushh';
+    });
+  }
+})();
 
 // ── Sign in with Apple ────────────────────────────────────────────────────────
 async function handleAppleSignIn() {
