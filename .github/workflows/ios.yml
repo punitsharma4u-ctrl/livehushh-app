@@ -33,6 +33,10 @@ jobs:
       - name: Sync Capacitor to iOS
         run: npx cap sync ios
 
+      # ── 4b. Generate app icons from icon.png ───────────────────────────────
+      - name: Generate iOS app icons
+        run: npx @capacitor/assets generate --ios 2>/dev/null || true
+
       # ── 5. Install CocoaPods ───────────────────────────────────────────────
       - name: Install CocoaPods
         run: |
