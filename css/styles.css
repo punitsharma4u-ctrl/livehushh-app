@@ -713,6 +713,40 @@ body.theme-light .sidebar .lh-logo-live,
 body.theme-light .app-nav .lh-logo-live,
 body.theme-light .auth-logo .lh-logo-live{color:#F8FAFC}
 /* Override nav-logo font */
-.nav-logo,.auth-logo,.app-nav-logo{letter-spacing:0}
-/* Hide old icon marks globally */
+.nav-logo,.auth-logo,.app-nav-logo,.sidebar-logo{letter-spacing:0}
+/* Hide old SVG icon marks — replaced by ::before pseudo marks */
 .nav-logo-mark,.sidebar-logo-mark,.app-nav-logo-mark,.auth-logo-mark{display:none!important}
+
+/* ── lh. Icon Mark — orange rounded square injected before logo text ── */
+.nav-logo::before,
+.auth-logo::before,
+.app-nav-logo::before,
+.sidebar-logo::before {
+  content: 'lh.';
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  min-width: 34px;
+  background: linear-gradient(145deg, #F97316, #EA580C);
+  border-radius: 10px;
+  color: #2D3748;
+  font-weight: 900;
+  font-size: .82rem;
+  font-family: 'Inter', system-ui, sans-serif;
+  letter-spacing: -.03em;
+  box-shadow: 0 4px 14px rgba(232,84,10,0.45);
+  flex-shrink: 0;
+}
+/* Smaller mark in sidebar and app-nav */
+.sidebar-logo::before {
+  width: 30px; height: 30px; min-width: 30px;
+  border-radius: 9px; font-size: .75rem;
+  box-shadow: none;
+}
+.app-nav-logo::before {
+  width: 28px; height: 28px; min-width: 28px;
+  border-radius: 8px; font-size: .72rem;
+  box-shadow: none;
+}
