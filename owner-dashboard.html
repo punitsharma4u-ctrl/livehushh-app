@@ -1615,7 +1615,7 @@ async function deleteOwnerAccount() {
   try {
     const sess = JSON.parse(localStorage.getItem('lh_session') || '{}');
     if (sess.sub) {
-      await _API.del('/account').catch(() => {});
+      await _API.delete('/account').catch(() => {});
     }
   } catch(e) {}
   localStorage.clear();
