@@ -69,6 +69,16 @@ jobs:
       - name: Set Xcode signing settings
         run: node scripts/fix-signing.js
 
+      # ── 8b. Enable Sign in with Apple capability ───────────────────────────
+      - name: Enable Sign in with Apple entitlement
+        run: |
+          PBXPROJ="ios/App/App.xcodeproj/project.pbxproj"
+          # Link entitlements file to the App target build settings
+          if ! grep -q "CODE_SIGN_ENTITLEMENTS" "$PBXPROJ"; then
+            sed -i '' 's/CODE_SIGN_STYLE = Manual;/CODE_SIGN_STYLE = Manual;\n\t\t\t\tCODE_SIGN_ENTITLEMENTS = App\/App.entitlements;/' "$PBXPROJ"
+          fi
+          echo "✅ Entitlements configured"
+
       # ── 8. Code signing ────────────────────────────────────────────────────
       - name: Install Apple certificate & provisioning profile
         env:

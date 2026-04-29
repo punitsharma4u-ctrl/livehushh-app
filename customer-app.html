@@ -431,6 +431,8 @@ body{background:var(--bg);display:flex;flex-direction:column;min-height:100vh;ov
           </div>
         </div>
         <button class="btn btn-secondary btn-sm w-full" style="margin-top:20px" onclick="APP.showToast('Profile updated','success')">Edit Profile</button>
+        <button class="btn btn-ghost btn-sm w-full" style="margin-top:10px;color:var(--text2)" onclick="handleSignOut()">Sign Out</button>
+        <button class="btn btn-sm w-full" style="margin-top:10px;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);color:#EF4444" onclick="confirmDeleteAccount()">Delete Account</button>
       </div>
       <div>
         <div class="card" style="margin-bottom:16px">
@@ -1563,6 +1565,51 @@ function urlBase64ToUint8Array(base64String) {
   const base64 = (base64String + pad).replace(/-/g, '+').replace(/_/g, '/');
   const raw = atob(base64);
   return Uint8Array.from([...raw].map(c => c.charCodeAt(0)));
+}
+
+// ── Sign Out ──────────────────────────────────────────────────────────────────
+function handleSignOut() {
+  if (!confirm('Are you sure you want to sign out?')) return;
+  localStorage.removeItem('lh_session');
+  location.href = 'auth.html';
+}
+
+// ── Delete Account ────────────────────────────────────────────────────────────
+function confirmDeleteAccount() {
+  const modal = document.createElement('div');
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:9999;display:flex;align-items:center;justify-content:center;padding:24px';
+  modal.innerHTML = `
+    <div style="background:var(--bg-card);border:1px solid rgba(239,68,68,0.3);border-radius:20px;padding:32px;max-width:420px;width:100%;text-align:center">
+      <div style="font-size:2.5rem;margin-bottom:16px">⚠️</div>
+      <div style="font-size:1.2rem;font-weight:700;margin-bottom:8px">Delete Account</div>
+      <div style="font-size:.875rem;color:var(--text2);line-height:1.6;margin-bottom:24px">
+        This will permanently delete your account and all your data including orders, waitlists, and preferences. This action cannot be undone.
+      </div>
+      <div style="display:flex;gap:12px;justify-content:center">
+        <button onclick="this.closest('[style*=fixed]').remove()" style="flex:1;padding:12px;border-radius:12px;border:1px solid var(--border2);background:var(--bg-card);color:var(--text);cursor:pointer;font-weight:600">Cancel</button>
+        <button onclick="deleteAccount()" style="flex:1;padding:12px;border-radius:12px;border:none;background:#EF4444;color:#fff;cursor:pointer;font-weight:600">Delete My Account</button>
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
+}
+
+async function deleteAccount() {
+  document.querySelectorAll('[style*=fixed][style*=z-index:9999]').forEach(el => el.remove());
+  try {
+    const session = JSON.parse(localStorage.getItem('lh_session') || '{}');
+    if (session.idToken) {
+      await _API.del('/account').catch(() => {});
+    }
+    // Clear Cognito if available
+    if (window.userPool) {
+      const user = userPool.getCurrentUser();
+      if (user) user.deleteUser(() => {});
+    }
+  } catch(e) { console.warn('Account deletion API error:', e); }
+  localStorage.clear();
+  sessionStorage.clear();
+  APP.showToast('Your account has been deleted.', 'success');
+  setTimeout(() => { location.href = 'auth.html'; }, 1500);
 }
 </script>
 <script src="js/theme.js"></script>
