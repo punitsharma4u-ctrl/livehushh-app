@@ -24,7 +24,7 @@ jobs:
 
       # ── 3. Install npm packages ────────────────────────────────────────────
       - name: Install dependencies
-        run: npm ci
+        run: npm install --legacy-peer-deps
 
       # ── 4. Add & sync iOS platform ─────────────────────────────────────────
       - name: Add iOS platform (if not present)
