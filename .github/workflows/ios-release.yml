@@ -57,7 +57,11 @@ jobs:
           PP_PATH=$RUNNER_TEMP/profile.mobileprovision
           echo -n "$PROFILE_BASE64" | base64 --decode -o $PP_PATH
           mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
-          cp $PP_PATH ~/Library/MobileDevice/Provisioning\ Profiles/
+          # Extract UUID so Xcode can find the profile by UUID filename
+          UUID=$(security cms -D -i $PP_PATH | plutil -extract UUID raw -)
+          cp $PP_PATH ~/Library/MobileDevice/Provisioning\ Profiles/$UUID.mobileprovision
+          echo "PROFILE_UUID=$UUID" >> $GITHUB_ENV
+          echo "Installed profile UUID: $UUID"
 
       # 7. Build & Archive
       - name: Build IPA
@@ -69,7 +73,7 @@ jobs:
             -configuration Release \
             CODE_SIGN_STYLE=Manual \
             CODE_SIGN_IDENTITY="Apple Distribution" \
-            PROVISIONING_PROFILE_SPECIFIER="livehushh_AppStore" \
+            PROVISIONING_PROFILE="$PROFILE_UUID" \
             -allowProvisioningUpdates
 
           xcodebuild -exportArchive \
