@@ -11,7 +11,7 @@
 <meta name="apple-mobile-web-app-title" content="LiveHushh">
 <link rel="apple-touch-icon" href="/icons/icon-192.png">
 <link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192.png">
-<link rel="stylesheet" href="css/styles.css?v=3">
+<link rel="stylesheet" href="css/styles.css?v=4">
 <style>
 /* App shell */
 body{background:var(--bg);display:flex;flex-direction:column;min-height:100vh;overflow-x:hidden}
@@ -125,6 +125,11 @@ body{background:var(--bg);display:flex;flex-direction:column;min-height:100vh;ov
 
 /* Toast */
 #toast-container{position:fixed;bottom:24px;right:24px;z-index:9999;display:flex;flex-direction:column;gap:8px}
+
+/* Deal notification banner */
+@keyframes slideDown{from{transform:translateY(-100%);opacity:0}to{transform:translateY(0);opacity:1}}
+@keyframes slideUp{from{transform:translateY(0);opacity:1}to{transform:translateY(-100%);opacity:0}}
+#deal-notification-banner{animation:slideDown .35s cubic-bezier(.4,0,.2,1)}
 
 /* ── Checkout modal ── */
 .checkout-step{display:none}
@@ -1433,8 +1438,36 @@ function openWaitlistModal() { document.getElementById('waitlistModal').classLis
 function closeWaitlistModal() { document.getElementById('waitlistModal').classList.add('hidden'); }
 function joinWaitlist(e) {
   e.preventDefault();
+  const form = e.target;
+  const nameInput  = form.querySelector('input[type="text"]');
+  const guestSel   = form.querySelector('select');
+  const guestName  = (nameInput  && nameInput.value.trim())  || 'Guest';
+  const guestCount = (guestSel   && guestSel.value)          || '2 guests';
+  const now = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+  const pos = APP.waitlist.length + 1;
+
+  const wlDoc = {
+    restaurantId:  currentRestaurantId,
+    name:          guestName,
+    guests:        guestCount,
+    position:      pos,
+    waitSecs:      1500,
+    joinedAt:      now,
+    startedAt:     Date.now(),
+    estimatedWait: '~25 min'
+  };
+
+  APP.waitlist.unshift(wlDoc);
+
+  // Persist to shared localStorage so owner dashboard can see it
+  const sharedWl = JSON.parse(localStorage.getItem('lh_shared_waitlist') || '[]');
+  sharedWl.unshift(wlDoc);
+  localStorage.setItem('lh_shared_waitlist', JSON.stringify(sharedWl));
+
+  _API.post('/waitlist', wlDoc).catch(() => {});
+
   closeWaitlistModal();
-  APP.showToast('Joined waitlist! You\'ll get an SMS when ready.', 'success', 4000);
+  APP.showToast('✅ You\'re on the waitlist! The restaurant has been notified.', 'success', 4000);
   renderWaitlists();
 }
 function renderWaitlists() {
@@ -1517,6 +1550,66 @@ function leaveWaitlist(i) {
   APP.showToast('You\'ve left the waitlist', 'info');
 }
 
+/* ── DEAL NOTIFICATIONS ── */
+const _seenDealIds = new Set(
+  JSON.parse(localStorage.getItem('lh_seen_deal_ids') || '[]')
+);
+
+function showDealBanner(deal) {
+  const existing = document.getElementById('deal-notification-banner');
+  if (existing) existing.remove();
+  const banner = document.createElement('div');
+  banner.id = 'deal-notification-banner';
+  banner.style.cssText = 'position:fixed;top:64px;left:0;right:0;z-index:500;background:rgba(245,158,11,0.15);border-bottom:1px solid rgba(245,158,11,0.4);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);padding:12px 24px;display:flex;align-items:center;gap:12px;cursor:pointer';
+  banner.innerHTML = `
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="#F59E0B"><polygon points="12,2 15.1,8.3 22,9.3 17,14.1 18.2,21 12,17.8 5.8,21 7,14.1 2,9.3 8.9,8.3"/></svg>
+    <div style="flex:1">
+      <div style="font-size:.875rem;font-weight:700;color:var(--gold)">🔥 New Deal: ${deal.title}${deal.discount ? ' — ' + deal.discount + '% off' : ''}</div>
+      <div style="font-size:.75rem;color:var(--text2);margin-top:1px">from <strong style="color:var(--text)">${deal.restaurantName || 'a restaurant'}</strong>${deal.desc ? ' · ' + deal.desc : ''}</div>
+    </div>
+    <button onclick="event.stopPropagation();this.closest('#deal-notification-banner').remove()" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:1.2rem;padding:4px;flex-shrink:0">✕</button>
+  `;
+  // Click banner → open that restaurant's menu
+  banner.addEventListener('click', () => {
+    if (deal.restaurantId) openRestaurant(deal.restaurantId);
+    banner.remove();
+  });
+  document.body.appendChild(banner);
+  // Auto-dismiss after 10 seconds
+  setTimeout(() => {
+    if (!banner.parentElement) return;
+    banner.style.animation = 'slideUp .35s cubic-bezier(.4,0,.2,1)';
+    setTimeout(() => banner.remove(), 350);
+  }, 10000);
+  // Browser push notification
+  if ('Notification' in window && Notification.permission === 'granted') {
+    new Notification('🔥 New Deal — ' + (deal.restaurantName || 'LiveHushh'), {
+      body: deal.title + (deal.discount ? ' — ' + deal.discount + '% off' : ''),
+      icon: '/icons/icon-192.png',
+    });
+  }
+}
+
+function pollDeals() {
+  const all = JSON.parse(localStorage.getItem('lh_shared_deals') || '[]');
+  const now = Date.now();
+  all.forEach(d => {
+    if (!d.active) return;
+    if (d.expiresAt && new Date(d.expiresAt) < new Date()) return;
+    const id = String(d.id || d._id);
+    if (_seenDealIds.has(id)) return;
+    // Only surface deals created in the last 5 minutes
+    if (d.createdAt && (now - new Date(d.createdAt).getTime()) > 300000) {
+      _seenDealIds.add(id); return;
+    }
+    _seenDealIds.add(id);
+    showDealBanner(d);
+  });
+  // Persist seen IDs (keep last 100)
+  const arr = [..._seenDealIds].slice(-100);
+  localStorage.setItem('lh_seen_deal_ids', JSON.stringify(arr));
+}
+
 /* ── INIT ── */
 (async () => {
   const grid = document.getElementById('restaurantGrid');
@@ -1595,6 +1688,10 @@ function leaveWaitlist(i) {
       renderRestaurants(APP.restaurants);
     }
   }, 60000);
+
+  // ── Poll for new deals pushed by owners ──────────────────────────────
+  pollDeals(); // run immediately on load
+  setInterval(pollDeals, 15000); // then every 15 seconds
 
   // ── Service Worker + Push Notifications ──────────────────────────────
   if ('serviceWorker' in navigator && 'PushManager' in window) {
