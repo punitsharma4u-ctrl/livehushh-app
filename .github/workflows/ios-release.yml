@@ -13,6 +13,15 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      # 1b. Select latest Xcode (Apple requires iOS 26 SDK as of 2026)
+      - name: Select latest Xcode
+        run: |
+          # Pick the highest-versioned Xcode available on this runner
+          LATEST_XCODE=$(ls -d /Applications/Xcode*.app 2>/dev/null | sort -V | tail -1)
+          echo "Using Xcode: $LATEST_XCODE"
+          sudo xcode-select -s "$LATEST_XCODE/Contents/Developer"
+          xcodebuild -version
+
       # 2. Node + npm
       - name: Setup Node 18
         uses: actions/setup-node@v4
