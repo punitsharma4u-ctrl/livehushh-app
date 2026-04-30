@@ -88,10 +88,13 @@ jobs:
           APP_STORE_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
           APP_STORE_KEY_CONTENT: ${{ secrets.ASC_PRIVATE_KEY }}
         run: |
-          echo "$APP_STORE_KEY_CONTENT" > /tmp/AuthKey.p8
+          # altool requires the key named AuthKey_<KEY_ID>.p8 in one of its search paths
+          mkdir -p ~/.appstoreconnect/private_keys
+          echo "$APP_STORE_KEY_CONTENT" > ~/.appstoreconnect/private_keys/AuthKey_${APP_STORE_KEY_ID}.p8
+          chmod 600 ~/.appstoreconnect/private_keys/AuthKey_${APP_STORE_KEY_ID}.p8
+
           xcrun altool --upload-app \
             --type ios \
             --file "$RUNNER_TEMP/ipa/App.ipa" \
             --apiKey "$APP_STORE_KEY_ID" \
-            --apiIssuer "$APP_STORE_ISSUER_ID" \
-            --private-key /tmp/AuthKey.p8
+            --apiIssuer "$APP_STORE_ISSUER_ID"
