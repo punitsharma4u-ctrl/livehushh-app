@@ -31,6 +31,8 @@
 
 const { MongoClient, ObjectId } = require('mongodb');
 const webpush = require('web-push');
+const Stripe   = require('stripe');
+const stripe   = Stripe(process.env.STRIPE_SECRET_KEY || '');
 
 // VAPID keys — generate with: npx web-push generate-vapid-keys
 // Set VAPID_PUBLIC_KEY and VAPID_PRIVATE_KEY in Lambda environment variables
@@ -297,6 +299,18 @@ exports.handler = async (event) => {
         : { customerSub: userId };
       const orders = await db.collection('orders').find(filter).sort({ createdAt: -1 }).toArray();
       return resp(200, orders);
+    }
+
+    // ── POST /orders/payment-intent ─────────────────────────────────────────
+    if (method === 'POST' && path.endsWith('/orders/payment-intent')) {
+      const { amountCents, currency = 'usd', restaurantId } = parseBody(event);
+      if (!amountCents || amountCents < 50) return resp(400, { error: 'Invalid amount' });
+      const paymentIntent = await stripe.paymentIntents.create({
+        amount:   amountCents,
+        currency,
+        metadata: { restaurantId: restaurantId || '', customerEmail: claims?.email || '' },
+      });
+      return resp(200, { clientSecret: paymentIntent.client_secret });
     }
 
     // ── POST /orders ────────────────────────────────────────────────────────

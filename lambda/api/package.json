@@ -4,6 +4,7 @@
   "description": "LiveHushh API Lambda — MongoDB proxy",
   "main": "index.js",
   "dependencies": {
-    "mongodb": "^6.0.0"
+    "mongodb": "^6.0.0",
+    "stripe": "^14.0.0"
   }
 }

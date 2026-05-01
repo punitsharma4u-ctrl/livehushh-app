@@ -190,6 +190,7 @@ body{background:var(--bg);display:flex;flex-direction:column;min-height:100vh;ov
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="LiveHushh">
   <link rel="apple-touch-icon" href="/icons/icon-192.png">
+  <script src="https://js.stripe.com/v3/"></script>
 </head>
 <body>
 
@@ -587,26 +588,16 @@ body{background:var(--bg);display:flex;flex-direction:column;min-height:100vh;ov
         <div id="checkoutTypeTag" style="margin-top:8px;font-size:.75rem;color:var(--text2)"></div>
       </div>
 
-      <!-- Card form -->
+      <!-- Real Stripe Card Element -->
       <div style="display:flex;flex-direction:column;gap:12px">
         <div class="form-group" style="margin-bottom:0">
           <label class="form-label">Name on Card</label>
           <input class="input" id="cardName" placeholder="James Carter" autocomplete="cc-name">
         </div>
-        <div class="form-group card-input-wrap" style="margin-bottom:0">
-          <label class="form-label">Card Number</label>
-          <input class="input" id="cardNum" placeholder="1234 5678 9012 3456" maxlength="19" autocomplete="cc-number" oninput="fmtCard(this)" style="padding-right:64px">
-          <span class="card-brand" id="cardBrandIcon" style="top:calc(50% + 14px)">💳</span>
-        </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-          <div class="form-group" style="margin-bottom:0">
-            <label class="form-label">Expiry</label>
-            <input class="input" id="cardExp" placeholder="MM / YY" maxlength="7" autocomplete="cc-exp" oninput="fmtExp(this)">
-          </div>
-          <div class="form-group" style="margin-bottom:0">
-            <label class="form-label">CVV</label>
-            <input class="input" id="cardCvv" placeholder="•••" maxlength="4" type="password" autocomplete="cc-csc">
-          </div>
+        <div class="form-group" style="margin-bottom:0">
+          <label class="form-label">Card Details</label>
+          <div id="stripe-card-element" style="background:rgba(255,255,255,0.06);border:1.5px solid var(--border2);border-radius:var(--r);padding:13px 14px;transition:border-color .2s"></div>
+          <div id="stripe-card-error" style="color:#EF4444;font-size:.78rem;margin-top:6px;display:none"></div>
         </div>
         <div style="display:flex;align-items:center;gap:6px;font-size:.72rem;color:var(--text3)">
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
@@ -1140,6 +1131,8 @@ function closeCheckout() {
 function goToStep(step) {
   document.querySelectorAll('.checkout-step').forEach(s => s.classList.remove('active'));
   document.getElementById('step-'+step).classList.add('active');
+  // Mount Stripe card element when payment step is shown
+  if (step === 'payment') setTimeout(_mountStripeCard, 100);
 }
 
 function selectOrderType(type) {
@@ -1191,38 +1184,92 @@ function fmtExp(el) {
   el.value = v;
 }
 
-function processPayment() {
+// ── Stripe setup ──────────────────────────────────────────────────────────────
+const _stripe = window.Stripe ? Stripe('pk_test_51MvKFaAGS5ZFcJC0kbxQJkmIegSrF1agmGzm3aLda3bhrxzKH0j3i3LM831jJl1e1RAlf5FZINGx8tZpVYc5AKiE00fk11xwZp') : null;
+let _stripeCard = null;
+
+function _mountStripeCard() {
+  if (!_stripe || _stripeCard) return;
+  const elements = _stripe.elements({
+    appearance: {
+      theme: 'night',
+      variables: {
+        colorPrimary: '#E8540A',
+        colorBackground: 'rgba(255,255,255,0.06)',
+        colorText: '#F8FAFC',
+        colorDanger: '#EF4444',
+        fontFamily: 'Inter, sans-serif',
+        borderRadius: '10px',
+      }
+    }
+  });
+  _stripeCard = elements.create('card', { hidePostalCode: true });
+  _stripeCard.mount('#stripe-card-element');
+  _stripeCard.on('change', e => {
+    const errEl = document.getElementById('stripe-card-error');
+    if (e.error) { errEl.textContent = e.error.message; errEl.style.display = 'block'; }
+    else { errEl.style.display = 'none'; }
+    const el = document.getElementById('stripe-card-element');
+    el.style.borderColor = e.error ? '#EF4444' : (e.complete ? '#10B981' : 'var(--border2)');
+  });
+}
+
+async function processPayment() {
   const name = document.getElementById('cardName').value.trim();
-  const num  = document.getElementById('cardNum').value.replace(/\s/g,'');
-  const exp  = document.getElementById('cardExp').value.trim();
-  const cvv  = document.getElementById('cardCvv').value.trim();
-  if (!name)          { APP.showToast('Enter name on card', 'error'); return; }
-  if (num.length < 15){ APP.showToast('Enter a valid card number', 'error'); return; }
-  if (!exp)           { APP.showToast('Enter expiry date', 'error'); return; }
-  if (!cvv)           { APP.showToast('Enter CVV', 'error'); return; }
+  if (!name) { APP.showToast('Enter name on card', 'error'); return; }
+  if (!_stripeCard) { APP.showToast('Card form not ready', 'error'); return; }
 
   const btn = document.getElementById('payBtn');
   btn.disabled = true;
   document.getElementById('payBtnLabel').innerHTML = '<span style="position:relative;z-index:1">Processing…</span>';
   const prog = document.getElementById('payProgress');
-  prog.style.transition = 'width 2s linear';
-  prog.style.width = '100%';
+  prog.style.transition = 'width 3s linear';
+  prog.style.width = '90%';
 
-  setTimeout(() => {
+  try {
+    // Calculate amount
     const sub   = APP.cartTotal();
     const disc  = liveDiscountApplied ? Math.round(sub * 0.3) : 0;
     const total = sub - disc;
+    const amountCents = Math.round(total * 100);
+
+    // Get Payment Intent from Lambda
+    const piRes = await _API.post('/orders/payment-intent', {
+      amountCents,
+      currency: 'usd',
+      restaurantId: currentRestaurantId
+    });
+    if (!piRes || !piRes.clientSecret) throw new Error('Could not create payment');
+
+    // Confirm card payment with Stripe
+    const { paymentIntent, error } = await _stripe.confirmCardPayment(piRes.clientSecret, {
+      payment_method: { card: _stripeCard, billing_details: { name } }
+    });
+
+    if (error) {
+      const errEl = document.getElementById('stripe-card-error');
+      errEl.textContent = error.message;
+      errEl.style.display = 'block';
+      btn.disabled = false;
+      prog.style.width = '0';
+      document.getElementById('payBtnLabel').innerHTML = `<span style="position:relative;z-index:1">Pay <span id="payAmountLabel">$${total.toFixed(2)}</span></span>`;
+      return;
+    }
+
+    // Payment succeeded — create order
+    prog.style.width = '100%';
     const num2  = 1043 + Math.floor(Math.random()*900);
     const now   = new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
-
     const orderDoc = {
-      id: 'ord-'+num2,
+      id: 'ord-' + num2,
       restaurantId: currentRestaurantId,
       items: [...APP.cart],
       status: 'placed',
-      total: total,
+      total,
       type: selectedOrderType,
-      time: now
+      time: now,
+      paymentIntentId: paymentIntent.id,
+      paid: true
     };
     APP.orders.unshift(orderDoc);
     _API.post('/orders', orderDoc).catch(() => {});
@@ -1233,12 +1280,11 @@ function processPayment() {
       document.getElementById('success-delivery').style.display = 'block';
       document.getElementById('success-dinein').style.display   = 'none';
     } else {
-      // Dine-in — add to waitlist + start countdown
       const waitMins = 25;
       wlTotalSecs = waitMins * 60;
       const pos = APP.waitlist.length + 6;
-      document.getElementById('wlSuccessPos').textContent    = pos;
-      document.getElementById('wlPositionText').textContent  = (pos - 1) + ' parties ahead of you';
+      document.getElementById('wlSuccessPos').textContent   = pos;
+      document.getElementById('wlPositionText').textContent = (pos - 1) + ' parties ahead of you';
       document.getElementById('success-delivery').style.display = 'none';
       document.getElementById('success-dinein').style.display   = 'block';
       startWlCountdown();
@@ -1246,14 +1292,10 @@ function processPayment() {
         restaurantId: currentRestaurantId,
         guests: document.getElementById('tableSize').value,
         name: document.getElementById('dineinName').value || 'You',
-        position: pos,
-        waitSecs: wlTotalSecs,
-        joinedAt: now,
-        startedAt: Date.now(),
-        estimatedWait: waitMins + ' min'
+        position: pos, waitSecs: wlTotalSecs,
+        joinedAt: now, startedAt: Date.now(), estimatedWait: waitMins + ' min'
       };
       APP.waitlist.unshift(wlDoc);
-      // Save to shared localStorage so restaurant can see it
       const sharedWl = JSON.parse(localStorage.getItem('lh_shared_waitlist') || '[]');
       sharedWl.unshift(wlDoc);
       localStorage.setItem('lh_shared_waitlist', JSON.stringify(sharedWl));
@@ -1264,8 +1306,13 @@ function processPayment() {
     APP.cart = [];
     removePromo();
     renderCart();
+
+  } catch (err) {
+    APP.showToast('Payment failed. Please try again.', 'error');
     btn.disabled = false;
-  }, 2000);
+    prog.style.width = '0';
+    document.getElementById('payBtnLabel').innerHTML = '<span style="position:relative;z-index:1">Pay</span>';
+  }
 }
 
 function startWlCountdown() {
