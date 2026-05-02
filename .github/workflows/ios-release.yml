@@ -62,8 +62,8 @@ jobs:
           UUID=$(/usr/libexec/PlistBuddy -c 'Print :UUID' "$DECODED_PLIST")
           echo "Profile UUID: $UUID"
           cp "$PP_PATH" ~/Library/MobileDevice/Provisioning\ Profiles/${UUID}.mobileprovision
-          echo "Profile installed successfully"
-          echo "Installed profile as ${UUID}.mobileprovision"
+          echo "Profile installed as ${UUID}.mobileprovision"
+          echo "PROFILE_UUID=$UUID" >> $GITHUB_ENV
 
       - name: Increment build number
         working-directory: ios/App
@@ -74,6 +74,7 @@ jobs:
 
       - name: Build and archive iOS app
         run: |
+          echo "Using profile UUID: $PROFILE_UUID"
           xcodebuild archive \
             -workspace ios/App/App.xcworkspace \
             -scheme App \
@@ -83,7 +84,7 @@ jobs:
             DEVELOPMENT_TEAM="464BK7HBM4" \
             CODE_SIGN_STYLE=Manual \
             CODE_SIGN_IDENTITY="iPhone Distribution" \
-            PROVISIONING_PROFILE_SPECIFIER="livehushh_AppStore" \
+            PROVISIONING_PROFILE="$PROFILE_UUID" \
             OTHER_CODE_SIGN_FLAGS="--keychain $RUNNER_TEMP/app-signing.keychain-db"
 
       - name: Export IPA
