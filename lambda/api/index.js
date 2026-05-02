@@ -33,6 +33,9 @@ const { MongoClient, ObjectId } = require('mongodb');
 const webpush = require('web-push');
 const Stripe   = require('stripe');
 const stripe   = Stripe(process.env.STRIPE_SECRET_KEY || '');
+const { SESClient, SendEmailCommand } = require('@aws-sdk/client-ses');
+const sesClient = new SESClient({ region: 'us-east-1' });
+const SES_FROM  = process.env.SES_FROM_EMAIL || 'punitsharma4u@gmail.com';
 
 // VAPID keys — generate with: npx web-push generate-vapid-keys
 // Set VAPID_PUBLIC_KEY and VAPID_PRIVATE_KEY in Lambda environment variables
@@ -78,12 +81,21 @@ function parseBody(event) {
 // API Gateway authorizer is set to "COGNITO_USER_POOLS".
 // Falls back to parsing the JWT from the Authorization header directly
 // (works whether or not API Gateway has a Cognito authorizer configured).
+// Admin API key — set ADMIN_API_KEY env var in Lambda, or use this default for dev
+const ADMIN_API_KEY = process.env.ADMIN_API_KEY || 'lh-admin-2024-secret';
+
 function getClaims(event) {
   const authClaims = event.requestContext?.authorizer?.claims;
   if (authClaims && authClaims.sub) return authClaims;
 
-  // Parse JWT payload from Authorization header
   const auth = (event.headers || {})['Authorization'] || (event.headers || {})['authorization'] || '';
+
+  // Admin API key shortcut (no Cognito account needed for admin dashboard)
+  if (auth === `AdminKey ${ADMIN_API_KEY}`) {
+    return { sub: 'admin', email: 'admin@livehushh.com', __isAdmin: true };
+  }
+
+  // Parse JWT payload from Authorization header
   const token = auth.startsWith('Bearer ') ? auth.slice(7) : auth;
   if (!token) return {};
   try {
@@ -140,19 +152,31 @@ exports.handler = async (event) => {
   const claims = getClaims(event);
   const userId = claims.sub;                        // Cognito user ID
 
+  console.log(`[REQ] ${method} ${path} | user=${userId || 'anon'}`);
+
   try {
     const db = await getDb();
 
     // ── Role lookup ─────────────────────────────────────────────────────────
-    // custom:role was never added to the Cognito User Pool schema, so the JWT
-    // never carries it. We look up the real role from MongoDB on every request.
     let role = 'customer'; // safe default
-    if (userId) {
+    if (claims.__isAdmin) {
+      role = 'admin'; // admin API key auth
+    } else if (userId) {
       const userRecord = await db.collection('users').findOne(
         { cognitoSub: userId },
         { projection: { role: 1 } }
       );
       if (userRecord && userRecord.role) role = userRecord.role;
+    }
+
+    // ── GET /admin/users ────────────────────────────────────────────────────
+    if (method === 'GET' && path.endsWith('/admin/users')) {
+      if (role !== 'admin') return resp(403, { error: 'Admin only' });
+      const users = await db.collection('users').find({})
+        .sort({ updatedAt: -1 })
+        .project({ _id: 0, cognitoSub: 1, email: 1, name: 1, role: 1, planStatus: 1, createdAt: 1, updatedAt: 1 })
+        .toArray();
+      return resp(200, users);
     }
 
     // ── GET /auth/profile ───────────────────────────────────────────────────
@@ -256,23 +280,28 @@ exports.handler = async (event) => {
 
     // ── GET /restaurants ────────────────────────────────────────────────────
     if (method === 'GET' && path.endsWith('/restaurants')) {
+      const ownerView = (event.queryStringParameters || {}).view === 'owner';
+
       if (role === 'admin') {
         // Admin sees every restaurant in the database
         const list = await db.collection('restaurants').find({}).toArray();
         return resp(200, list.map(normalizeRestaurant));
       }
-      if (role === 'owner') {
-        // Owner sees their own restaurant(s) regardless of status
+
+      if (role === 'owner' && ownerView) {
+        // Owner dashboard: return only THIS owner's restaurant(s)
         const list = await db.collection('restaurants').find({
           $or: [{ ownerSub: userId }, { owner_id: userId }]
         }).toArray();
         return resp(200, list.map(normalizeRestaurant));
       }
-      // Customers: active paid plan, valid trial, or legacy (no planStatus)
+
+      // Customer view (or owner browsing as customer): show all active/trial/legacy restaurants
       const now = new Date();
       const list = await db.collection('restaurants').find({
         $or: [
           { planStatus: { $exists: false } },                     // legacy — always show
+          { planStatus: null },                                    // explicitly null — always show
           { planStatus: 'active' },                               // paid plan
           { planStatus: 'trial', trialEndsAt: { $gt: now } }     // valid trial
         ]
@@ -294,11 +323,61 @@ exports.handler = async (event) => {
 
     // ── GET /orders ─────────────────────────────────────────────────────────
     if (method === 'GET' && path.endsWith('/orders')) {
-      const filter = role === 'owner'
-        ? { restaurantOwnerSub: userId }
-        : { customerSub: userId };
+      // viewAs param lets an owner browse their customer orders too
+      const viewAs = (event.queryStringParameters || {}).viewAs;
+      let filter;
+      if (role === 'owner' && viewAs !== 'customer') {
+        filter = { restaurantOwnerSub: userId };
+      } else {
+        filter = { customerSub: userId };
+      }
       const orders = await db.collection('orders').find(filter).sort({ createdAt: -1 }).toArray();
       return resp(200, orders);
+    }
+
+    // ── Email helper (AWS SES) ────────────────────────────────────────────────
+    async function sendEmail(to, subject, htmlBody, textBody) {
+      if (!to) { console.log('Email skipped: no recipient'); return { ok: false }; }
+      try {
+        const cmd = new SendEmailCommand({
+          Source: `LiveHushh <${SES_FROM}>`,
+          Destination: { ToAddresses: [to] },
+          Message: {
+            Subject: { Data: subject, Charset: 'UTF-8' },
+            Body: {
+              Html: { Data: htmlBody, Charset: 'UTF-8' },
+              Text: { Data: textBody || htmlBody.replace(/<[^>]+>/g,''), Charset: 'UTF-8' },
+            },
+          },
+        });
+        const r = await sesClient.send(cmd);
+        console.log('Email sent:', r.MessageId, '→', to);
+        return { ok: true, messageId: r.MessageId };
+      } catch (e) {
+        console.log('Email error:', e.message);
+        return { ok: false, error: e.message };
+      }
+    }
+
+    // ── POST /notify/sms ─────────────────────────────────────────────────────
+    // Owner notifies customer that their table is ready (now sends email)
+    if (method === 'POST' && path.endsWith('/notify/sms')) {
+      if (role !== 'owner') return resp(403, { error: 'Owners only' });
+      const { email, customerEmail, customerName, restaurantName, message } = parseBody(event);
+      const to = email || customerEmail;
+      if (!to) return resp(400, { error: 'customer email required' });
+      const name    = customerName || 'there';
+      const resto   = restaurantName || 'the restaurant';
+      const subject = `🍽️ Your table at ${resto} is ready!`;
+      const html    = `<div style="font-family:sans-serif;max-width:480px;margin:auto">
+        <h2 style="color:#E8540A">Your table is ready! 🎉</h2>
+        <p>Hi ${name},</p>
+        <p>${message || `Your table at <strong>${resto}</strong> is ready. Please head to the host stand now.`}</p>
+        <p style="color:#888;font-size:12px">— LiveHushh</p>
+      </div>`;
+      const result = await sendEmail(to, subject, html);
+      if (!result.ok) return resp(500, { error: result.error || 'Email failed' });
+      return resp(200, { ok: true, messageId: result.messageId });
     }
 
     // ── POST /orders/payment-intent ─────────────────────────────────────────
@@ -316,31 +395,86 @@ exports.handler = async (event) => {
     // ── POST /orders ────────────────────────────────────────────────────────
     if (method === 'POST' && path.endsWith('/orders')) {
       const body = parseBody(event);
-      const doc  = {
+      // Look up restaurant owner so the order appears on the owner's dashboard
+      let restaurantOwnerSub = body.restaurantOwnerSub || null;
+      if (!restaurantOwnerSub && body.restaurantId) {
+        const { ObjectId } = require('mongodb');
+        let restQuery = null;
+        try { restQuery = { _id: new ObjectId(body.restaurantId) }; } catch { restQuery = { restaurant_id: body.restaurantId }; }
+        const rest = await db.collection('restaurants').findOne(restQuery, { projection: { ownerSub: 1, owner_id: 1 } });
+        if (rest) restaurantOwnerSub = rest.ownerSub || rest.owner_id || null;
+      }
+      const doc = {
         ...body,
         customerSub: userId,
         customerEmail: claims.email,
+        restaurantOwnerSub,
         status: 'placed',
         createdAt: new Date(),
       };
       const result = await db.collection('orders').insertOne(doc);
+
+      // Auto-email order confirmation to customer
+      const restName    = doc.restaurantName || 'the restaurant';
+      const orderType   = doc.orderType === 'delivery' ? 'Delivery' : 'Dine-In';
+      const totalDisplay = doc.total ? `$${(doc.total / 100).toFixed(2)}` : '';
+      const confirmSubject = `✅ Order Confirmed — ${restName}`;
+      const confirmHtml = `<div style="font-family:sans-serif;max-width:520px;margin:auto;background:#06061A;color:#e0e0e0;padding:28px;border-radius:12px">
+        <h2 style="color:#E8540A;margin-top:0">Order Confirmed! 🎉</h2>
+        <p>Hi ${doc.customerName || 'there'},</p>
+        <p>Your <strong>${orderType}</strong> order at <strong>${restName}</strong> has been placed successfully${totalDisplay ? ' for <strong>' + totalDisplay + '</strong>' : ''}.</p>
+        ${doc.items && doc.items.length ? `<table style="width:100%;border-collapse:collapse;margin:16px 0">${doc.items.map(i=>`<tr><td style="padding:6px 0;border-bottom:1px solid #333">${i.name} × ${i.qty}</td><td style="text-align:right;padding:6px 0;border-bottom:1px solid #333">$${((i.price*i.qty)/100).toFixed(2)}</td></tr>`).join('')}</table>` : ''}
+        ${doc.orderType === 'delivery' ? `<p>📍 Delivering to: ${doc.deliveryAddress}</p>` : `<p>🍽️ Table for ${doc.tableSize || 1}</p>`}
+        <p style="color:#888;font-size:12px;margin-top:24px">— LiveHushh · You're receiving this because you placed an order</p>
+      </div>`;
+      await sendEmail(doc.customerEmail, confirmSubject, confirmHtml);
+
       return resp(201, { ok: true, id: result.insertedId });
     }
 
     // ── GET /waitlist ───────────────────────────────────────────────────────
     if (method === 'GET' && path.endsWith('/waitlist')) {
       const restaurantId = event.queryStringParameters?.restaurantId;
-      const filter = restaurantId ? { restaurantId } : {};
-      const list   = await db.collection('waitlist').find(filter).sort({ joinedAt: 1 }).toArray();
+      console.log(`[WAITLIST GET] restaurantId=${restaurantId}`);
+      let list;
+      if (restaurantId) {
+        // Match on restaurantId string OR restaurant_id OR _id
+        list = await db.collection('waitlist').find({
+          $or: [
+            { restaurantId: restaurantId },
+            { restaurantId: restaurantId.toString() },
+            { restaurant_id: restaurantId },
+          ]
+        }).sort({ joinedAt: 1 }).toArray();
+      } else {
+        list = await db.collection('waitlist').find({}).sort({ joinedAt: 1 }).toArray();
+      }
+      console.log(`[WAITLIST GET] found ${list.length} entries`);
       return resp(200, list);
     }
 
     // ── POST /waitlist ──────────────────────────────────────────────────────
     if (method === 'POST' && path.endsWith('/waitlist')) {
       const body = parseBody(event);
-      const doc  = { ...body, customerSub: userId, joinedAt: new Date(), startedAt: new Date() };
+      const doc  = { ...body, customerSub: userId, customerEmail: claims.email, joinedAt: new Date(), startedAt: new Date() };
+      console.log(`[WAITLIST POST] restaurantId=${doc.restaurantId} customerEmail=${doc.customerEmail} name=${doc.name}`);
       const result = await db.collection('waitlist').insertOne(doc);
       return resp(201, { ok: true, id: result.insertedId });
+    }
+
+    // ── PATCH /orders/:id ───────────────────────────────────────────────────
+    if (method === 'PATCH' && /\/orders\/[^/]+$/.test(path)) {
+      const id = path.split('/').pop();
+      const { status } = parseBody(event);
+      let query;
+      try { query = { _id: new ObjectId(id) }; } catch { query = { id }; }
+      // Owner can update their own orders, customer can cancel their own
+      if (role === 'owner') {
+        await db.collection('orders').updateOne(query, { $set: { status, updatedAt: new Date() } });
+      } else {
+        await db.collection('orders').updateOne({ ...query, customerSub: userId }, { $set: { status, updatedAt: new Date() } });
+      }
+      return resp(200, { ok: true });
     }
 
     // ── DELETE /waitlist/:id ────────────────────────────────────────────────

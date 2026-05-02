@@ -799,5 +799,24 @@ async function handleAppleSignIn(e) {
 </script>
 <script src="js/theme.js"></script>
 <script>if("serviceWorker"in navigator){navigator.serviceWorker.register("/service-worker.js").then(()=>console.log("SW registered")).catch(e=>console.warn("SW error",e));}</script>
+<script>
+// In the iOS/Android app, hide Owner & Admin role options (Apple guideline 3.1.1)
+// Business account registration must be done via the web, not the app store app.
+(function() {
+  const isApp = !!(window.Capacitor) || navigator.userAgent.includes('LiveHushh');
+  if (!isApp) return;
+  // Hide owner/admin role cards on both login and signup forms
+  ['role-owner','role-admin','srole-owner','srole-admin'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = 'none';
+  });
+  // Also hide the "restaurant field" on signup
+  const rf = document.getElementById('restaurantField');
+  if (rf) rf.style.display = 'none';
+  // Update subtitle
+  const sub = document.querySelector('.auth-subtitle');
+  if (sub) sub.textContent = 'Discover restaurants near you';
+})();
+</script>
 </body>
 </html>

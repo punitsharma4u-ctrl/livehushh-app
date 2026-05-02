@@ -12,6 +12,7 @@ const APP = {
 
   // ── Restaurants ──
   restaurants: [], // loaded from API
+  liveSessions: [], // loaded from API
 
   // ── Waitlist ──
   waitlist: [], // loaded from API

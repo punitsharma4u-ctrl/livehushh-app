@@ -46,16 +46,16 @@
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<true/>
 	<key>NSCameraUsageDescription</key>
-	<string>LiveHushh needs camera access to let you take photos and videos.</string>
+	<string>LiveHushh uses your camera to broadcast live video streams from restaurants. For example, a restaurant can go live to showcase tonight's specials, and diners can watch and interact in real time.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>LiveHushh needs photo library access to let you select photos and videos.</string>
+	<string>LiveHushh uses your photo library so you can upload images to your profile or share restaurant moments in the community feed.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
-	<string>LiveHushh needs permission to save photos to your library.</string>
+	<string>LiveHushh saves captured restaurant photos and screenshots from live streams to your photo library so you can share them with friends.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>LiveHushh needs your location to show relevant local content.</string>
+	<string>LiveHushh uses your location to show restaurants near you and calculate delivery distances. For example, it checks whether your address is within a restaurant's delivery range before you place an order.</string>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
-	<string>LiveHushh needs your location to show relevant local content.</string>
+	<string>LiveHushh uses your location to show restaurants near you and calculate delivery distances. For example, it checks whether your address is within a restaurant's delivery range before you place an order.</string>
 	<key>NSMicrophoneUsageDescription</key>
-	<string>LiveHushh needs microphone access to record audio with videos.</string>
+	<string>LiveHushh uses your microphone to capture audio during live restaurant streams. For example, when a restaurant host goes live to announce daily specials, the microphone records their voice so viewers can hear the announcement clearly.</string>
 </dict>
 </plist>

@@ -595,10 +595,15 @@ function showPage(name, el) {
 /* ── ADMIN API helper ──────────────────────────────────────────────────── */
 const _ADMIN_SESSION = (() => { try { return JSON.parse(localStorage.getItem('lh_session')||'{}'); } catch { return {}; } })();
 const _ADMIN_BASE    = ((window.LH_CONFIG||{}).api||{}).baseUrl || '';
+const _ADMIN_KEY = 'lh-admin-2024-secret';
 async function adminApi(method, path, body) {
+  // Use admin API key if no real JWT (admin login is password-only, no Cognito)
+  const authHeader = _ADMIN_SESSION.idToken
+    ? _ADMIN_SESSION.idToken
+    : `AdminKey ${_ADMIN_KEY}`;
   const r = await fetch(_ADMIN_BASE + path, {
     method,
-    headers: { 'Content-Type': 'application/json', Authorization: _ADMIN_SESSION.idToken || '' },
+    headers: { 'Content-Type': 'application/json', Authorization: authHeader },
     body: body ? JSON.stringify(body) : undefined,
   });
   const json = await r.json().catch(() => ({}));
@@ -813,27 +818,34 @@ function renderSubscriptions() {
 }
 
 /* ── USERS ── */
-function renderUsers() {
-  // Load real users from shared localStorage, supplement with demo data
-  const realUsers = JSON.parse(localStorage.getItem('lh_shared_users') || '[]');
-  const demoUsers = [
-    {name:'James Carter',role:'Customer',city:'Toronto',joined:'Jan 2025',last:'Today',orders:12,status:'active'},
-    {name:'Emily Clarke',role:'Owner',city:'Toronto',joined:'Mar 2024',last:'Today',orders:0,status:'active'},
-    {name:'Admin User',role:'Admin',city:'—',joined:'Jan 2024',last:'Now',orders:0,status:'active'},
-  ];
-  // Merge: real users first, then demo users not already in real
-  const allUsers = [...realUsers, ...demoUsers.filter(d => !realUsers.find(r => r.name === d.name))];
-  const roleCol = {Customer:'pill-purple',Owner:'pill-gold',Admin:'pill-cyan'};
-  document.getElementById('usersTbody').innerHTML = allUsers.map(u=>`
-    <tr>
-      <td><span style="font-weight:600">${u.name}</span></td>
-      <td><span class="pill ${roleCol[u.role]||'pill-purple'}" style="font-size:.7rem">${u.role}</span></td>
-      <td class="caption">${u.city||'—'}</td>
-      <td class="caption">${u.joined||'—'}</td>
-      <td class="caption">${u.last||'—'}</td>
-      <td>${u.orders||'—'}</td>
-      <td><span class="pill pill-green" style="font-size:.7rem">${u.status||'active'}</span></td>
-    </tr>`).join('');
+async function renderUsers() {
+  const tbody = document.getElementById('usersTbody');
+  tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:24px;color:var(--text2)">⏳ Loading users…</td></tr>';
+  try {
+    const users = await adminApi('GET', '/admin/users');
+    if (!users || !users.length) {
+      tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:24px;color:var(--text2)">No users found</td></tr>';
+      return;
+    }
+    const roleCol = { customer:'pill-purple', owner:'pill-gold', admin:'pill-cyan' };
+    tbody.innerHTML = users.map(u => {
+      const roleLbl = (u.role||'customer');
+      const joined = u.updatedAt ? new Date(u.updatedAt).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : '—';
+      return `<tr>
+        <td><span style="font-weight:600">${u.name||'—'}</span><br><span class="caption">${u.email||''}</span></td>
+        <td><span class="pill ${roleCol[roleLbl]||'pill-purple'}" style="font-size:.7rem;text-transform:capitalize">${roleLbl}</span></td>
+        <td class="caption">${u.planStatus||'—'}</td>
+        <td class="caption">${joined}</td>
+        <td class="caption">${u.cognitoSub ? u.cognitoSub.slice(0,8)+'…' : '—'}</td>
+        <td><span class="pill pill-green" style="font-size:.7rem">active</span></td>
+      </tr>`;
+    }).join('');
+    // Update total users KPI
+    const kpi = document.querySelector('#page-users .kpi-val');
+    if (kpi) kpi.textContent = users.length;
+  } catch(e) {
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:24px;color:#EF4444">Failed to load users</td></tr>';
+  }
 }
 
 /* ── REVENUE ── */

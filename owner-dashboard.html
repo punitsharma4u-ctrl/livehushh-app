@@ -402,10 +402,11 @@ body{background:var(--bg);display:flex;min-height:100vh;overflow-x:hidden}
     <div id="page-orders" class="page">
       <div class="order-tabs">
         <div class="order-tab active" onclick="filterOrders('all',this)">All</div>
-        <div class="order-tab" onclick="filterOrders('placed',this)">New <span class="pill pill-gold" style="font-size:.65rem;padding:2px 7px;margin-left:4px">2</span></div>
+        <div class="order-tab" onclick="filterOrders('placed',this)">New</div>
         <div class="order-tab" onclick="filterOrders('preparing',this)">Preparing</div>
-        <div class="order-tab" onclick="filterOrders('out_for_delivery',this)">Delivery</div>
+        <div class="order-tab" onclick="filterOrders('out_for_delivery',this)">Ready</div>
         <div class="order-tab" onclick="filterOrders('delivered',this)">Delivered</div>
+        <div class="order-tab" onclick="filterOrders('rejected',this)">Rejected</div>
       </div>
       <div class="orders-grid" id="ownerOrdersGrid"></div>
     </div>
@@ -1214,26 +1215,38 @@ function toggleItemAvail(ci, ii, toggleEl) {
 }
 
 /* ── ORDERS ── */
+let _currentOrderFilter = 'all';
 function renderOwnerOrders(filter) {
-  const orders = filter === 'all' ? APP.orders : APP.orders.filter(o => o.status === filter);
-  const statusColors = {placed:'gold',preparing:'purple',out_for_delivery:'cyan',delivered:'green'};
+  _currentOrderFilter = filter || _currentOrderFilter;
+  const allOrders = APP.orders;
+  const orders = _currentOrderFilter === 'all' ? allOrders : allOrders.filter(o => o.status === _currentOrderFilter);
+  const statusColors = {placed:'gold',preparing:'purple',out_for_delivery:'cyan',delivered:'green',rejected:'red'};
+  const statusLabel  = {placed:'New',preparing:'Preparing',out_for_delivery:'Ready',delivered:'Completed',rejected:'Rejected'};
   const actions = {
-    placed: (o,i) => `<button class="btn btn-primary btn-sm" onclick="updateOrderStatus(${i},'preparing')">Accept</button><button class="btn btn-danger btn-sm" onclick="updateOrderStatus(${i},'delivered')">Reject</button>`,
-    preparing: (o,i) => `<button class="btn btn-gold btn-sm" onclick="updateOrderStatus(${i},'out_for_delivery')">Mark Ready</button>`,
-    out_for_delivery: (o,i) => `<button class="btn btn-secondary btn-sm" onclick="updateOrderStatus(${i},'delivered')">Delivered</button>`,
-    delivered: () => `<span class="pill pill-green" style="font-size:.72rem">Completed</span>`
+    placed:           (o,i) => `<button class="btn btn-primary btn-sm" onclick="updateOrderStatus(${i},'preparing')">Accept</button><button class="btn btn-danger btn-sm" onclick="updateOrderStatus(${i},'rejected')">Reject</button>`,
+    preparing:        (o,i) => `<button class="btn btn-gold btn-sm" onclick="updateOrderStatus(${i},'out_for_delivery')">Mark Ready</button>`,
+    out_for_delivery: (o,i) => `<button class="btn btn-secondary btn-sm" onclick="updateOrderStatus(${i},'delivered')">Mark Delivered</button>`,
+    delivered:        ()    => `<span class="pill pill-green" style="font-size:.72rem">Completed ✓</span>`,
+    rejected:         ()    => `<span class="pill pill-red"   style="font-size:.72rem">Rejected</span>`,
   };
-  const r = APP.restaurants[0];
-  document.getElementById('ownerOrdersGrid').innerHTML = orders.map((o,i) => `
+  document.getElementById('ownerOrdersGrid').innerHTML = orders.map((o,i) => {
+    const globalIdx = APP.orders.indexOf(o);
+    const orderId = (o.id || o._id || '').toString().replace('ord-','').slice(-6);
+    const itemList = (o.items||[]).map(it => `${it.name}${it.qty > 1 ? ' ×'+it.qty : ''}`).join(', ') || '—';
+    const total    = o.total ? '$' + (o.total/100).toFixed(2) : '$' + (o.totalDisplay || '—');
+    return `
     <div class="order-card ${o.status==='placed'?'new':''}">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
-        <span style="font-weight:700">Order #${o.id.replace('ord-','')}</span>
-        <span class="pill pill-${statusColors[o.status]||'purple'}" style="font-size:.7rem">${o.status.replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase())}</span>
+        <span style="font-weight:700">Order #${orderId}</span>
+        <span class="pill pill-${statusColors[o.status]||'purple'}" style="font-size:.7rem">${statusLabel[o.status]||o.status}</span>
       </div>
-      <div class="caption" style="margin-bottom:8px">${o.items.map(it=>it.name).join(', ')}</div>
-      <div style="font-weight:700;color:var(--gold);margin-bottom:12px">$${o.total}</div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap">${(actions[o.status]||actions.delivered)(o,i)}</div>
-    </div>`).join('') || '<div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--text2)">No orders in this category</div>';
+      <div class="caption" style="margin-bottom:4px">${itemList}</div>
+      ${o.customerEmail ? `<div class="caption" style="margin-bottom:4px;color:var(--text3)">✉️ ${o.customerEmail}</div>` : ''}
+      ${o.orderType === 'delivery' ? `<div class="caption" style="margin-bottom:4px;color:var(--text3)">🛵 ${o.deliveryAddress||'Delivery'}</div>` : `<div class="caption" style="margin-bottom:4px;color:var(--text3)">🍽️ Dine-In · ${o.tableSize||'?'} guests</div>`}
+      <div style="font-weight:700;color:var(--gold);margin-bottom:12px">${total}</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">${(actions[o.status]||actions.delivered)(o, globalIdx)}</div>
+    </div>`;
+  }).join('') || '<div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--text2)">No orders in this category</div>';
 }
 
 /* ── RESTAURANT PROFILE SAVE ───────────────────────────────────────────── */
@@ -1326,14 +1339,17 @@ async function saveRestaurantProfile() {
 }
 
 function updateOrderStatus(idx, status) {
-  APP.orders[idx].status = status;
-  // Sync to API if available
   const order = APP.orders[idx];
-  if (order && order._id) {
-    _API.patch('/orders/' + order._id, { status }).catch(() => {});
+  if (!order) return;
+  order.status = status;
+  // Persist to API
+  const apiId = order._id || order.id;
+  if (apiId) {
+    _API.patch('/orders/' + apiId, { status }).catch(() => {});
   }
-  renderOwnerOrders('all');
-  APP.showToast('Order status updated to '+status.replace(/_/g,' '), 'success');
+  renderOwnerOrders(_currentOrderFilter); // stay on current tab
+  const labels = {preparing:'Preparing',out_for_delivery:'Ready for pickup',delivered:'Delivered',rejected:'Rejected'};
+  APP.showToast('Order → ' + (labels[status] || status), 'success');
 }
 
 function filterOrders(f, el) {
@@ -1356,24 +1372,49 @@ function renderWaitlistPanel() {
     document.getElementById('waitlistPanel').innerHTML = '<div style="padding:32px;text-align:center;color:var(--text2)">No guests in queue</div>';
     return;
   }
-  document.getElementById('waitlistPanel').innerHTML = merged.map((w,i) => `
-    <div class="wl-table-row">
+  document.getElementById('waitlistPanel').innerHTML = merged.map((w,i) => {
+    const hasEmail = w.email || w.customerEmail;
+    return `
+    <div class="wl-table-row" id="wl-row-${i}">
       <div class="wl-pos-badge">${i+1}</div>
       <div style="flex:1">
         <div style="font-weight:600;font-size:.9rem">${w.name || 'Guest ' + (i+1)}</div>
-        <div class="caption">${w.guests} guests · Joined ${w.joinedAt||'recently'} · Wait: ${w.estimatedWait||'~25 min'}</div>
+        <div class="caption">${w.guests||'?'} guests · Joined ${w.joinedAt||'recently'} · Wait: ${w.estimatedWait||'~25 min'}</div>
+        ${hasEmail ? `<div class="caption" style="color:var(--green);margin-top:2px">✉️ ${hasEmail}</div>` : '<div class="caption" style="color:var(--text3);margin-top:2px">No email on file</div>'}
       </div>
-      <div style="display:flex;gap:8px">
-        <button class="btn btn-primary btn-sm" onclick="seatGuest(${i})">Seat Now</button>
-        <button class="btn btn-ghost btn-sm" style="color:var(--red)" onclick="removeGuest(${i})">Remove</button>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        <button class="btn btn-sm" style="background:rgba(16,185,129,0.15);color:#10B981;border:1px solid rgba(16,185,129,0.3)" onclick="notifyTableReady(${i})" ${!hasEmail?'disabled title="No email on file"':''}>✉️ Table Ready</button>
+        <button class="btn btn-primary btn-sm" onclick="seatGuest(${i})">Seat</button>
+        <button class="btn btn-ghost btn-sm" style="color:var(--red)" onclick="removeGuest(${i})">✕</button>
       </div>
-    </div>`).join('');
+    </div>`;
+  }).join('');
   APP.waitlist = merged;
+}
+
+async function notifyTableReady(idx) {
+  const w = APP.waitlist[idx];
+  const email = w.email || w.customerEmail;
+  if (!email) { APP.showToast('No email on file for this guest', 'error'); return; }
+  const resto = APP.restaurants[0] || {};
+  const btn = document.querySelector(`#wl-row-${idx} button`);
+  if (btn) { btn.disabled = true; btn.textContent = 'Sending…'; }
+  try {
+    await _API.post('/notify/sms', {
+      email,
+      customerName: w.name || 'Guest',
+      restaurantName: resto.name || 'the restaurant',
+    });
+    APP.showToast(`✅ Email sent to ${email}`, 'success');
+    if (btn) { btn.textContent = '✅ Sent'; }
+  } catch(e) {
+    APP.showToast('Email failed: ' + (e.message || 'Unknown error'), 'error');
+    if (btn) { btn.disabled = false; btn.textContent = '✉️ Table Ready'; }
+  }
 }
 
 function seatGuest(idx) {
   APP.waitlist.splice(idx,1);
-  // Also update shared localStorage
   const shared = JSON.parse(localStorage.getItem('lh_shared_waitlist') || '[]');
   if (shared.length > idx) shared.splice(idx,1);
   localStorage.setItem('lh_shared_waitlist', JSON.stringify(shared));
@@ -1662,22 +1703,25 @@ function initMediaPage() {
       APP.deals = allDeals.filter(d => String(d.restaurantId) === String(rid));
     }
   } else {
+    // Fetch each resource independently so one failure doesn't block others
     try {
-      const [restaurants, orders] = await Promise.all([
-        _API.get('/restaurants'),
-        _API.get('/orders'),
-      ]);
+      const restaurants = await _API.get('/restaurants?view=owner');
       if (restaurants && restaurants.length) APP.restaurants = restaurants;
-      if (orders) APP.orders = orders;
+    } catch(e) { console.warn('restaurants fetch failed', e); }
 
-      const rid = (APP.restaurants[0] || {}).id;
-      if (rid) {
-        const wl = await _API.get('/waitlist?restaurantId=' + rid);
-        if (wl) APP.waitlist = wl;
-      }
-    } catch(e) {
-      APP.showToast('Failed to load data from API', 'error');
-    }
+    try {
+      const orders = await _API.get('/orders');
+      if (orders) APP.orders = orders;
+    } catch(e) { console.warn('orders fetch failed', e); }
+
+    try {
+      const rid = (APP.restaurants[0] || {}).id || (APP.restaurants[0] || {})._id;
+      console.log('[OWNER INIT] fetching waitlist for restaurantId=', rid);
+      const wlUrl = rid ? '/waitlist?restaurantId=' + rid : '/waitlist';
+      const wl = await _API.get(wlUrl);
+      if (Array.isArray(wl)) APP.waitlist = wl;
+      console.log('[OWNER INIT] waitlist entries=', APP.waitlist.length);
+    } catch(e) { console.warn('waitlist fetch failed', e); }
   }
 
   // ── Check trial / plan status ─────────────────────────────────────────────
@@ -1712,27 +1756,39 @@ function initMediaPage() {
     Notification.requestPermission();
   }
 
-  // ── Poll for new orders every 30 seconds ──
+  // ── Poll for new orders + waitlist every 30 seconds ──
   setInterval(async () => {
-    let fresh = null;
-    if (_API.ready) {
-      fresh = await _API.get('/orders');
-    }
-    if (!fresh) return;
-    const prevCount = APP.orders.length;
-    const newOrders = fresh.filter(o => !APP.orders.find(existing => existing.id === o.id || existing._id === o._id));
-    APP.orders = fresh;
-    if (newOrders.length > 0) {
-      APP.showToast(`🔔 ${newOrders.length} new order${newOrders.length > 1 ? 's' : ''} received!`, 'success');
-      renderOwnerOrders('all');
-      // Browser push notification
-      if ('Notification' in window && Notification.permission === 'granted') {
-        new Notification('LiveHushh — New Order!', {
-          body: `${newOrders.length} new order${newOrders.length > 1 ? 's' : ''} waiting for confirmation`,
-          icon: '/icons/icon-192.png',
-        });
+    if (!_API.ready) return;
+
+    // Refresh orders
+    try {
+      const fresh = await _API.get('/orders');
+      if (!fresh) return;
+      const newOrders = fresh.filter(o => !APP.orders.find(e => (e.id||e._id) === (o.id||o._id)));
+      APP.orders = fresh;
+      if (newOrders.length > 0) {
+        APP.showToast(`🔔 ${newOrders.length} new order${newOrders.length > 1 ? 's' : ''} received!`, 'success');
+        renderOwnerOrders(_currentOrderFilter);
+        if ('Notification' in window && Notification.permission === 'granted') {
+          new Notification('LiveHushh — New Order!', { body: `${newOrders.length} new order(s) waiting`, icon: '/icons/icon-192.png' });
+        }
       }
-    }
+    } catch(e) {}
+
+    // Refresh waitlist
+    try {
+      const rid = (APP.restaurants[0] || {}).id || (APP.restaurants[0] || {})._id;
+      const wlUrl = rid ? '/waitlist?restaurantId=' + rid : '/waitlist';
+      const wl = await _API.get(wlUrl);
+      if (Array.isArray(wl)) {
+        const prevLen = APP.waitlist.length;
+        APP.waitlist = wl;
+        if (wl.length > prevLen) {
+          APP.showToast(`👥 ${wl.length - prevLen} new guest(s) joined the waitlist!`, 'info');
+          renderWaitlistPanel();
+        }
+      }
+    } catch(e) {}
   }, 30000);
 })();
 
