@@ -57,7 +57,9 @@ jobs:
           echo -n "$PROVISIONING_PROFILE_BASE64" | base64 --decode > "$PP_PATH"
           echo "Profile size: $(wc -c < $PP_PATH) bytes"
           mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
-          UUID=$(security cms -D -i "$PP_PATH" | /usr/libexec/PlistBuddy -c 'Print :UUID' /dev/stdin)
+          DECODED_PLIST=$RUNNER_TEMP/decoded_profile.plist
+          security cms -D -i "$PP_PATH" -o "$DECODED_PLIST"
+          UUID=$(/usr/libexec/PlistBuddy -c 'Print :UUID' "$DECODED_PLIST")
           echo "Profile UUID: $UUID"
           cp "$PP_PATH" ~/Library/MobileDevice/Provisioning\ Profiles/${UUID}.mobileprovision
           echo "Profile installed successfully"
