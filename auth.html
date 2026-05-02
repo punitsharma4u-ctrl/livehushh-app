@@ -1016,8 +1016,15 @@ function _redirect(role, isNewSignup) {
     return;
   }
 
-  // In native iOS/Android app — hide owner section (Apple guideline 3.1.1)
+  // Skip landing on desktop browsers — only show for mobile/app
   const isApp = !!(window.Capacitor) || navigator.userAgent.includes('LiveHushh');
+  const isMobile = window.innerWidth < 768;
+  if (!isApp && !isMobile) {
+    landing.style.display = 'none';
+    return;
+  }
+
+  // In native iOS/Android app — hide owner section (Apple guideline 3.1.1)
   if (isApp) {
     const ownerSection = document.getElementById('ld-owner-section');
     const ownerBtn     = document.getElementById('ld-owner-btn');
