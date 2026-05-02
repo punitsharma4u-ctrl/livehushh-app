@@ -97,23 +97,19 @@ jobs:
             -exportOptionsPlist $RUNNER_TEMP/ExportOptions.plist \
             -exportPath $RUNNER_TEMP/export
 
+      - name: Save IPA as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: App-Release.ipa
+          path: ${{ runner.temp }}/export/*.ipa
+
       - name: Upload to App Store Connect
-        env:
-          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
-          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
-          ASC_PRIVATE_KEY: ${{ secrets.ASC_PRIVATE_KEY }}
-        run: |
-          mkdir -p ~/.appstoreconnect/private_keys
-          echo "$ASC_PRIVATE_KEY" > ~/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8
-          echo "Key file size: $(wc -c < ~/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8) bytes"
-          IPA_PATH=$(find $RUNNER_TEMP/export -name "*.ipa" | head -1)
-          echo "Uploading: $IPA_PATH"
-          xcrun altool --upload-app \
-            --type ios \
-            --file "$IPA_PATH" \
-            --apiKey "$ASC_KEY_ID" \
-            --apiIssuer "$ASC_ISSUER_ID" \
-            --verbose
+        uses: apple-actions/upload-testflight-build@v1
+        with:
+          app-path: ${{ runner.temp }}/export/App.ipa
+          issuer-id: ${{ secrets.ASC_ISSUER_ID }}
+          api-key-id: ${{ secrets.ASC_KEY_ID }}
+          api-private-key: ${{ secrets.ASC_PRIVATE_KEY }}
 
       - name: Clean up keychain
         if: always()
