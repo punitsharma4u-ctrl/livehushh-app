@@ -3,7 +3,7 @@
 <plist version="1.0">
 <dict>
   <key>method</key>
-  <string>app-store</string>
+  <string>app-store-connect</string>
   <key>teamID</key>
   <string>464BK7HBM4</string>
   <key>uploadBitcode</key>
@@ -15,7 +15,7 @@
   <key>provisioningProfiles</key>
   <dict>
     <key>com.livehushh.app</key>
-    <string>livehushh_AppStore</string>
+    <string>PROFILE_UUID_PLACEHOLDER</string>
   </dict>
 </dict>
 </plist>
