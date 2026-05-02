@@ -251,7 +251,7 @@ body{height:100vh;display:grid;grid-template-columns:1fr 1fr;background:var(--bg
 
   <!-- Top bar -->
   <div class="ld-bar">
-    <a class="ld-logo" href="#"><span class="ld-logo-live">live</span><span class="ld-logo-hushh">hushh.</span></a>
+    <span class="ld-logo"><span class="ld-logo-live">live</span><span class="ld-logo-hushh">hushh.</span></span>
     <button class="ld-signin-btn" onclick="ldSignIn()">Sign in</button>
   </div>
 
@@ -334,10 +334,10 @@ body{height:100vh;display:grid;grid-template-columns:1fr 1fr;background:var(--bg
 
 <!-- MOBILE TOP BAR (hidden on desktop) -->
 <div class="auth-mobile-bar">
-  <a href="index.html" class="lh-logo" style="text-decoration:none">
+  <a href="#" onclick="showLanding();return false;" class="lh-logo" style="text-decoration:none">
     <span class="lh-logo-live" style="color:#F8FAFC">live</span><span class="lh-logo-hushh">hushh.</span>
   </a>
-  <a href="index.html" class="btn btn-ghost btn-sm">← Home</a>
+  <a href="#" onclick="showLanding();return false;" class="btn btn-ghost btn-sm" id="home-btn">← Back</a>
 </div>
 
 <!-- LEFT PANEL -->
@@ -1035,12 +1035,27 @@ function ldChoose(role) {
   selectSignupRole(role);
   selectRole(role);
   switchTab('signup');
+  // Scroll auth form to top
+  const authRight = document.querySelector('.auth-right');
+  if (authRight) authRight.scrollTop = 0;
+  window.scrollTo(0, 0);
 }
 
 function ldSignIn() {
   const landing = document.getElementById('lh-landing');
   if (landing) landing.style.display = 'none';
   switchTab('login');
+  const authRight = document.querySelector('.auth-right');
+  if (authRight) authRight.scrollTop = 0;
+  window.scrollTo(0, 0);
+}
+
+function showLanding() {
+  const landing = document.getElementById('lh-landing');
+  if (landing) {
+    landing.style.display = 'flex';
+    landing.scrollTop = 0;
+  }
 }
 
 // ── Sign in with Apple ────────────────────────────────────────────────────────
@@ -1104,6 +1119,7 @@ async function handleAppleSignIn(e) {
 (function() {
   const isApp = !!(window.Capacitor) || navigator.userAgent.includes('LiveHushh');
   if (!isApp) return;
+
   // Hide owner/admin role cards on both login and signup forms
   ['role-owner','role-admin','srole-owner','srole-admin'].forEach(id => {
     const el = document.getElementById(id);
@@ -1115,6 +1131,16 @@ async function handleAppleSignIn(e) {
   // Update subtitle
   const sub = document.querySelector('.auth-subtitle');
   if (sub) sub.textContent = 'Discover restaurants near you';
+
+  // Hide the left marketing panel — landing screen already shows marketing
+  const authLeft = document.querySelector('.auth-left');
+  if (authLeft) authLeft.style.display = 'none';
+
+  // Make body single column (full width form) in app
+  document.body.style.gridTemplateColumns = '1fr';
+
+  // Hide "← Back" button if already on landing (it appears after ldChoose)
+  // but keep it visible once form is shown — handled by showLanding/ldChoose
 })();
 </script>
 </body>
