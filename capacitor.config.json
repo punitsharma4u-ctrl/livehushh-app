@@ -3,7 +3,7 @@
   "appName": "LiveHushh",
   "webDir": "www",
   "server": {
-    "url": "https://www.livehushh.com/customer-app.html",
+    "url": "https://www.livehushh.com/auth.html",
     "cleartext": false,
     "androidScheme": "https"
   },

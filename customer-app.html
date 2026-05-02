@@ -35,6 +35,19 @@ body{background:var(--bg);display:flex;flex-direction:column;min-height:100vh;ov
 .chip{padding:7px 16px;border-radius:var(--r-full);font-size:.8rem;font-weight:500;cursor:pointer;border:1px solid var(--border2);color:var(--text2);background:var(--bg-card);transition:all .2s}
 .chip.active{background:rgba(232,84,10,0.15);border-color:var(--purple);color:var(--purple-l)}
 .chip:hover:not(.active){border-color:var(--border3);color:var(--text)}
+/* Distance toggle */
+.dist-filter-row{display:flex;align-items:center;gap:12px;margin-bottom:16px;padding:10px 16px;background:var(--bg2);border:1px solid var(--border2);border-radius:var(--r-xl)}
+.dist-filter-label{font-size:.85rem;font-weight:600;flex:1;display:flex;align-items:center;gap:6px}
+.dist-toggle{position:relative;display:inline-block;width:44px;height:24px;flex-shrink:0}
+.dist-toggle input{opacity:0;width:0;height:0;position:absolute}
+.dist-slider-pill{position:absolute;cursor:pointer;inset:0;background:var(--border2);border-radius:24px;transition:.3s}
+.dist-slider-pill::before{content:'';position:absolute;width:18px;height:18px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.3s}
+.dist-toggle input:checked + .dist-slider-pill{background:var(--primary)}
+.dist-toggle input:checked + .dist-slider-pill::before{transform:translateX(20px)}
+.dist-range-wrap{display:none;align-items:center;gap:8px}
+.dist-range-wrap.active{display:flex}
+.dist-range-wrap input[type=range]{width:90px;accent-color:var(--primary);cursor:pointer}
+.dist-km-label{font-size:.82rem;color:var(--primary);font-weight:700;min-width:40px;text-align:right}
 
 /* Restaurant grid */
 .restaurant-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:20px}
@@ -256,6 +269,22 @@ body{background:var(--bg);display:flex;flex-direction:column;min-height:100vh;ov
       <div class="chip" onclick="setFilter('veg',this)">🟢 Pure Veg</div>
       <div class="chip" onclick="setFilter('open',this)">Open Now</div>
       <!-- cuisine chips injected dynamically after restaurants load -->
+    </div>
+
+    <!-- Distance filter toggle -->
+    <div class="dist-filter-row">
+      <span class="dist-filter-label">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="10" r="3"/><path d="M12 21.7C17.3 17 20 13 20 10a8 8 0 1 0-16 0c0 3 2.7 6.9 8 11.7z"/></svg>
+        Nearby Only
+      </span>
+      <div class="dist-range-wrap" id="distRangeWrap">
+        <input type="range" id="distRange" min="1" max="50" value="10" oninput="updateDistKm(this.value)">
+        <span class="dist-km-label" id="distKmLabel">10 km</span>
+      </div>
+      <label class="dist-toggle">
+        <input type="checkbox" id="distToggle" onchange="toggleDistFilter(this.checked)">
+        <span class="dist-slider-pill"></span>
+      </label>
     </div>
 
     <!-- Live now banner -->
@@ -787,6 +816,21 @@ let liveInterval = null;
 let chatInterval = null;
 let liveSeconds = 0;
 let activeFilter = 'all';
+let distFilterEnabled = false;
+let maxDistKm = 10;
+
+function toggleDistFilter(enabled) {
+  distFilterEnabled = enabled;
+  const wrap = document.getElementById('distRangeWrap');
+  if (wrap) { if (enabled) wrap.classList.add('active'); else wrap.classList.remove('active'); }
+  applyFilters();
+}
+function updateDistKm(val) {
+  maxDistKm = parseFloat(val);
+  const lbl = document.getElementById('distKmLabel');
+  if (lbl) lbl.textContent = val + ' km';
+  applyFilters();
+}
 
 const chatNames = ['Ryan K.','Emily S.','Alex T.','Sophie M.','David P.','Rachel G.','Kevin L.','Amanda B.'];
 const chatLines = [
@@ -1520,6 +1564,10 @@ function applyFilters(q, sortBy) {
   else if (activeFilter === 'veg') list = list.filter(r => r.isVeg);
   else if (activeFilter === 'open') list = list.filter(r => r.isOpen);
   else if (activeFilter !== 'all') list = list.filter(r => (r.cuisine||'').toLowerCase() === activeFilter.toLowerCase());
+  // Distance filter — off by default, filters by stored distance value when toggled on
+  if (distFilterEnabled) {
+    list = list.filter(r => parseFloat(r.distance) <= maxDistKm);
+  }
   const sort = sortBy || 'default';
   if (sort === 'rating') list.sort((a,b) => b.rating - a.rating);
   else if (sort === 'distance') list.sort((a,b) => a.distance - b.distance);
