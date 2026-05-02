@@ -55,7 +55,10 @@ jobs:
           PP_PATH=$RUNNER_TEMP/build_pp.mobileprovision
           echo "$PROVISIONING_PROFILE_BASE64" | base64 --decode -o "$PP_PATH"
           mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
-          cp "$PP_PATH" ~/Library/MobileDevice/Provisioning\ Profiles/
+          UUID=$(security cms -D -i "$PP_PATH" | /usr/libexec/PlistBuddy -c 'Print :UUID' /dev/stdin)
+          echo "Profile UUID: $UUID"
+          cp "$PP_PATH" ~/Library/MobileDevice/Provisioning\ Profiles/${UUID}.mobileprovision
+          echo "Installed profile as ${UUID}.mobileprovision"
 
       - name: Increment build number
         working-directory: ios/App
