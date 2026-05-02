@@ -89,9 +89,27 @@ jobs:
 
       - name: Export IPA
         run: |
+          echo "Using profile UUID: $PROFILE_UUID"
+          python3 -c "
+import plistlib, os
+uuid = os.environ['PROFILE_UUID']
+plist = {
+    'method': 'app-store-connect',
+    'teamID': '464BK7HBM4',
+    'uploadBitcode': False,
+    'uploadSymbols': True,
+    'signingStyle': 'manual',
+    'provisioningProfiles': {
+        'com.livehushh.app': uuid
+    }
+}
+with open(os.environ['RUNNER_TEMP'] + '/ExportOptions.plist', 'wb') as f:
+    plistlib.dump(plist, f)
+print('ExportOptions.plist written with UUID:', uuid)
+"
           xcodebuild -exportArchive \
             -archivePath $RUNNER_TEMP/App.xcarchive \
-            -exportOptionsPlist ios/ExportOptions.plist \
+            -exportOptionsPlist $RUNNER_TEMP/ExportOptions.plist \
             -exportPath $RUNNER_TEMP/export
 
       - name: Upload to App Store Connect
