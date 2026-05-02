@@ -1,109 +1,132 @@
-name: iOS Release → App Store
+﻿name: iOS App Store Release
 
 on:
-  workflow_dispatch:   # run manually from GitHub with one click
+  workflow_dispatch:
+    inputs:
+      release_notes:
+        description: "Release notes for this build"
+        required: false
+        default: "Bug fixes and improvements"
 
 jobs:
-  build:
+  build-and-submit:
     runs-on: macos-latest
+    timeout-minutes: 60
 
     steps:
-
-      # 1. Get the code
-      - name: Checkout
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      # 1b. Select latest Xcode (Apple requires iOS 26 SDK as of 2026)
-      - name: Select latest Xcode
-        run: |
-          # Pick the highest-versioned Xcode available on this runner
-          LATEST_XCODE=$(ls -d /Applications/Xcode*.app 2>/dev/null | sort -V | tail -1)
-          echo "Using Xcode: $LATEST_XCODE"
-          sudo xcode-select -s "$LATEST_XCODE/Contents/Developer"
-          xcodebuild -version
-
-      # 2. Node + npm
-      - name: Setup Node 18
+      - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 18
+          node-version: "20"
+          cache: "npm"
 
-      - name: Install npm deps
+      - name: Install npm dependencies
         run: npm ci
 
-      # 3. Sync Capacitor web assets to iOS
-      - name: Capacitor sync
+      - name: Sync Capacitor iOS project
         run: npx cap sync ios
 
-      # 4. Install CocoaPods deps (includes CapacitorAppleSignIn)
-      - name: Pod install
-        run: |
-          cd ios/App
-          pod install --repo-update
+      - name: Install CocoaPods dependencies
+        working-directory: ios/App
+        run: pod install --repo-update
 
-      # 5. Import Distribution Certificate (.p12)
-      - name: Import certificate
+      - name: Install distribution certificate
         env:
-          CERTIFICATE_BASE64: ${{ secrets.CERTIFICATE_P12_BASE64 }}
-          CERTIFICATE_PASSWORD: ${{ secrets.CERTIFICATE_PASSWORD }}
+          BUILD_CERTIFICATE_BASE64: ${{ secrets.BUILD_CERTIFICATE_BASE64 }}
+          P12_PASSWORD: ${{ secrets.P12_PASSWORD }}
           KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
         run: |
-          CERT_PATH=$RUNNER_TEMP/cert.p12
-          KEYCHAIN_PATH=$RUNNER_TEMP/app.keychain-db
-          echo -n "$CERTIFICATE_BASE64" | base64 --decode -o $CERT_PATH
-          security create-keychain -p "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
-          security set-keychain-settings -lut 21600 $KEYCHAIN_PATH
-          security unlock-keychain -p "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
-          security import $CERT_PATH -P "$CERTIFICATE_PASSWORD" -A \
-            -t cert -f pkcs12 -k $KEYCHAIN_PATH
-          security list-keychain -d user -s $KEYCHAIN_PATH
+          CERT_PATH=$RUNNER_TEMP/build_certificate.p12
+          KEYCHAIN_PATH=$RUNNER_TEMP/app-signing.keychain-db
+          echo "$BUILD_CERTIFICATE_BASE64" | base64 --decode -o "$CERT_PATH"
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security import "$CERT_PATH" -P "$P12_PASSWORD" -A -t cert -f pkcs12 -k "$KEYCHAIN_PATH"
+          security list-keychain -d user -s "$KEYCHAIN_PATH"
 
-      # 6. Install Provisioning Profile
       - name: Install provisioning profile
         env:
-          PROFILE_BASE64: ${{ secrets.PROVISIONING_PROFILE_BASE64 }}
+          BUILD_PROVISION_PROFILE_BASE64: ${{ secrets.BUILD_PROVISION_PROFILE_BASE64 }}
         run: |
-          PP_PATH=$RUNNER_TEMP/profile.mobileprovision
-          echo -n "$PROFILE_BASE64" | base64 --decode -o $PP_PATH
+          PP_PATH=$RUNNER_TEMP/build_pp.mobileprovision
+          echo "$BUILD_PROVISION_PROFILE_BASE64" | base64 --decode -o "$PP_PATH"
           mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
-          # Extract UUID so Xcode can find the profile by UUID filename
-          UUID=$(security cms -D -i $PP_PATH | plutil -extract UUID raw -)
-          cp $PP_PATH ~/Library/MobileDevice/Provisioning\ Profiles/$UUID.mobileprovision
-          echo "PROFILE_UUID=$UUID" >> $GITHUB_ENV
-          echo "Installed profile UUID: $UUID"
+          cp "$PP_PATH" ~/Library/MobileDevice/Provisioning\ Profiles/
 
-      # 7. Build & Archive
-      - name: Build IPA
+      - name: Increment build number
+        working-directory: ios/App
+        run: |
+          BUILD_NUMBER=$GITHUB_RUN_NUMBER
+          /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $BUILD_NUMBER" App/Info.plist
+          echo "Build number set to: $BUILD_NUMBER"
+
+      - name: Build and archive iOS app
+        env:
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         run: |
           xcodebuild archive \
             -workspace ios/App/App.xcworkspace \
             -scheme App \
-            -archivePath $RUNNER_TEMP/App.xcarchive \
             -configuration Release \
+            -archivePath $RUNNER_TEMP/App.xcarchive \
+            -destination "generic/platform=iOS" \
+            DEVELOPMENT_TEAM="$APPLE_TEAM_ID" \
             CODE_SIGN_STYLE=Manual \
-            CODE_SIGN_IDENTITY="Apple Distribution" \
-            PROVISIONING_PROFILE="$PROFILE_UUID" \
-            -allowProvisioningUpdates
+            CODE_SIGN_IDENTITY="iPhone Distribution" \
+            PROVISIONING_PROFILE_SPECIFIER="livehushh_AppStore" \
+            | xcpretty && exit ${PIPESTATUS[0]}
 
+      - name: Export IPA
+        env:
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          cat > $RUNNER_TEMP/ExportOptions.plist << PLISTEOF
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>method</key><string>app-store</string>
+            <key>teamID</key><string>$APPLE_TEAM_ID</string>
+            <key>uploadBitcode</key><false/>
+            <key>uploadSymbols</key><true/>
+            <key>signingStyle</key><string>manual</string>
+            <key>provisioningProfiles</key>
+            <dict>
+              <key>com.livehushh.app</key>
+              <string>livehushh_AppStore</string>
+            </dict>
+          </dict>
+          </plist>
+          PLISTEOF
           xcodebuild -exportArchive \
             -archivePath $RUNNER_TEMP/App.xcarchive \
-            -exportOptionsPlist ExportOptions.plist \
-            -exportPath $RUNNER_TEMP/ipa
+            -exportOptionsPlist $RUNNER_TEMP/ExportOptions.plist \
+            -exportPath $RUNNER_TEMP/export \
+            | xcpretty && exit ${PIPESTATUS[0]}
 
-      # 8. Upload to App Store Connect
-      - name: Upload to App Store
+      - name: Upload to App Store Connect
         env:
-          APP_STORE_KEY_ID: ${{ secrets.ASC_KEY_ID }}
-          APP_STORE_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
-          APP_STORE_KEY_CONTENT: ${{ secrets.ASC_PRIVATE_KEY }}
+          APP_STORE_CONNECT_API_KEY_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}
+          APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          APP_STORE_CONNECT_API_KEY_BASE64: ${{ secrets.APP_STORE_CONNECT_API_KEY_BASE64 }}
         run: |
-          # altool requires the key named AuthKey_<KEY_ID>.p8 in one of its search paths
-          mkdir -p ~/.appstoreconnect/private_keys
-          echo "$APP_STORE_KEY_CONTENT" > ~/.appstoreconnect/private_keys/AuthKey_${APP_STORE_KEY_ID}.p8
-          chmod 600 ~/.appstoreconnect/private_keys/AuthKey_${APP_STORE_KEY_ID}.p8
-
+          KEY_PATH=$RUNNER_TEMP/AuthKey_${APP_STORE_CONNECT_API_KEY_ID}.p8
+          echo "$APP_STORE_CONNECT_API_KEY_BASE64" | base64 --decode -o "$KEY_PATH"
+          IPA_PATH=$(find $RUNNER_TEMP/export -name "*.ipa" | head -1)
+          echo "Uploading: $IPA_PATH"
           xcrun altool --upload-app \
             --type ios \
-            --file "$RUNNER_TEMP/ipa/App.ipa" \
-            --apiKey "$APP_STORE_KEY_ID" \
-            --apiIssuer "$APP_STORE_ISSUER_ID"
+            --file "$IPA_PATH" \
+            --apiKey "$APP_STORE_CONNECT_API_KEY_ID" \
+            --apiIssuer "$APP_STORE_CONNECT_ISSUER_ID" \
+            --apiKeyPath "$KEY_PATH" \
+            --verbose
+
+      - name: Clean up keychain and provisioning profile
+        if: always()
+        run: |
+          security delete-keychain $RUNNER_TEMP/app-signing.keychain-db 2>/dev/null || true
