@@ -103,8 +103,9 @@ jobs:
           ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
           ASC_PRIVATE_KEY: ${{ secrets.ASC_PRIVATE_KEY }}
         run: |
-          KEY_PATH=$RUNNER_TEMP/AuthKey_${ASC_KEY_ID}.p8
-          echo "$ASC_PRIVATE_KEY" > "$KEY_PATH"
+          mkdir -p ~/.appstoreconnect/private_keys
+          echo "$ASC_PRIVATE_KEY" > ~/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8
+          echo "Key file size: $(wc -c < ~/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8) bytes"
           IPA_PATH=$(find $RUNNER_TEMP/export -name "*.ipa" | head -1)
           echo "Uploading: $IPA_PATH"
           xcrun altool --upload-app \
@@ -112,7 +113,6 @@ jobs:
             --file "$IPA_PATH" \
             --apiKey "$ASC_KEY_ID" \
             --apiIssuer "$ASC_ISSUER_ID" \
-            --apiKeyPath "$KEY_PATH" \
             --verbose
 
       - name: Clean up keychain
