@@ -68,18 +68,16 @@ jobs:
       - name: Fix app icon (strip alpha channel for Xcode 26 compatibility)
         run: |
           ICON=ios/App/App/Assets.xcassets/AppIcon.appiconset/AppIcon-512@2x.png
-          echo "Icon before: $(sips -g pixelWidth -g pixelHeight -g hasAlpha "$ICON" 2>/dev/null)"
-          # Use ImageMagick to properly strip alpha (sips hasAlpha property is read-only)
-          if command -v convert &>/dev/null; then
-            convert "$ICON" -background white -alpha remove -alpha off -flatten "$ICON"
-            echo "Used ImageMagick to strip alpha"
-          else
-            # Fallback: round-trip through JPEG via sips to lose alpha
-            sips -s format jpeg "$ICON" -o /tmp/icon_tmp.jpg 2>/dev/null
-            sips -s format png /tmp/icon_tmp.jpg -o "$ICON" 2>/dev/null
-            echo "Used sips JPEG round-trip to strip alpha"
-          fi
-          echo "Icon after:  $(sips -g pixelWidth -g pixelHeight -g hasAlpha "$ICON" 2>/dev/null)"
+          echo "=== Before ==="
+          ls -la "$ICON"
+          sips -g pixelWidth -g pixelHeight -g hasAlpha "$ICON"
+          # Strip alpha via JPEG round-trip — JPEG has no alpha, guaranteed to work on all macOS runners
+          cp "$ICON" /tmp/icon_orig.png
+          sips -s format jpeg /tmp/icon_orig.png -o /tmp/icon_noalpha.jpg
+          sips -s format png /tmp/icon_noalpha.jpg -o "$ICON"
+          echo "=== After ==="
+          ls -la "$ICON"
+          sips -g pixelWidth -g pixelHeight -g hasAlpha "$ICON"
 
       - name: Increment build number
         working-directory: ios/App
