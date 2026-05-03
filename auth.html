@@ -1024,14 +1024,18 @@ function _redirect(role, isNewSignup) {
     return;
   }
 
-  // In native iOS/Android app — hide owner section (Apple guideline 3.1.1)
+  // In native iOS/Android app — owner benefits stay visible, but join card
+  // becomes a sign-in card (Apple guideline 3.1.1: no new paid signups in app;
+  // signing in for existing accounts is explicitly allowed)
   if (isApp) {
-    const ownerSection = document.getElementById('ld-owner-section');
-    const ownerBtn     = document.getElementById('ld-owner-btn');
-    const orDiv        = ownerBtn && ownerBtn.previousElementSibling;
-    if (ownerSection) ownerSection.style.display = 'none';
-    if (ownerBtn)     ownerBtn.style.display     = 'none';
-    if (orDiv && orDiv.classList && orDiv.classList.contains('ld-or')) orDiv.style.display = 'none';
+    const ownerBtn = document.getElementById('ld-owner-btn');
+    if (ownerBtn) {
+      ownerBtn.setAttribute('onclick', "ldSignInAs('owner')");
+      const nameEl = ownerBtn.querySelector('.ld-jcard-name');
+      const descEl = ownerBtn.querySelector('.ld-jcard-desc');
+      if (nameEl) nameEl.innerHTML = 'Sign in as Owner';
+      if (descEl) descEl.textContent = 'Access your restaurant dashboard';
+    }
   }
 })();
 
@@ -1051,6 +1055,16 @@ function ldChoose(role) {
 function ldSignIn() {
   const landing = document.getElementById('lh-landing');
   if (landing) landing.style.display = 'none';
+  switchTab('login');
+  const authRight = document.querySelector('.auth-right');
+  if (authRight) authRight.scrollTop = 0;
+  window.scrollTo(0, 0);
+}
+
+function ldSignInAs(role) {
+  const landing = document.getElementById('lh-landing');
+  if (landing) landing.style.display = 'none';
+  selectRole(role);
   switchTab('login');
   const authRight = document.querySelector('.auth-right');
   if (authRight) authRight.scrollTop = 0;
