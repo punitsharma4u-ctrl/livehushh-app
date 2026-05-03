@@ -210,7 +210,7 @@ body{background:var(--bg);display:flex;flex-direction:column;min-height:100vh;ov
 
 <!-- APP NAV -->
 <nav class="app-nav">
-  <a href="index.html" class="app-nav-logo">
+  <a href="index.html" class="app-nav-logo" onclick="if(_isNativeApp){showPage('browse');return false;}">
     <span class="lh-logo"><span class="lh-logo-live">live</span><span class="lh-logo-hushh">hushh.</span></span>
   </a>
   <div style="flex:1"></div>
@@ -237,7 +237,7 @@ body{background:var(--bg);display:flex;flex-direction:column;min-height:100vh;ov
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/></svg>
       Cart (<span id="cartCountBadge">0</span>)
     </button>
-    <a href="auth.html?role=customer" class="btn btn-secondary btn-sm">Sign Out</a>
+    <a href="#" onclick="handleSignOut();return false;" class="btn btn-secondary btn-sm">Sign Out</a>
   </div>
 </nav>
 
@@ -1987,7 +1987,7 @@ function urlBase64ToUint8Array(base64String) {
 function handleSignOut() {
   if (!confirm('Are you sure you want to sign out?')) return;
   localStorage.removeItem('lh_session');
-  location.href = 'auth.html?role=customer';
+  location.href = _isNativeApp ? 'auth.html' : 'auth.html?role=customer';
 }
 
 // ── Delete Account ────────────────────────────────────────────────────────────
@@ -2025,7 +2025,7 @@ async function deleteAccount() {
   localStorage.clear();
   sessionStorage.clear();
   APP.showToast('Your account has been deleted.', 'success');
-  setTimeout(() => { location.href = 'auth.html?role=customer'; }, 1500);
+  setTimeout(() => { location.href = _isNativeApp ? 'auth.html' : 'auth.html?role=customer'; }, 1500);
 }
 </script>
 <script src="js/theme.js"></script>
@@ -2048,7 +2048,7 @@ async function deleteAccount() {
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
     Profile
   </div>
-  <div class="mob-tab" onclick="location.href='auth.html?role=customer'">
+  <div class="mob-tab" onclick="handleSignOut()">
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
     Sign Out
   </div>

@@ -241,7 +241,7 @@ body{background:var(--bg);display:flex;min-height:100vh;overflow-x:hidden}
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polygon points="10,8 16,12 10,16" fill="currentColor"/></svg>
       Go Live
     </button>
-    <a href="index.html" class="btn btn-ghost btn-sm">← Home</a>
+    <a href="index.html" class="btn btn-ghost btn-sm" id="homeBtn">← Home</a>
   </div>
 
   <!-- TRIAL / PLAN BANNER -->
@@ -1684,7 +1684,7 @@ function initMediaPage() {
           <div style="font-size:.85rem;color:var(--text2)">${SESSION.email}</div>
           ${SESSION.restaurant ? `<div style="font-size:.85rem;color:var(--text2);margin-top:4px">Restaurant: ${SESSION.restaurant}</div>` : ''}
         </div>
-        <button class="btn btn-ghost btn-sm" onclick="localStorage.removeItem('lh_session');location.href='auth.html?role=owner'">Sign Out</button>
+        <button class="btn btn-ghost btn-sm" onclick="localStorage.removeItem('lh_session');location.href=(_isNativeApp?'auth.html':'auth.html?role=owner')">Sign Out</button>
       </div>`;
     return;
   }
@@ -1841,11 +1841,21 @@ function choosePlan(planId, planName, mrr) {
 }
 
 // ── Sign Out & Delete Account ────────────────────────────────────────────────
+const _isNativeApp = !!(window.Capacitor) || navigator.userAgent.includes('LiveHushh');
+
+// Hide web-only nav elements inside the native app
+if (_isNativeApp) {
+  document.addEventListener('DOMContentLoaded', () => {
+    const homeBtn = document.getElementById('homeBtn');
+    if (homeBtn) homeBtn.style.display = 'none';
+  });
+}
+
 function handleOwnerSignOut(e) {
   e.preventDefault();
   if (!confirm('Are you sure you want to sign out?')) return;
   localStorage.removeItem('lh_session');
-  location.href = 'auth.html?role=owner';
+  location.href = _isNativeApp ? 'auth.html' : 'auth.html?role=owner';
 }
 
 function confirmOwnerDeleteAccount() {
@@ -1877,7 +1887,7 @@ async function deleteOwnerAccount() {
   localStorage.clear();
   sessionStorage.clear();
   alert('Your account has been deleted.');
-  location.href = 'auth.html?role=owner';
+  location.href = _isNativeApp ? 'auth.html' : 'auth.html?role=owner';
 }
 </script>
 <script src="js/theme.js"></script>
