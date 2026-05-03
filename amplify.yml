@@ -14,6 +14,20 @@ frontend:
   cache:
     paths:
       - node_modules/**/*
-
-# Lambda functions are deployed separately via `amplify push`
-# See SETUP.md for full deployment instructions
+customHeaders:
+  - pattern: '**/*.html'
+    headers:
+      - key: Cache-Control
+        value: 'no-cache, no-store, must-revalidate'
+      - key: Pragma
+        value: no-cache
+      - key: Expires
+        value: '0'
+  - pattern: '**/*.js'
+    headers:
+      - key: Cache-Control
+        value: 'no-cache, must-revalidate'
+  - pattern: '**/*.css'
+    headers:
+      - key: Cache-Control
+        value: 'no-cache, must-revalidate'
