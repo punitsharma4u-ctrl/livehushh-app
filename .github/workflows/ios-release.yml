@@ -69,7 +69,16 @@ jobs:
         run: |
           ICON=ios/App/App/Assets.xcassets/AppIcon.appiconset/AppIcon-512@2x.png
           echo "Icon before: $(sips -g pixelWidth -g pixelHeight -g hasAlpha "$ICON" 2>/dev/null)"
-          sips --setProperty format png --setProperty hasAlpha false "$ICON" -o "$ICON" 2>/dev/null || true
+          # Use ImageMagick to properly strip alpha (sips hasAlpha property is read-only)
+          if command -v convert &>/dev/null; then
+            convert "$ICON" -background white -alpha remove -alpha off -flatten "$ICON"
+            echo "Used ImageMagick to strip alpha"
+          else
+            # Fallback: round-trip through JPEG via sips to lose alpha
+            sips -s format jpeg "$ICON" -o /tmp/icon_tmp.jpg 2>/dev/null
+            sips -s format png /tmp/icon_tmp.jpg -o "$ICON" 2>/dev/null
+            echo "Used sips JPEG round-trip to strip alpha"
+          fi
           echo "Icon after:  $(sips -g pixelWidth -g pixelHeight -g hasAlpha "$ICON" 2>/dev/null)"
 
       - name: Increment build number
