@@ -65,6 +65,13 @@ jobs:
           echo "Profile installed as ${UUID}.mobileprovision"
           echo "PROFILE_UUID=$UUID" >> $GITHUB_ENV
 
+      - name: Fix app icon (strip alpha channel for Xcode 26 compatibility)
+        run: |
+          ICON=ios/App/App/Assets.xcassets/AppIcon.appiconset/AppIcon-512@2x.png
+          echo "Icon before: $(sips -g pixelWidth -g pixelHeight -g hasAlpha "$ICON" 2>/dev/null)"
+          sips --setProperty format png --setProperty hasAlpha false "$ICON" -o "$ICON" 2>/dev/null || true
+          echo "Icon after:  $(sips -g pixelWidth -g pixelHeight -g hasAlpha "$ICON" 2>/dev/null)"
+
       - name: Increment build number
         working-directory: ios/App
         run: |
