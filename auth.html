@@ -1067,6 +1067,19 @@ function ldSignIn() {
 function ldSignInAs(role) {
   const landing = document.getElementById('lh-landing');
   if (landing) landing.style.display = 'none';
+
+  // Lock login form to the chosen role — hide the other role cards and shrink grid to 1 col
+  const opposite = role === 'owner' ? 'customer' : 'owner';
+  const hideEl = document.getElementById('role-' + opposite);
+  if (hideEl) hideEl.style.display = 'none';
+  document.querySelectorAll('#loginForm .role-grid').forEach(g => g.style.gridTemplateColumns = '1fr');
+
+  // Update subtitle so it's clear which account type they're signing into
+  const subtitle = document.querySelector('#loginForm .auth-subtitle');
+  if (subtitle) subtitle.textContent = role === 'owner'
+    ? 'Sign in to your restaurant owner account'
+    : 'Sign in to your customer account';
+
   selectRole(role);
   switchTab('login');
   const authRight = document.querySelector('.auth-right');
