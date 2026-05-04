@@ -22,6 +22,7 @@
  *   POST   /promos                 — create promo (admin)
  *   PATCH  /promos/:id             — enable/disable promo (admin)
  *   DELETE /promos/:id             — delete promo (admin)
+ *   GET    /live/channel           — get or create IVS channel for owner
  *   POST   /live/start             — owner marks restaurant as live
  *   POST   /live/end               — owner ends live session
  *   GET    /live/sessions          — get all currently live restaurants
@@ -35,6 +36,8 @@ const Stripe   = require('stripe');
 const stripe   = Stripe(process.env.STRIPE_SECRET_KEY || '');
 const { SESClient, SendEmailCommand } = require('@aws-sdk/client-ses');
 const sesClient = new SESClient({ region: 'us-east-1' });
+const { IvsClient, CreateChannelCommand, GetChannelCommand } = require('@aws-sdk/client-ivs');
+const ivsClient = new IvsClient({ region: 'us-east-1' });
 const SES_FROM  = process.env.SES_FROM_EMAIL || 'punitsharma4u@gmail.com';
 
 // VAPID keys — generate with: npx web-push generate-vapid-keys
@@ -586,6 +589,63 @@ exports.handler = async (event) => {
         { $inc: { usedCount: 1 } }
       );
       return resp(200, { ok: true });
+    }
+
+    // ── GET /live/channel ────────────────────────────────────────────────────
+    // Returns existing IVS channel creds or creates a new channel for this owner
+    if (method === 'GET' && path.endsWith('/live/channel')) {
+      if (role !== 'owner') return resp(403, { error: 'Owners only' });
+      const rest = await db.collection('restaurants').findOne({ ownerSub: userId });
+      if (!rest) return resp(404, { error: 'Restaurant not found. Please complete your restaurant profile first.' });
+
+      // Return existing credentials if already provisioned
+      if (rest.ivsStreamKey && rest.ivsIngestEndpoint) {
+        return resp(200, {
+          streamKey:    rest.ivsStreamKey,
+          ingest:       rest.ivsIngestEndpoint,
+          playback:     rest.ivsPlaybackUrl || '',
+          channelArn:   rest.ivsChannelArn  || '',
+        });
+      }
+
+      // Create a new IVS channel for this owner
+      try {
+        const channelName = `livehushh-${userId.replace(/[^a-zA-Z0-9-_]/g, '-').slice(0, 40)}`;
+        const createRes = await ivsClient.send(new CreateChannelCommand({
+          name:       channelName,
+          latencyMode: 'LOW',
+          type:        'STANDARD',
+          tags:        { ownerSub: userId, restaurantId: rest._id.toString() },
+        }));
+
+        const channel   = createRes.channel;
+        const streamKey = createRes.streamKey;
+
+        const ivsData = {
+          ivsChannelArn:      channel.arn,
+          ivsIngestEndpoint:  channel.ingestEndpoint,
+          ivsPlaybackUrl:     channel.playbackUrl,
+          ivsStreamKeyArn:    streamKey.arn,
+          ivsStreamKey:       streamKey.value,
+          ivsCreatedAt:       new Date(),
+        };
+
+        // Save credentials against the restaurant so we never create duplicates
+        await db.collection('restaurants').updateOne(
+          { ownerSub: userId },
+          { $set: ivsData }
+        );
+
+        return resp(200, {
+          streamKey: streamKey.value,
+          ingest:    channel.ingestEndpoint,
+          playback:  channel.playbackUrl,
+          channelArn: channel.arn,
+        });
+      } catch (ivsErr) {
+        console.error('IVS channel creation failed:', ivsErr);
+        return resp(500, { error: 'Could not create live stream channel. ' + (ivsErr.message || '') });
+      }
     }
 
     // ── POST /live/start ─────────────────────────────────────────────────────
