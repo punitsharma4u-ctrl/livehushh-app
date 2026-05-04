@@ -46,7 +46,7 @@
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<true/>
 	<key>NSCameraUsageDescription</key>
-	<string>LiveHushh uses your camera to broadcast live video streams from restaurants. For example, a restaurant can go live to showcase tonight's specials, and diners can watch and interact in real time.</string>
+	<string>LiveHushh uses your camera so restaurant owners can go live to promote their business and hot deals in real time. For example, an owner can stream their kitchen preparing tonight's special dish so customers can watch and decide to visit or order.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>LiveHushh uses your photo library so you can upload images to your profile or share restaurant moments in the community feed.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
@@ -56,6 +56,6 @@
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
 	<string>LiveHushh uses your location to show restaurants near you and calculate delivery distances. For example, it checks whether your address is within a restaurant's delivery range before you place an order.</string>
 	<key>NSMicrophoneUsageDescription</key>
-	<string>LiveHushh uses your microphone to capture audio during live restaurant streams. For example, when a restaurant host goes live to announce daily specials, the microphone records their voice so viewers can hear the announcement clearly.</string>
+	<string>LiveHushh uses your microphone so restaurant owners can speak and share their specials and promotions in real time during live streams. For example, a restaurant owner describes today's dishes and discounts live so customers can hear and act on the offer immediately.</string>
 </dict>
 </plist>

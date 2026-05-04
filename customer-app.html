@@ -240,7 +240,7 @@ body{background:var(--bg);display:flex;flex-direction:column;min-height:100vh;ov
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/></svg>
       Cart (<span id="cartCountBadge">0</span>)
     </button>
-    <a href="#" onclick="handleSignOut();return false;" class="btn btn-secondary btn-sm">Sign Out</a>
+    <a href="#" id="navAuthBtn" onclick="handleSignOut();return false;" class="btn btn-secondary btn-sm">Sign Out</a>
   </div>
 </nav>
 
@@ -288,6 +288,13 @@ body{background:var(--bg);display:flex;flex-direction:column;min-height:100vh;ov
         <input type="checkbox" id="distToggle" onchange="toggleDistFilter(this.checked)">
         <span class="dist-slider-pill"></span>
       </label>
+    </div>
+
+    <!-- Guest sign-in banner (hidden when logged in) -->
+    <div id="guestBrowseBanner" style="display:none;background:rgba(232,84,10,0.07);border:1px solid rgba(232,84,10,0.25);border-radius:var(--r-xl);padding:14px 20px;align-items:center;gap:12px;margin-bottom:16px">
+      <span style="font-size:1.2rem">✨</span>
+      <span style="font-size:.88rem;flex:1;color:var(--text)"><strong>Sign in free</strong> to unlock exclusive deals, live offers & place orders directly</span>
+      <a href="auth.html?role=customer" id="guestBannerLink" class="btn btn-primary btn-sm" style="white-space:nowrap;flex-shrink:0">Sign In / Join Free</a>
     </div>
 
     <!-- Live now banner -->
@@ -801,13 +808,14 @@ const _isNativeApp = !!(window.Capacitor) || navigator.userAgent.includes('LiveH
 function _requireLogin(action) {
   if (_API.isLoggedIn()) { action(); return; }
   // Not logged in — show sign-in prompt
+  const authUrl = _isNativeApp ? 'auth.html' : 'auth.html?role=customer';
   const modal = document.createElement('div');
   modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:9999;display:flex;align-items:center;justify-content:center;padding:24px';
   modal.innerHTML = `<div style="background:#0f0f23;border:1px solid #333;border-radius:16px;padding:32px;max-width:360px;width:100%;text-align:center">
     <div style="font-size:2rem;margin-bottom:12px">🔒</div>
     <h3 style="font-family:'Inter',sans-serif;font-size:1.1rem;font-weight:700;margin-bottom:8px">Sign in to continue</h3>
-    <p style="color:#888;font-size:.88rem;margin-bottom:24px">Create a free account or sign in to place orders, join waitlists and more.</p>
-    <a href="auth.html?role=customer" class="btn btn-primary w-full" style="display:block;margin-bottom:10px;text-decoration:none">Sign In / Create Account</a>
+    <p style="color:#888;font-size:.88rem;margin-bottom:24px">Create a free account or sign in to place orders, join waitlists and unlock exclusive deals.</p>
+    <a href="${authUrl}" class="btn btn-primary w-full" style="display:block;margin-bottom:10px;text-decoration:none">Sign In / Create Account</a>
     <button onclick="this.closest('div').parentElement.remove()" style="background:none;border:none;color:#666;font-size:.85rem;cursor:pointer">Maybe later</button>
   </div>`;
   document.body.appendChild(modal);
@@ -916,6 +924,23 @@ function openRestaurant(id) {
   renderMenuContent(r, []);
   renderCart();
   showPage('menu');
+
+  // For guests: show deals teaser instead of actual deals
+  if (!_API.isLoggedIn()) {
+    const authUrl = _isNativeApp ? 'auth.html' : 'auth.html?role=customer';
+    document.getElementById('menuDealsContainer').innerHTML = `
+      <div style="background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.25);border-radius:var(--r);padding:16px 20px;display:flex;align-items:center;gap:14px;margin-bottom:16px">
+        <span style="font-size:1.5rem">🔒</span>
+        <div style="flex:1">
+          <div style="font-weight:700;font-size:.9rem;color:var(--gold)">Exclusive deals & live specials available</div>
+          <div style="font-size:.8rem;color:var(--text2);margin-top:3px">Sign in to unlock today's discounts, live offers and special promotions from this restaurant.</div>
+        </div>
+        <a href="${authUrl}" class="btn btn-primary btn-sm" style="white-space:nowrap;flex-shrink:0">Sign In →</a>
+      </div>`;
+    renderMenuContent(r, []);
+    renderCart();
+    return;
+  }
 
   // Load banner from localStorage if available
   const savedBanner = localStorage.getItem('lh_banner');
@@ -1868,6 +1893,22 @@ function pollDeals() {
 /* ── INIT ── */
 (async () => {
   const grid = document.getElementById('restaurantGrid');
+
+  // Update nav button and guest banner based on auth state
+  const navAuthBtn = document.getElementById('navAuthBtn');
+  const guestBanner = document.getElementById('guestBrowseBanner');
+  const guestBannerLink = document.getElementById('guestBannerLink');
+  if (!_API.isLoggedIn()) {
+    if (navAuthBtn) {
+      navAuthBtn.textContent = 'Sign In';
+      navAuthBtn.href = _isNativeApp ? 'auth.html' : 'auth.html?role=customer';
+      navAuthBtn.onclick = null;
+    }
+    if (guestBanner) {
+      guestBanner.style.display = 'flex';
+      if (guestBannerLink && _isNativeApp) guestBannerLink.href = 'auth.html';
+    }
+  }
 
   // Populate profile from session
   try {

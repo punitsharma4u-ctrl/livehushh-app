@@ -739,6 +739,9 @@ function selectSignupRole(role) {
     if (el) el.classList.toggle('active', r === role);
   });
   document.getElementById('restaurantField').style.display = role === 'owner' ? 'block' : 'none';
+  // Show/hide admin approval note for owner role
+  const note = document.getElementById('owner-approval-note');
+  if (note) note.style.display = role === 'owner' ? 'block' : 'none';
 }
 
 /* ── SIGN IN ──────────────────────────────────────────── */
@@ -1151,21 +1154,26 @@ async function handleAppleSignIn(e) {
 <script src="js/theme.js"></script>
 <script>if("serviceWorker"in navigator){navigator.serviceWorker.register("/service-worker.js").then(()=>console.log("SW registered")).catch(e=>console.warn("SW error",e));}</script>
 <script>
-// In the iOS/Android app, hide Owner & Admin role options (Apple guideline 3.1.1)
-// Business account registration must be done via the web, not the app store app.
+// In the iOS/Android app — admin role hidden; owner signup allowed (free, requires admin approval)
 (function() {
   const isApp = !!(window.Capacitor) || navigator.userAgent.includes('LiveHushh');
   if (!isApp) return;
 
-  // Hide owner/admin role cards on signup form only (Apple guideline 3.1.1 — no new paid signups in app)
-  // Keep them visible on LOGIN form so existing owners can sign in through the app
-  ['srole-owner','srole-admin'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.style.display = 'none';
-  });
-  // Also hide the "restaurant field" on signup
-  const rf = document.getElementById('restaurantField');
-  if (rf) rf.style.display = 'none';
+  // Hide admin-only role card on signup (admins are internal staff, not self-serve)
+  const adminCard = document.getElementById('srole-admin');
+  if (adminCard) adminCard.style.display = 'none';
+
+  // Owner signup IS allowed in-app — it's free and requires admin approval before activation
+  // Add an approval notice below the owner signup card
+  const ownerCard = document.getElementById('srole-owner');
+  if (ownerCard) {
+    ownerCard.insertAdjacentHTML('afterend',
+      '<p id="owner-approval-note" style="display:none;font-size:.75rem;color:var(--text2);margin-top:6px;text-align:center">' +
+      '✅ Free to join · Your account will be reviewed and activated by our team within 24 hours.' +
+      '</p>'
+    );
+  }
+
   // Update subtitle
   const sub = document.querySelector('.auth-subtitle');
   if (sub) sub.textContent = 'Discover restaurants near you';
@@ -1176,9 +1184,6 @@ async function handleAppleSignIn(e) {
 
   // Make body single column (full width form) in app
   document.body.style.gridTemplateColumns = '1fr';
-
-  // Hide "← Back" button if already on landing (it appears after ldChoose)
-  // but keep it visible once form is shown — handled by showLanding/ldChoose
 })();
 </script>
 </body>
