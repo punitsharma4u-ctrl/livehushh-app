@@ -192,7 +192,7 @@ async function apiCall(method, path, body) {
 let localStream    = null;
 let broadcastClient= null;
 let faceModel      = null;
-let blurEnabled    = true;
+let blurEnabled    = false; // Owner face should be visible for personal connection
 let blurAnimId     = null;
 let micMuted       = false;
 let isLive         = false;
@@ -229,7 +229,8 @@ async function initCamera() {
   canvas.width  = hiddenVid.videoWidth  || 1280;
   canvas.height = hiddenVid.videoHeight || 720;
   startDraw();
-  if (blurEnabled) loadBlazeFace();
+  // Face blur is OFF by default — owner's face should be visible for personal connection
+  // Owner can tap the 😶 button to enable blur if needed (e.g. to protect background guests)
 }
 
 async function flipCamera() {
@@ -308,7 +309,11 @@ function toggleBlur() {
   blurEnabled = !blurEnabled;
   document.getElementById('blurBtn').classList.toggle('active', blurEnabled);
   document.getElementById('blurOverlays').innerHTML = '';
-  if (blurEnabled && faceModel) detectFaces();
+  if (blurEnabled) {
+    // Load model on first use
+    if (!faceModel) loadBlazeFace();
+    else detectFaces();
+  }
 }
 
 /* ── Setup Screen ── */
