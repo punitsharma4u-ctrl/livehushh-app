@@ -739,9 +739,6 @@ function selectSignupRole(role) {
     if (el) el.classList.toggle('active', r === role);
   });
   document.getElementById('restaurantField').style.display = role === 'owner' ? 'block' : 'none';
-  // Show/hide admin approval note for owner role
-  const note = document.getElementById('owner-approval-note');
-  if (note) note.style.display = role === 'owner' ? 'block' : 'none';
 }
 
 /* ── SIGN IN ──────────────────────────────────────────── */
@@ -966,10 +963,12 @@ async function _sendWelcomeEmail(name, email, role) {
 }
 
 function _redirect(role, isNewSignup) {
-  if (role === 'admin')      { location.href = 'admin-dashboard.html'; return; }
-  if (role === 'customer')   { location.href = 'customer-app.html';    return; }
-  // Owner: new signups always go to onboarding; returning go to dashboard
-  if (isNewSignup)           { location.href = 'owner-onboarding.html'; return; }
+  if (role === 'admin')    { location.href = 'admin-dashboard.html'; return; }
+  if (role === 'customer') { location.href = 'customer-app.html';    return; }
+
+  // In native app skip onboarding wizard — go straight to dashboard
+  const _inApp = !!(window.Capacitor) || !!sessionStorage.getItem('_lhNativeApp') || navigator.userAgent.includes('LiveHushh');
+  if (isNewSignup && !_inApp) { location.href = 'owner-onboarding.html'; return; }
   location.href = 'owner-dashboard.html';
 }
 
@@ -1157,22 +1156,12 @@ async function handleAppleSignIn(e) {
 // In the iOS/Android app — admin role hidden; owner signup allowed (free, requires admin approval)
 (function() {
   const isApp = !!(window.Capacitor) || navigator.userAgent.includes('LiveHushh');
+  if (isApp) sessionStorage.setItem('_lhNativeApp', '1');
   if (!isApp) return;
 
   // Hide admin-only role card on signup (admins are internal staff, not self-serve)
   const adminCard = document.getElementById('srole-admin');
   if (adminCard) adminCard.style.display = 'none';
-
-  // Owner signup IS allowed in-app — it's free and requires admin approval before activation
-  // Add an approval notice below the owner signup card
-  const ownerCard = document.getElementById('srole-owner');
-  if (ownerCard) {
-    ownerCard.insertAdjacentHTML('afterend',
-      '<p id="owner-approval-note" style="display:none;font-size:.75rem;color:var(--text2);margin-top:6px;text-align:center">' +
-      '✅ Free to join · Your account will be reviewed and activated by our team within 24 hours.' +
-      '</p>'
-    );
-  }
 
   // Update subtitle
   const sub = document.querySelector('.auth-subtitle');

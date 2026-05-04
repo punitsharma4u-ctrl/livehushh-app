@@ -765,6 +765,21 @@ function getRestRows() {
   }));
   return [...real, ..._demoRestRows.filter(d => !real.find(r => r.name===d.name))];
 }
+async function loadRealRestaurants() {
+  try {
+    const token = (() => { try { return JSON.parse(localStorage.getItem('lh_session')||'{}').idToken||''; } catch{return '';} })();
+    if (!token) return;
+    const res = await fetch('https://api.livehushh.com/restaurants', { headers: { Authorization: 'Bearer ' + token } });
+    if (!res.ok) return;
+    const data = await res.json();
+    if (!Array.isArray(data) || !data.length) return;
+    // Merge into shared localStorage so getRestRows picks them up
+    const existing = JSON.parse(localStorage.getItem('lh_shared_restaurants') || '[]');
+    data.forEach(r => { if (!existing.find(e => e.id === r.id || e.name === r.name)) existing.push(r); });
+    localStorage.setItem('lh_shared_restaurants', JSON.stringify(existing));
+    renderRestaurants();
+  } catch(e) {}
+}
 function renderRestaurants(filter='') {
   const restRows = getRestRows();
   const rows = filter ? restRows.filter(r=>r.name.toLowerCase().includes(filter.toLowerCase())||(r.city||'').toLowerCase().includes(filter.toLowerCase())) : restRows;
@@ -1111,6 +1126,7 @@ function rejectOwner(email, name) {
 /* ── INIT ── */
 initOverview();
 renderRestaurants();
+loadRealRestaurants();
 renderSubscriptions();
 renderUsers();
 renderVideosPanel('all');

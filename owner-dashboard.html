@@ -1844,7 +1844,7 @@ function choosePlan(planId, planName, mrr) {
 }
 
 // ── Sign Out & Delete Account ────────────────────────────────────────────────
-const _isNativeApp = !!(window.Capacitor) || navigator.userAgent.includes('LiveHushh');
+const _isNativeApp = !!(window.Capacitor) || !!sessionStorage.getItem('_lhNativeApp') || navigator.userAgent.includes('LiveHushh');
 
 // Hide web-only nav elements inside the native app
 if (_isNativeApp) {
