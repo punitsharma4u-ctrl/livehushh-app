@@ -55,8 +55,17 @@ const DB_NAME    = 'livehushh';
 let _client;
 async function getDb() {
   if (!_client) {
-    _client = new MongoClient(MONGO_URI, { serverSelectionTimeoutMS: 5000 });
-    await _client.connect();
+    _client = new MongoClient(MONGO_URI, {
+      serverSelectionTimeoutMS: 5000,   // fail fast if no server found
+      connectTimeoutMS:         5000,   // TCP connection timeout
+      socketTimeoutMS:         10000,   // individual operation timeout
+    });
+    try {
+      await _client.connect();
+    } catch (e) {
+      _client = null;   // reset so next invocation retries fresh
+      throw e;
+    }
   }
   return _client.db(DB_NAME);
 }
@@ -145,6 +154,15 @@ function normalizeRestaurant(r) {
   };
 }
 
+// ─── demo fallback restaurants (shown when MongoDB is unreachable) ───────────
+const DEMO_RESTAURANTS = [
+  { id:'demo1', _id:'demo1', name:'The Spice Garden', cuisine:'Indian', description:'Authentic Indian cuisine with live cooking shows every evening.', city:'Toronto', address:'123 Main St', phone:'416-555-0101', hours:'11am-10pm', priceRange:'$$', image:'', website:'', isLive:true, liveViewers:12, latitude:43.65, longitude:-79.38, isOpen:true, rating:4.8, distance:'0.3 km', isVeg:false, ownerSub:null, ownerName:'Raj Patel', planStatus:'active', trialEndsAt:null, menu:[] },
+  { id:'demo2', _id:'demo2', name:'Bella Italia',     cuisine:'Italian', description:'Wood-fired pizza and fresh pasta. Watch our chefs go live at 7pm.', city:'Toronto', address:'456 Queen St', phone:'416-555-0202', hours:'12pm-11pm', priceRange:'$$$', image:'', website:'', isLive:false, liveViewers:0, latitude:43.65, longitude:-79.39, isOpen:true, rating:4.6, distance:'0.7 km', isVeg:false, ownerSub:null, ownerName:'Marco Rossi', planStatus:'active', trialEndsAt:null, menu:[] },
+  { id:'demo3', _id:'demo3', name:'Green Bowl',       cuisine:'Vegan', description:'Fresh plant-based bowls and smoothies. Healthy eating made delicious.', city:'Toronto', address:'789 King St', phone:'416-555-0303', hours:'8am-8pm', priceRange:'$', image:'', website:'', isLive:false, liveViewers:0, latitude:43.64, longitude:-79.40, isOpen:true, rating:4.7, distance:'1.2 km', isVeg:true, ownerSub:null, ownerName:'Aisha Kumar', planStatus:'active', trialEndsAt:null, menu:[] },
+  { id:'demo4', _id:'demo4', name:'Dragon Palace',    cuisine:'Chinese', description:'Traditional dim sum and Szechuan specialties. Family recipes since 1985.', city:'Toronto', address:'321 Dundas St', phone:'416-555-0404', hours:'10am-10pm', priceRange:'$$', image:'', website:'', isLive:false, liveViewers:0, latitude:43.66, longitude:-79.37, isOpen:true, rating:4.5, distance:'1.8 km', isVeg:false, ownerSub:null, ownerName:'Wei Chen', planStatus:'active', trialEndsAt:null, menu:[] },
+  { id:'demo5', _id:'demo5', name:'Taco Loco',        cuisine:'Mexican', description:'Street-style tacos and fresh guacamole. Live salsa cooking Fridays!', city:'Toronto', address:'567 Bloor St', phone:'416-555-0505', hours:'11am-9pm', priceRange:'$', image:'', website:'', isLive:false, liveViewers:0, latitude:43.67, longitude:-79.41, isOpen:true, rating:4.4, distance:'2.1 km', isVeg:false, ownerSub:null, ownerName:'Carlos Mendez', planStatus:'active', trialEndsAt:null, menu:[] },
+];
+
 // ─── router ─────────────────────────────────────────────────────────────────
 
 exports.handler = async (event) => {
@@ -156,6 +174,28 @@ exports.handler = async (event) => {
   const userId = claims.sub;                        // Cognito user ID
 
   console.log(`[REQ] ${method} ${path} | user=${userId || 'anon'}`);
+
+  // ── Public GET /restaurants with DB fallback ──────────────────────────────
+  // Return demo data immediately if MongoDB is unreachable, so the app always
+  // shows restaurants to guests/customers even during DB downtime.
+  if (method === 'GET' && path.endsWith('/restaurants') && !userId) {
+    try {
+      const db = await getDb();
+      const now = new Date();
+      const list = await db.collection('restaurants').find({
+        $or: [
+          { planStatus: { $exists: false } },
+          { planStatus: null },
+          { planStatus: 'active' },
+          { planStatus: 'trial', trialEndsAt: { $gt: now } }
+        ]
+      }).toArray();
+      return resp(200, list.map(normalizeRestaurant));
+    } catch (dbErr) {
+      console.warn('[WARN] MongoDB unavailable, serving demo restaurants:', dbErr.message);
+      return resp(200, DEMO_RESTAURANTS);
+    }
+  }
 
   try {
     const db = await getDb();
