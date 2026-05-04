@@ -311,13 +311,25 @@ body{height:100vh;display:grid;grid-template-columns:1fr 1fr;background:var(--bg
     <h2 class="ld-join-title">Ready to join?</h2>
     <p class="ld-join-sub">Choose how you want to use LiveHushh</p>
 
-    <div class="ld-jcard diner" onclick="ldChoose('customer')">
-      <div class="ld-jcard-ico">🍴</div>
-      <div class="ld-jcard-txt">
-        <div class="ld-jcard-name">I'm a Diner <span style="display:inline-block;background:#10B981;color:#fff;font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;vertical-align:middle;margin-left:6px;">✓ Always Free</span></div>
-        <div class="ld-jcard-desc">Get exclusive deals, skip queues &amp; order ahead</div>
+    <!-- Customer card — expands to show two options -->
+    <div class="ld-jcard diner" id="ld-diner-card" onclick="ldExpandDiner()" style="flex-direction:column;align-items:stretch;cursor:pointer;">
+      <div style="display:flex;align-items:center;gap:14px;">
+        <div class="ld-jcard-ico">🍴</div>
+        <div class="ld-jcard-txt" style="flex:1;">
+          <div class="ld-jcard-name">I'm a Diner <span style="display:inline-block;background:#10B981;color:#fff;font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;vertical-align:middle;margin-left:6px;">✓ Always Free</span></div>
+          <div class="ld-jcard-desc">Browse restaurants, view menus &amp; get exclusive deals</div>
+        </div>
+        <div class="ld-jcard-arr" id="ld-diner-arr">→</div>
       </div>
-      <div class="ld-jcard-arr">→</div>
+      <!-- Expanded options (hidden by default) -->
+      <div id="ld-diner-options" style="display:none;margin-top:14px;border-top:1px solid rgba(255,255,255,0.08);padding-top:14px;gap:10px;flex-direction:column;">
+        <button onclick="event.stopPropagation();location.href='customer-app.html'" style="width:100%;padding:12px;border-radius:12px;border:1.5px solid rgba(255,255,255,0.15);background:transparent;color:#F8FAFC;font-size:14px;font-weight:600;cursor:pointer;text-align:left;">
+          👀 Browse restaurants &nbsp;<span style="color:#94A3B8;font-size:12px;font-weight:400;">— no account needed, deals hidden</span>
+        </button>
+        <button onclick="event.stopPropagation();ldChoose('customer')" style="width:100%;padding:12px;border-radius:12px;border:none;background:linear-gradient(135deg,#E8540A,#F59E0B);color:#fff;font-size:14px;font-weight:700;cursor:pointer;text-align:left;">
+          🔓 Sign In / Join Free &nbsp;<span style="font-size:12px;font-weight:400;opacity:0.9;">— unlock deals, order &amp; join waitlist</span>
+        </button>
+      </div>
     </div>
 
     <div class="ld-or">or</div>
@@ -332,13 +344,6 @@ body{height:100vh;display:grid;grid-template-columns:1fr 1fr;background:var(--bg
     </div>
 
     <div class="ld-sign-row" style="margin-top:16px">Already a member? <a onclick="ldSignIn()">Sign in →</a></div>
-
-    <!-- Guest browse link -->
-    <div style="text-align:center;margin-top:18px;padding-bottom:8px;">
-      <a href="customer-app.html" style="color:#94A3B8;font-size:13px;text-decoration:none;border-bottom:1px solid rgba(148,163,184,0.3);padding-bottom:2px;">
-        👀 Just browsing? Explore restaurants without signing in →
-      </a>
-    </div>
   </div>
 </div>
 
@@ -1050,6 +1055,15 @@ function _redirect(role, isNewSignup) {
     }
   }
 })();
+
+function ldExpandDiner() {
+  const opts = document.getElementById('ld-diner-options');
+  const arr  = document.getElementById('ld-diner-arr');
+  if (!opts) return;
+  const expanded = opts.style.display !== 'none';
+  opts.style.display = expanded ? 'none' : 'flex';
+  if (arr) arr.textContent = expanded ? '→' : '↓';
+}
 
 function ldChoose(role) {
   const landing = document.getElementById('lh-landing');
