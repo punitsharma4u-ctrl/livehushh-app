@@ -75,12 +75,12 @@ jobs:
             /usr/libexec/PlistBuddy -c "Add :$1 string '$2'" "$INFO_PLIST" 2>/dev/null || \
             /usr/libexec/PlistBuddy -c "Set :$1 '$2'" "$INFO_PLIST"
           }
-          add_or_set NSCameraUsageDescription "LiveHushh needs camera access to let you take photos and videos."
+          add_or_set NSCameraUsageDescription "LiveHushh uses your camera so restaurant owners can go live to promote their business and hot deals in real time. For example, an owner can stream their kitchen preparing tonight's special dish so customers can watch and decide to visit or order."
           add_or_set NSPhotoLibraryUsageDescription "LiveHushh needs photo library access to let you select photos."
           add_or_set NSPhotoLibraryAddUsageDescription "LiveHushh needs permission to save photos to your library."
-          add_or_set NSLocationWhenInUseUsageDescription "LiveHushh needs your location to show relevant local content."
-          add_or_set NSLocationAlwaysAndWhenInUseUsageDescription "LiveHushh needs your location to show relevant local content."
-          add_or_set NSMicrophoneUsageDescription "LiveHushh needs microphone access to record audio with videos."
+          add_or_set NSLocationWhenInUseUsageDescription "LiveHushh uses your location to show nearby restaurants and live deals available in your area."
+          add_or_set NSLocationAlwaysAndWhenInUseUsageDescription "LiveHushh uses your location to show nearby restaurants and live deals available in your area."
+          add_or_set NSMicrophoneUsageDescription "LiveHushh uses your microphone so restaurant owners can speak and share their specials and promotions in real time during live streams. For example, a restaurant owner describes today's dishes and discounts live so customers can hear and act on the offer immediately."
           echo "✅ Privacy strings applied to Info.plist"
 
       # ── 8. Patch Xcode project signing ────────────────────────────────────

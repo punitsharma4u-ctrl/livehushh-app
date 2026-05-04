@@ -65,17 +65,24 @@ jobs:
           echo "Profile installed as ${UUID}.mobileprovision"
           echo "PROFILE_UUID=$UUID" >> $GITHUB_ENV
 
-      - name: Fix app icon (strip alpha channel for Xcode 26 compatibility)
+      - name: Fix app icon (copy icon.png + strip alpha for Xcode 26)
         run: |
           ICON=ios/App/App/Assets.xcassets/AppIcon.appiconset/AppIcon-512@2x.png
-          echo "=== Before ==="
+          # Step 1: copy icon.png (1024×1024) into xcassets — same as ios.yml does
+          if [ -f "icon.png" ]; then
+            sips -z 1024 1024 icon.png --out "$ICON"
+            echo "✅ icon.png copied to xcassets (1024×1024)"
+          else
+            echo "⚠️  icon.png not found, using existing xcassets icon"
+          fi
+          echo "=== Before alpha strip ==="
           ls -la "$ICON"
           sips -g pixelWidth -g pixelHeight -g hasAlpha "$ICON"
-          # Strip alpha via JPEG round-trip — JPEG has no alpha, guaranteed to work on all macOS runners
+          # Step 2: strip alpha via JPEG round-trip (JPEG has no alpha channel)
           cp "$ICON" /tmp/icon_orig.png
           sips -s format jpeg /tmp/icon_orig.png -o /tmp/icon_noalpha.jpg
           sips -s format png /tmp/icon_noalpha.jpg -o "$ICON"
-          echo "=== After ==="
+          echo "=== After alpha strip ==="
           ls -la "$ICON"
           sips -g pixelWidth -g pixelHeight -g hasAlpha "$ICON"
 
