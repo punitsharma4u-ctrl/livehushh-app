@@ -76,24 +76,14 @@
   <a href="owner-dashboard.html" style="color:var(--text2);font-size:.85rem">← Back to Dashboard</a>
 </div>
 
-<!-- Setup screen (enter IVS stream key) -->
+<!-- Setup screen — shown only if stream credentials not yet configured -->
 <div id="setupScreen" class="hidden">
   <div style="position:absolute;top:16px;left:16px"><a href="owner-dashboard.html" style="color:var(--text2);font-size:.85rem">← Back</a></div>
 
   <div style="font-size:2.5rem">🎬</div>
   <div>
-    <div class="setup-title">Ready to Go Live?</div>
-    <div class="setup-sub">Connect your IVS stream key from AWS, then tap Start.<br>Your customers within 20 miles will be notified instantly.</div>
-  </div>
-
-  <div class="field"><div class="label">IVS Stream Key</div>
-    <input class="input" id="streamKeyInput" type="password" placeholder="sk_us-east-1_xxxxxxxxxx" autocomplete="off">
-  </div>
-  <div class="field"><div class="label">IVS Ingest Endpoint</div>
-    <input class="input" id="ingestInput" type="text" placeholder="a1b2c3d4e5f6.global-contribute.live-video.net">
-  </div>
-  <div class="field"><div class="label">IVS Playback URL (for customers)</div>
-    <input class="input" id="playbackInput" type="text" placeholder="https://a1b2c3.us-east-1.playback.live-video.net/api/video/v1/....m3u8">
+    <div class="setup-title">You're Almost Live!</div>
+    <div class="setup-sub">Pin a deal to promote during your stream, then tap Go Live.<br>Your customers nearby will get notified instantly.</div>
   </div>
 
   <div class="field">
@@ -103,6 +93,11 @@
 
   <button class="btn-start" id="startLiveBtn" onclick="startSession()">🔴 Go Live</button>
   <div id="setupErr" style="color:#EF4444;font-size:.82rem"></div>
+
+  <!-- Hidden credential inputs (auto-filled from API / localStorage) -->
+  <input type="hidden" id="streamKeyInput">
+  <input type="hidden" id="ingestInput">
+  <input type="hidden" id="playbackInput">
 </div>
 
 <!-- LIVE BROADCAST SCREEN -->
@@ -319,11 +314,32 @@ function toggleBlur() {
 /* ── Setup Screen ── */
 async function showSetup() {
   document.getElementById('setupScreen').classList.remove('hidden');
-  // Load saved IVS credentials
-  const saved = JSON.parse(localStorage.getItem('lh_ivs') || '{}');
-  if (saved.streamKey)  document.getElementById('streamKeyInput').value = saved.streamKey;
-  if (saved.ingest)     document.getElementById('ingestInput').value    = saved.ingest;
-  if (saved.playback)   document.getElementById('playbackInput').value  = saved.playback;
+
+  // 1. Try to get IVS credentials from API automatically
+  let creds = null;
+  try {
+    creds = await apiCall('GET', '/live/channel');
+  } catch(e) {}
+
+  // 2. Fall back to localStorage if API doesn't have them
+  if (!creds || !creds.streamKey) {
+    const saved = JSON.parse(localStorage.getItem('lh_ivs') || '{}');
+    if (saved.streamKey) creds = { streamKey: saved.streamKey, ingest: saved.ingest, playback: saved.playback };
+  }
+
+  // 3. Set hidden inputs (no manual entry needed)
+  if (creds && creds.streamKey) {
+    document.getElementById('streamKeyInput').value = creds.streamKey;
+    document.getElementById('ingestInput').value    = creds.ingest    || '';
+    document.getElementById('playbackInput').value  = creds.playback  || '';
+    localStorage.setItem('lh_ivs', JSON.stringify(creds));
+  } else {
+    // No credentials found — show friendly message, not technical form
+    document.getElementById('setupErr').textContent =
+      'Stream not yet activated. Contact LiveHushh support to enable live streaming for your account.';
+    document.getElementById('startLiveBtn').disabled = true;
+  }
+
   // Load deals
   try {
     activeDeals = await apiCall('GET', '/deals');
@@ -343,7 +359,7 @@ async function showSetup() {
     });
   }
   // Update restaurant name bar
-  document.getElementById('restNameBar').textContent = SESSION.name || 'Your Restaurant';
+  document.getElementById('restNameBar').textContent = SESSION.restaurant || SESSION.name || 'Your Restaurant';
 }
 
 function selectDeal(deal, chip, idx) {
