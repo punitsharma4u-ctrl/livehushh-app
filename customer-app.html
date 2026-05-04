@@ -2031,7 +2031,9 @@ function urlBase64ToUint8Array(base64String) {
 function handleSignOut() {
   if (!confirm('Are you sure you want to sign out?')) return;
   localStorage.removeItem('lh_session');
-  location.href = _isNativeApp ? 'auth.html' : 'auth.html?role=customer';
+  if (_isNativeApp) { location.href = 'auth.html'; return; }
+  // On web: stay on the app as a guest — reload shows browse with Sign In button
+  location.reload();
 }
 
 // ── Delete Account ────────────────────────────────────────────────────────────
