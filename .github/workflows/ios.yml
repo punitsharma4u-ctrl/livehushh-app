@@ -39,13 +39,8 @@ jobs:
       # ── 4a. Fix CocoaPods CDN → use git master specs ───────────────────────
       - name: Configure CocoaPods specs source
         run: |
-          # Remove CDN trunk repo (may not exist - that's fine)
-          pod repo remove trunk 2>/dev/null; true
-          # Add git-based master specs repo if not already present
-          if ! pod repo list 2>/dev/null | grep -q "^master$"; then
-            pod repo add master https://github.com/CocoaPods/Specs.git
-          fi
-          # Patch Podfile to declare git source (use cat to avoid macOS sed issues)
+          pod repo remove trunk || true
+          pod repo add master https://github.com/CocoaPods/Specs.git || pod repo update master || true
           PODFILE="ios/App/Podfile"
           if [ -f "$PODFILE" ] && ! grep -q "github.com/CocoaPods/Specs" "$PODFILE"; then
             echo "source 'https://github.com/CocoaPods/Specs.git'" | cat - "$PODFILE" > /tmp/Podfile_tmp
