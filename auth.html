@@ -1068,11 +1068,19 @@ function ldExpandDiner() {
 function ldChoose(role) {
   const landing = document.getElementById('lh-landing');
   if (landing) landing.style.display = 'none';
-  // Pre-select role and switch to signup tab
+
+  // Re-show all role cards (URL param ?role=customer may have hidden owner card)
+  // Always show customer + owner, keep admin hidden
+  ['role-customer','srole-customer','role-owner','srole-owner'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = '';
+  });
+  document.querySelectorAll('.role-grid').forEach(g => g.style.gridTemplateColumns = 'repeat(2,1fr)');
+
+  // Pre-select chosen role and switch to signup tab
   selectSignupRole(role);
   selectRole(role);
   switchTab('signup');
-  // Scroll auth form to top
   const authRight = document.querySelector('.auth-right');
   if (authRight) authRight.scrollTop = 0;
   window.scrollTo(0, 0);
@@ -1081,6 +1089,12 @@ function ldChoose(role) {
 function ldSignIn() {
   const landing = document.getElementById('lh-landing');
   if (landing) landing.style.display = 'none';
+  // Re-show all role cards in case URL param hid them
+  ['role-customer','srole-customer','role-owner','srole-owner'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = '';
+  });
+  document.querySelectorAll('.role-grid').forEach(g => g.style.gridTemplateColumns = 'repeat(2,1fr)');
   switchTab('login');
   const authRight = document.querySelector('.auth-right');
   if (authRight) authRight.scrollTop = 0;
