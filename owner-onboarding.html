@@ -385,8 +385,8 @@ select.input{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xml
 
     <div id="ob-error" style="display:none;background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.25);border-radius:var(--r);padding:12px 16px;font-size:.85rem;color:#EF4444;margin-bottom:16px"></div>
 
-    <div id="app-payment-note" style="display:none;background:rgba(232,84,10,0.08);border:1px solid rgba(232,84,10,0.25);border-radius:12px;padding:14px 16px;font-size:.85rem;margin-bottom:16px;line-height:1.5">
-      🌐 <strong>Payment is completed on our website.</strong> Tapping the button below will register your restaurant for free, then open Safari to complete your plan setup.
+    <div id="app-payment-note" style="display:none;background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.25);border-radius:12px;padding:14px 16px;font-size:.85rem;margin-bottom:16px;line-height:1.5">
+      ✅ <strong>Start free, upgrade anytime.</strong> Your restaurant goes live immediately on a 14-day free trial. Add a payment method from your dashboard after signing up.
     </div>
 
     <div class="ob-nav-btns">
@@ -477,7 +477,7 @@ if (_isNativeApp) {
     const note = document.getElementById('app-payment-note');
     if (note) note.style.display = 'block';
     const btn = document.getElementById('goLiveBtn');
-    if (btn) btn.textContent = '🚀 Register Free & Choose Plan →';
+    if (btn) btn.textContent = '🚀 Start Free Trial';
   });
 }
 
@@ -507,13 +507,7 @@ async function startTrial() {
     // Dev fallback — save to session and go to dashboard
     const session = { ...SESSION, restaurant: restaurant.name, onboarded: true, planStatus: 'trial' };
     localStorage.setItem('lh_session', JSON.stringify(session));
-    if (_isNativeApp) {
-      showSuccess();
-      // Open website for payment after short delay
-      setTimeout(() => window.open('https://www.livehushh.com/owner-onboarding.html?plan=' + selectedPlan + '&step=payment', '_system'), 1500);
-    } else {
-      showSuccess();
-    }
+    showSuccess();
     return;
   }
 
@@ -528,17 +522,11 @@ async function startTrial() {
     // Update local session
     const session = { ...SESSION, restaurant: restaurant.name, onboarded: true, planStatus: 'trial', trialEndsAt: data.trialEndsAt };
     localStorage.setItem('lh_session', JSON.stringify(session));
-    if (_isNativeApp) {
-      showSuccess();
-      // Open Safari to complete plan payment on website
-      setTimeout(() => window.open('https://www.livehushh.com/owner-onboarding.html?plan=' + selectedPlan + '&step=payment', '_system'), 1500);
-    } else {
-      showSuccess();
-    }
+    showSuccess();
   } catch(e) {
     errEl.textContent = e.message || 'Something went wrong. Please try again.';
     errEl.style.display = 'block';
-    btn.textContent = _isNativeApp ? '🚀 Register Free & Choose Plan →' : '🚀 Start 14-Day Free Trial';
+    btn.textContent = '🚀 Start 14-Day Free Trial';
     btn.disabled = false;
   }
 }
