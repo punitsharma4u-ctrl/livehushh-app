@@ -1035,7 +1035,7 @@ function _redirect(role, isNewSignup) {
 
   // Show landing on mobile browsers and always in the native app
   const isApp = !!(window.Capacitor) || navigator.userAgent.includes('LiveHushh');
-  const isMobile = window.innerWidth < 1024;
+  const isMobile = window.innerWidth <= 1024;
   if (!isApp && !isMobile) {
     landing.style.display = 'none';
     return;
