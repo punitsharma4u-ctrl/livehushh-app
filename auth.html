@@ -1033,13 +1033,8 @@ function _redirect(role, isNewSignup) {
     return;
   }
 
-  // Skip landing on desktop browsers — only show for mobile/app
+  // Always show landing — on all screen sizes and devices
   const isApp = !!(window.Capacitor) || navigator.userAgent.includes('LiveHushh');
-  const isMobile = window.innerWidth < 768;
-  if (!isApp && !isMobile) {
-    landing.style.display = 'none';
-    return;
-  }
 
   // In native iOS/Android app — owner benefits stay visible, but join card
   // becomes a sign-in card (Apple guideline 3.1.1: no new paid signups in app;
