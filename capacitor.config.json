@@ -5,7 +5,11 @@
   "server": {
     "url": "https://www.livehushh.com/auth.html",
     "cleartext": false,
-    "androidScheme": "https"
+    "androidScheme": "https",
+    "allowNavigation": [
+      "www.livehushh.com",
+      "livehushh.com"
+    ]
   },
   "plugins": {
     "PushNotifications": {
