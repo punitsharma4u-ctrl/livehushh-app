@@ -49,7 +49,7 @@ jobs:
           fi
 
       - name: Sync Capacitor to iOS
-        run: npx cap sync ios --no-deps || npx cap copy ios
+        run: npx cap sync ios
 
       # ── 4b. Set app icon from icon.png ────────────────────────────────────
       - name: Set app icon
