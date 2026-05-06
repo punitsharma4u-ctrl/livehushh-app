@@ -204,6 +204,10 @@ body{background:var(--bg);display:flex;min-height:100vh;overflow-x:hidden}
       Media &amp; Videos
       <span class="pill pill-gold" style="margin-left:auto;font-size:.62rem;padding:2px 7px">Pro</span>
     </div>
+    <div class="nav-item" onclick="showPage('billing',this)">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+      Billing &amp; Plan
+    </div>
     <div class="nav-item" onclick="showPage('settings',this)">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
       Settings
@@ -505,6 +509,108 @@ body{background:var(--bg);display:flex;min-height:100vh;overflow-x:hidden}
             <svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" style="margin:0 auto 12px;display:block"><path d="M15 10l4.553-2.069A1 1 0 0 1 21 8.82v6.361a1 1 0 0 1-1.447.894L15 14M3 8a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8z"/></svg>
             <div style="font-size:.87rem;font-weight:500">No videos yet — upload your first one!</div>
             <div class="caption" style="margin-top:4px">Approved videos appear on your live stream page</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ BILLING & PLAN ══ -->
+    <div id="page-billing" class="page">
+      <div style="max-width:720px;display:flex;flex-direction:column;gap:20px">
+
+        <!-- Current plan status -->
+        <div class="chart-card" id="currentPlanCard">
+          <div class="chart-title" style="margin-bottom:16px">💳 Current Plan</div>
+          <div id="planStatusArea">Loading…</div>
+        </div>
+
+        <!-- Plan cards -->
+        <div class="chart-card" id="planPickerCard">
+          <div class="chart-title" style="margin-bottom:4px">Choose Your Plan</div>
+          <div style="font-size:.82rem;color:var(--text2);margin-bottom:20px">Select a plan to activate after your free trial. No credit card required during trial.</div>
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px" id="planGrid">
+
+            <!-- Starter -->
+            <div class="plan-card" id="plan-starter" onclick="selectBillingPlan('starter')" style="border:2px solid var(--border2);border-radius:16px;padding:20px;cursor:pointer;transition:all .2s;background:var(--bg-card);position:relative">
+              <div style="font-size:1rem;font-weight:800;margin-bottom:6px">Starter</div>
+              <div style="font-size:1.7rem;font-weight:800;margin-bottom:2px">$29<span style="font-size:.8rem;font-weight:400;color:var(--text2)">/mo</span></div>
+              <div style="font-size:.72rem;color:var(--green);font-weight:600;margin-bottom:14px">Best for new restaurants</div>
+              <div style="display:flex;flex-direction:column;gap:7px;font-size:.78rem;color:var(--text2)">
+                <div>✅ Restaurant listing</div>
+                <div>✅ Menu management</div>
+                <div>✅ 2 live streams/month</div>
+                <div>✅ Basic analytics</div>
+                <div style="color:rgba(255,255,255,0.25)">❌ Deal push notifications</div>
+                <div style="color:rgba(255,255,255,0.25)">❌ Waitlist management</div>
+              </div>
+            </div>
+
+            <!-- Pro -->
+            <div class="plan-card" id="plan-pro" onclick="selectBillingPlan('pro')" style="border:2px solid #E8540A;border-radius:16px;padding:20px;cursor:pointer;transition:all .2s;background:rgba(232,84,10,0.07);position:relative">
+              <div style="position:absolute;top:0;right:0;background:linear-gradient(135deg,#E8540A,#F59E0B);color:#fff;font-size:.6rem;font-weight:700;padding:4px 12px;border-radius:0 14px 0 10px;letter-spacing:.06em">POPULAR</div>
+              <div style="font-size:1rem;font-weight:800;margin-bottom:6px">Pro</div>
+              <div style="font-size:1.7rem;font-weight:800;margin-bottom:2px">$79<span style="font-size:.8rem;font-weight:400;color:var(--text2)">/mo</span></div>
+              <div style="font-size:.72rem;color:var(--green);font-weight:600;margin-bottom:14px">Most popular choice</div>
+              <div style="display:flex;flex-direction:column;gap:7px;font-size:.78rem;color:var(--text2)">
+                <div>✅ Everything in Starter</div>
+                <div>✅ Unlimited live streams</div>
+                <div>✅ Deal push notifications</div>
+                <div>✅ Waitlist management</div>
+                <div>✅ Advanced analytics</div>
+                <div>✅ Priority support</div>
+              </div>
+            </div>
+
+            <!-- Enterprise -->
+            <div class="plan-card" id="plan-enterprise" onclick="selectBillingPlan('enterprise')" style="border:2px solid var(--border2);border-radius:16px;padding:20px;cursor:pointer;transition:all .2s;background:var(--bg-card);position:relative">
+              <div style="font-size:1rem;font-weight:800;margin-bottom:6px">Enterprise</div>
+              <div style="font-size:1.7rem;font-weight:800;margin-bottom:2px">$199<span style="font-size:.8rem;font-weight:400;color:var(--text2)">/mo</span></div>
+              <div style="font-size:.72rem;color:var(--green);font-weight:600;margin-bottom:14px">For restaurant chains</div>
+              <div style="display:flex;flex-direction:column;gap:7px;font-size:.78rem;color:var(--text2)">
+                <div>✅ Everything in Pro</div>
+                <div>✅ Multiple locations</div>
+                <div>✅ Custom branding</div>
+                <div>✅ API access</div>
+                <div>✅ Dedicated account manager</div>
+                <div>✅ SLA guarantee</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Payment form -->
+          <div id="paymentForm" style="display:none;margin-top:24px;border-top:1px solid var(--border2);padding-top:24px">
+            <div style="font-weight:700;margin-bottom:4px" id="payingForLabel">Paying for Pro — $79/mo</div>
+            <div style="font-size:.82rem;color:var(--text2);margin-bottom:20px">Your card will be charged after your free trial ends.</div>
+            <div style="display:grid;gap:14px">
+              <div class="form-group">
+                <label class="form-label">Cardholder Name</label>
+                <input class="input" id="pay_name" placeholder="Name on card">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Card Number</label>
+                <input class="input" id="pay_card" placeholder="4242 4242 4242 4242" maxlength="19" oninput="formatCard(this)">
+              </div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+                <div class="form-group">
+                  <label class="form-label">Expiry</label>
+                  <input class="input" id="pay_expiry" placeholder="MM / YY" maxlength="7" oninput="formatExpiry(this)">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">CVC</label>
+                  <input class="input" id="pay_cvc" placeholder="123" maxlength="4">
+                </div>
+              </div>
+              <div id="payError" style="display:none;background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.25);border-radius:var(--r);padding:10px 14px;font-size:.82rem;color:#EF4444"></div>
+              <div style="display:flex;gap:12px">
+                <button class="btn btn-ghost" onclick="cancelPayment()">Cancel</button>
+                <button class="btn btn-primary" id="payBtn" onclick="submitPayment()" style="flex:1">
+                  🔒 Confirm Plan &amp; Save Card
+                </button>
+              </div>
+              <div style="font-size:.75rem;color:var(--text2);text-align:center">
+                🔒 Secured by Stripe. You won't be charged until your trial ends.
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -1853,6 +1959,123 @@ if (_isNativeApp) {
     if (homeBtn) homeBtn.style.display = 'none';
   });
 }
+
+// ── Billing & Plan ──────────────────────────────────────────────────────────
+let _selectedBillingPlan = null;
+
+function initBillingPage() {
+  const session = JSON.parse(localStorage.getItem('lh_session') || '{}');
+  const planStatus = session.planStatus || 'trial';
+  const trialEndsAt = session.trialEndsAt ? new Date(session.trialEndsAt) : new Date(Date.now() + 14*24*60*60*1000);
+  const daysLeft = Math.max(0, Math.ceil((trialEndsAt - Date.now()) / (1000*60*60*24)));
+  const activePlan = session.activePlan || null;
+
+  const statusArea = document.getElementById('planStatusArea');
+  if (!statusArea) return;
+
+  if (activePlan) {
+    const labels = { starter:'Starter — $29/mo', pro:'Pro — $79/mo', enterprise:'Enterprise — $199/mo' };
+    statusArea.innerHTML = `
+      <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+        <div style="width:48px;height:48px;border-radius:12px;background:rgba(16,185,129,0.15);display:flex;align-items:center;justify-content:center;font-size:1.5rem">✅</div>
+        <div>
+          <div style="font-weight:700;font-size:1.05rem">${labels[activePlan] || activePlan}</div>
+          <div style="font-size:.82rem;color:var(--text2)">Active — renews monthly. <a onclick="showPage('billing',null)" style="color:var(--purple-l);cursor:pointer">Change plan</a></div>
+        </div>
+      </div>`;
+  } else if (planStatus === 'trial') {
+    const pct = Math.round(((14 - daysLeft) / 14) * 100);
+    statusArea.innerHTML = `
+      <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:16px">
+        <div style="width:48px;height:48px;border-radius:12px;background:rgba(245,158,11,0.15);display:flex;align-items:center;justify-content:center;font-size:1.5rem">⏳</div>
+        <div style="flex:1">
+          <div style="font-weight:700;font-size:1.05rem">Free Trial — ${daysLeft} day${daysLeft===1?'':'s'} remaining</div>
+          <div style="font-size:.82rem;color:var(--text2)">Trial ends ${trialEndsAt.toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})}</div>
+          <div style="margin-top:8px;height:6px;background:rgba(255,255,255,0.08);border-radius:99px;overflow:hidden"><div style="height:100%;width:${pct}%;background:linear-gradient(90deg,#F59E0B,#E8540A);border-radius:99px"></div></div>
+        </div>
+      </div>
+      <div style="font-size:.85rem;color:var(--text2)">👇 Choose a plan below to continue after your trial — your card won't be charged until the trial ends.</div>`;
+  } else {
+    statusArea.innerHTML = `
+      <div style="color:#EF4444;font-weight:600">⚠️ Trial expired — choose a plan to reactivate your listing.</div>`;
+  }
+}
+
+function selectBillingPlan(plan) {
+  _selectedBillingPlan = plan;
+  ['starter','pro','enterprise'].forEach(p => {
+    const el = document.getElementById('plan-' + p);
+    if (!el) return;
+    el.style.borderColor = p === plan ? '#E8540A' : 'var(--border2)';
+    el.style.background  = p === plan ? 'rgba(232,84,10,0.10)' : 'var(--bg-card)';
+  });
+  const labels = { starter:'Starter — $29/mo', pro:'Pro — $79/mo', enterprise:'Enterprise — $199/mo' };
+  const lbl = document.getElementById('payingForLabel');
+  if (lbl) lbl.textContent = 'Paying for ' + (labels[plan] || plan);
+  const form = document.getElementById('paymentForm');
+  if (form) form.style.display = 'block';
+  setTimeout(() => form && form.scrollIntoView({ behavior:'smooth', block:'start' }), 100);
+}
+
+function cancelPayment() {
+  _selectedBillingPlan = null;
+  ['starter','pro','enterprise'].forEach(p => {
+    const el = document.getElementById('plan-' + p);
+    if (!el) return;
+    el.style.borderColor = p === 'pro' ? '#E8540A' : 'var(--border2)';
+    el.style.background  = p === 'pro' ? 'rgba(232,84,10,0.07)' : 'var(--bg-card)';
+  });
+  const form = document.getElementById('paymentForm');
+  if (form) form.style.display = 'none';
+}
+
+function formatCard(el) {
+  let v = el.value.replace(/\D/g,'').substring(0,16);
+  el.value = v.replace(/(.{4})/g,'$1 ').trim();
+}
+function formatExpiry(el) {
+  let v = el.value.replace(/\D/g,'').substring(0,4);
+  if (v.length >= 2) v = v.substring(0,2) + ' / ' + v.substring(2);
+  el.value = v;
+}
+
+async function submitPayment() {
+  const btn = document.getElementById('payBtn');
+  const errEl = document.getElementById('payError');
+  errEl.style.display = 'none';
+  const name = document.getElementById('pay_name').value.trim();
+  const card = document.getElementById('pay_card').value.replace(/\s/g,'');
+  const expiry = document.getElementById('pay_expiry').value.replace(/\s/g,'');
+  const cvc = document.getElementById('pay_cvc').value.trim();
+  if (!name || card.length < 16 || expiry.length < 4 || cvc.length < 3) {
+    errEl.textContent = 'Please fill in all card details correctly.';
+    errEl.style.display = 'block';
+    return;
+  }
+  btn.textContent = '⏳ Processing…'; btn.disabled = true;
+  // Simulate processing (replace with real Stripe integration)
+  await new Promise(r => setTimeout(r, 1800));
+  // Save plan to session
+  const session = JSON.parse(localStorage.getItem('lh_session') || '{}');
+  session.activePlan = _selectedBillingPlan;
+  session.planStatus = 'active';
+  localStorage.setItem('lh_session', JSON.stringify(session));
+  // Update sidebar plan label
+  const planLine = document.getElementById('ownerPlanLine');
+  const labels = { starter:'Starter Plan', pro:'Pro Plan', enterprise:'Enterprise Plan' };
+  if (planLine) planLine.textContent = labels[_selectedBillingPlan] || 'Active Plan';
+  btn.textContent = '🔒 Confirm Plan & Save Card'; btn.disabled = false;
+  document.getElementById('paymentForm').style.display = 'none';
+  initBillingPage();
+  APP.showToast('🎉 Plan activated! You\'re all set.', 'success');
+}
+
+// Init billing when navigating to it
+const _origShowPage = showPage;
+showPage = function(name, el) {
+  _origShowPage(name, el);
+  if (name === 'billing') initBillingPage();
+};
 
 function handleOwnerSignOut(e) {
   e.preventDefault();
