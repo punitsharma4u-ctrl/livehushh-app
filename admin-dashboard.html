@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Admin Dashboard — LiveHushh</title>
-<link rel="stylesheet" href="css/styles.css?v=4">
+<link rel="stylesheet" href="/css/styles.css?v=4">
 <style>
 body{background:var(--bg);display:flex;min-height:100vh;overflow-x:hidden}
 
@@ -169,7 +169,7 @@ body{background:var(--bg);display:flex;min-height:100vh;overflow-x:hidden}
     </div>
   </nav>
   <div class="sidebar-footer">
-    <a href="auth.html" class="btn btn-ghost btn-sm w-full">Sign Out</a>
+    <a href="/auth.html" class="btn btn-ghost btn-sm w-full">Sign Out</a>
   </div>
 </aside>
 
@@ -183,7 +183,7 @@ body{background:var(--bg);display:flex;min-height:100vh;overflow-x:hidden}
       Platform Operational
     </span>
     <button class="btn btn-secondary btn-sm" onclick="APP.showToast('Report generating...','info')">Export Report</button>
-    <a href="index.html" class="btn btn-ghost btn-sm">← Home</a>
+    <a href="/index.html" class="btn btn-ghost btn-sm">← Home</a>
   </div>
 
   <div class="page-content">
@@ -570,7 +570,7 @@ body{background:var(--bg);display:flex;min-height:100vh;overflow-x:hidden}
 
 <div id="toast-container" style="position:fixed;bottom:24px;right:24px;z-index:9999;display:flex;flex-direction:column;gap:8px"></div>
 
-<script src="js/data.js?v=2"></script>
+<script src="/js/data.js?v=2"></script>
 <script>
 function showPage(name, el) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
@@ -697,7 +697,24 @@ function showToast(msg, type='info') {
 }
 
 /* ── OVERVIEW ── */
-function initOverview() {
+async function initOverview() {
+  // Fetch real stats from API
+  let stats = null;
+  try { stats = await adminApi('GET', '/admin/stats'); } catch(e) {}
+
+  // Update KPI tiles with real data
+  if (stats) {
+    const kpiMap = {
+      0: stats.totalRestaurants,
+      1: '$' + stats.mrr.toLocaleString(),
+      2: stats.totalUsers,
+      3: stats.liveSessions,
+    };
+    document.querySelectorAll('#page-overview .kpi-val').forEach((el, i) => {
+      if (kpiMap[i] !== undefined) el.textContent = kpiMap[i];
+    });
+  }
+
   const months = ['Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec','Jan','Feb'];
   const revenue = [42,51,58,64,70,78,84,95,108,128,154,184];
   const maxR = Math.max(...revenue);
@@ -708,128 +725,139 @@ function initOverview() {
     </div>`).join('');
   document.getElementById('overviewLabels').innerHTML = '';
 
-  const plans = [
-    {name:'Pro',count:1842,pct:76,color:'var(--grad)'},
-    {name:'Starter',count:422,pct:17,color:'var(--grad-gold)'},
-    {name:'Enterprise',count:136,pct:5.6,color:'var(--grad-cyan)'},
-    {name:'Trial',count:34,pct:1.4,color:'rgba(255,255,255,0.3)'},
+  // Real plan distribution
+  const planCounts = stats ? stats.planCounts : { pro:0, starter:0, enterprise:0, trial:0 };
+  const total = Object.values(planCounts).reduce((a,b)=>a+b,0) || 1;
+  const planDef = [
+    {name:'Pro',key:'pro',color:'var(--grad)'},
+    {name:'Starter',key:'starter',color:'var(--grad-gold)'},
+    {name:'Enterprise',key:'enterprise',color:'var(--grad-cyan)'},
+    {name:'Trial',key:'trial',color:'rgba(255,255,255,0.3)'},
   ];
-  document.getElementById('planDist').innerHTML = plans.map(p=>`
-    <div class="prog-item">
-      <div class="prog-header"><span>${p.name}</span><span style="color:var(--text2)">${p.count.toLocaleString()} · ${p.pct}%</span></div>
-      <div class="prog-bar"><div class="prog-fill" style="width:${p.pct*1.2}%;background:${p.color}"></div></div>
-    </div>`).join('');
+  document.getElementById('planDist').innerHTML = planDef.map(p=>{
+    const count = planCounts[p.key]||0;
+    const pct = total ? Math.round(count/total*100) : 0;
+    return `<div class="prog-item">
+      <div class="prog-header"><span>${p.name}</span><span style="color:var(--text2)">${count} · ${pct}%</span></div>
+      <div class="prog-bar"><div class="prog-fill" style="width:${Math.max(pct,2)}%;background:${p.color}"></div></div>
+    </div>`;
+  }).join('');
 
-  const activities = [
-    {dot:'var(--green)',text:'The Spice Route upgraded to Pro plan',time:'2 min ago'},
-    {dot:'var(--purple)',text:'New restaurant Seoul Kitchen went live — 420 viewers',time:'14 min ago'},
-    {dot:'var(--gold)',text:'Villa Romana processed $8,400 in orders',time:'28 min ago'},
-    {dot:'var(--cyan)',text:'New user milestone: 1.24M active users',time:'1 hour ago'},
-    {dot:'var(--pink)',text:'Enterprise renewal: Curry Palace chain (12 locations)',time:'2 hours ago'},
-    {dot:'var(--red)',text:'Subscription cancelled: Old Town Bistro (Starter)',time:'3 hours ago'},
-  ];
-  document.getElementById('activityFeed').innerHTML = activities.map(a=>`
+  // Recent subscriptions as activity feed
+  let subs = [];
+  try { subs = await adminApi('GET', '/admin/subscriptions'); } catch(e){}
+  const stColors = {active:'var(--green)', trial:'var(--gold)', expired:'var(--red)'};
+  const actHtml = subs.slice(0,6).map(s=>`
     <div class="activity-item">
-      <div class="act-dot" style="background:${a.dot}"></div>
-      <div><div class="act-text">${a.text}</div><div class="act-time">${a.time}</div></div>
-    </div>`).join('');
+      <div class="act-dot" style="background:${stColors[s.status]||'var(--text2)'}"></div>
+      <div><div class="act-text">${s.name} — ${s.plan} plan (${s.status})</div><div class="act-time">${s.email}</div></div>
+    </div>`).join('') || '<div class="caption" style="padding:16px 0">No subscription activity yet.</div>';
+  document.getElementById('activityFeed').innerHTML = actHtml;
 
-  const top = [
-    {name:'The Spice Garden',city:'Toronto',rev:'$1.84K',sessions:7,col:'var(--purple-l)'},
-    {name:'Pasta Republic',city:'Calgary',rev:'$1.52K',sessions:12,col:'var(--pink)'},
-    {name:'Seoul Kitchen',city:'Vancouver',rev:'$1.28K',sessions:9,col:'var(--cyan)'},
-    {name:'Villa Romana',city:'Ottawa',rev:'$940',sessions:6,col:'var(--gold)'},
-    {name:'Curry Palace',city:'Montreal',rev:'$860',sessions:8,col:'var(--green)'},
-  ];
-  document.getElementById('topPerformers').innerHTML = top.map((t,i)=>`
+  // Real restaurants as top performers
+  let rests = [];
+  try { rests = await adminApi('GET', '/restaurants'); } catch(e) {}
+  const colors = ['var(--purple-l)','var(--pink)','var(--cyan)','var(--gold)','var(--green)'];
+  document.getElementById('topPerformers').innerHTML = rests.slice(0,5).map((r,i)=>`
     <div style="display:flex;align-items:center;gap:10px">
       <div style="width:24px;height:24px;border-radius:6px;background:rgba(255,255,255,0.06);display:flex;align-items:center;justify-content:center;font-size:.72rem;font-weight:700;color:var(--text2)">${i+1}</div>
-      <div style="flex:1"><div style="font-size:.82rem;font-weight:600;color:${t.col}">${t.name}</div><div class="caption">${t.city} · ${t.sessions} sessions</div></div>
-      <div style="font-weight:700;font-size:.85rem">${t.rev}</div>
-    </div>`).join('');
+      <div style="flex:1"><div style="font-size:.82rem;font-weight:600;color:${colors[i]}">${r.name}</div><div class="caption">${r.city||'—'} · ${r.isLive?'🔴 Live':'offline'}</div></div>
+      <div style="font-weight:700;font-size:.85rem;color:var(--text2)">${r.planStatus||'trial'}</div>
+    </div>`).join('') || '<div class="caption">No restaurants yet.</div>';
 }
 
 /* ── RESTAURANTS ── */
-const _demoRestRows = [
-  {name:'The Spice Garden',city:'Toronto',plan:'Pro',sessions:7,mrr:'$299',status:'active'},
-  {name:'Seoul Kitchen',city:'Vancouver',plan:'Pro',sessions:12,mrr:'$299',status:'active'},
-  {name:'Pasta Republic',city:'Calgary',plan:'Enterprise',sessions:18,mrr:'$799',status:'active'},
-  {name:'Villa Romana',city:'Ottawa',plan:'Starter',sessions:4,mrr:'$99',status:'active'},
-  {name:'Curry Palace',city:'Montreal',plan:'Enterprise',sessions:22,mrr:'$799',status:'active'},
-  {name:'Old Town Bistro',city:'Edmonton',plan:'Starter',sessions:1,mrr:'$99',status:'suspended'},
-];
-function getRestRows() {
-  const real = JSON.parse(localStorage.getItem('lh_shared_restaurants') || '[]').map(r => ({
-    name: r.name, city: r.city||'—', plan: r.activePlan||'Starter', sessions: r.sessions||0,
-    mrr: r.activePlan==='Pro'?'$299':r.activePlan==='Enterprise'?'$799':'$99', status: r.planStatus||'trial'
-  }));
-  return [...real, ..._demoRestRows.filter(d => !real.find(r => r.name===d.name))];
-}
-async function loadRealRestaurants() {
-  try {
-    const token = (() => { try { return JSON.parse(localStorage.getItem('lh_session')||'{}').idToken||''; } catch{return '';} })();
-    if (!token) return;
-    const res = await fetch('https://api.livehushh.com/restaurants', { headers: { Authorization: 'Bearer ' + token } });
-    if (!res.ok) return;
-    const data = await res.json();
-    if (!Array.isArray(data) || !data.length) return;
-    // Merge into shared localStorage so getRestRows picks them up
-    const existing = JSON.parse(localStorage.getItem('lh_shared_restaurants') || '[]');
-    data.forEach(r => { if (!existing.find(e => e.id === r.id || e.name === r.name)) existing.push(r); });
-    localStorage.setItem('lh_shared_restaurants', JSON.stringify(existing));
-    renderRestaurants();
-  } catch(e) {}
-}
-function renderRestaurants(filter='') {
-  const restRows = getRestRows();
-  const rows = filter ? restRows.filter(r=>r.name.toLowerCase().includes(filter.toLowerCase())||(r.city||'').toLowerCase().includes(filter.toLowerCase())) : restRows;
-  const planCol = {Starter:'pill-purple',Pro:'pill-cyan',Enterprise:'pill-gold'};
-  document.getElementById('restaurantTbody').innerHTML = rows.map((r,i)=>`
-    <tr>
+let _cachedRestaurants = [];
+async function renderRestaurants(filter='') {
+  const tbody = document.getElementById('restaurantTbody');
+  if (!_cachedRestaurants.length) {
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:24px;color:var(--text2)">⏳ Loading restaurants…</td></tr>';
+    try {
+      _cachedRestaurants = await adminApi('GET', '/restaurants');
+    } catch(e) {
+      tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:24px;color:#EF4444">Failed to load: ${e.message}</td></tr>`;
+      return;
+    }
+  }
+  const PLAN_MRR = { starter:'$99', pro:'$199', enterprise:'$499' };
+  const rows = filter
+    ? _cachedRestaurants.filter(r =>
+        (r.name||'').toLowerCase().includes(filter.toLowerCase()) ||
+        (r.city||'').toLowerCase().includes(filter.toLowerCase()))
+    : _cachedRestaurants;
+
+  const planCol = {Starter:'pill-purple', starter:'pill-purple', Pro:'pill-cyan', pro:'pill-cyan', Enterprise:'pill-gold', enterprise:'pill-gold'};
+  tbody.innerHTML = rows.length ? rows.map((r,i)=>{
+    const plan = r.activePlan || r.planStatus || 'trial';
+    const planLabel = plan.charAt(0).toUpperCase() + plan.slice(1);
+    const mrr = PLAN_MRR[plan] || (r.planStatus === 'trial' ? 'Trial' : '—');
+    const status = r.planStatus || 'unknown';
+    const sCol = status==='active'?'pill-green':status==='trial'?'pill-gold':'pill-red';
+    return `<tr>
       <td style="color:var(--text2)">${i+1}</td>
-      <td><span style="font-weight:600">${r.name}</span></td>
-      <td>${r.city}</td>
-      <td><span class="pill ${planCol[r.plan]||'pill-purple'}" style="font-size:.7rem">${r.plan}</span></td>
-      <td>${r.sessions}</td>
-      <td style="font-weight:600;color:var(--gold)">${r.mrr}</td>
-      <td><span class="pill ${r.status==='active'?'pill-green':'pill-red'}" style="font-size:.7rem">${r.status}</span></td>
-      <td><div style="display:flex;gap:6px">
-        <button class="btn btn-secondary btn-sm" onclick="APP.showToast('Viewing ${r.name}','info')">View</button>
-        <button class="btn btn-ghost btn-sm" style="color:${r.status==='active'?'var(--red)':'var(--green)'}" onclick="APP.showToast('${r.name} ${r.status==='active'?'suspended':'reinstated'}','${r.status==='active'?'error':'success'}')">${r.status==='active'?'Suspend':'Reinstate'}</button>
-      </div></td>
-    </tr>`).join('');
+      <td><span style="font-weight:600">${r.name}</span><br><span class="caption">${r.cuisine||''}</span></td>
+      <td>${r.city||'—'}</td>
+      <td><span class="pill ${planCol[plan]||'pill-purple'}" style="font-size:.7rem">${planLabel}</span></td>
+      <td>${r.isLive?'<span style="color:var(--pink)">🔴 Live</span>':'—'}</td>
+      <td style="font-weight:600;color:var(--gold)">${mrr}</td>
+      <td><span class="pill ${sCol}" style="font-size:.7rem">${status}</span></td>
+      <td><button class="btn btn-secondary btn-sm" onclick="APP.showToast('${r.name}','info')">View</button></td>
+    </tr>`;
+  }).join('') : '<tr><td colspan="8" style="text-align:center;padding:24px;color:var(--text2)">No restaurants found.</td></tr>';
+
+  // Update sidebar badge with real count
+  document.querySelector('#page-restaurants .pill-cyan')?.setAttribute('data-count', rows.length);
+  document.querySelectorAll('.nav-item').forEach(n=>{
+    if (n.textContent.includes('Restaurants')) {
+      const pill = n.querySelector('.pill');
+      if (pill) pill.textContent = _cachedRestaurants.length;
+    }
+  });
 }
 function filterRestaurantTable(v) { renderRestaurants(v); }
-function addRestaurant(e) { e.preventDefault(); document.getElementById('addRestModal').classList.add('hidden'); APP.showToast('Restaurant added successfully','success'); renderRestaurants(); }
+function addRestaurant(e) { e.preventDefault(); document.getElementById('addRestModal').classList.add('hidden'); APP.showToast('Restaurant added successfully','success'); _cachedRestaurants=[]; renderRestaurants(); }
 
 /* ── SUBSCRIPTIONS ── */
-function renderSubscriptions() {
-  // Load real subscriptions from shared localStorage
-  const realSubs = JSON.parse(localStorage.getItem('lh_shared_subscriptions') || '[]');
-  const demoSubs = [
-    {name:'The Spice Garden',plan:'Pro',mrr:'$299',start:'Mar 2024',next:'Mar 2025',status:'active'},
-    {name:'Seoul Kitchen',plan:'Pro',mrr:'$299',start:'Jan 2024',next:'Jan 2025',status:'active'},
-    {name:'Pasta Republic',plan:'Enterprise',mrr:'$799',start:'Oct 2023',next:'Oct 2025',status:'active'},
-    {name:'Villa Romana',plan:'Starter',mrr:'$99',start:'Feb 2025',next:'Feb 2026',status:'trial'},
-    {name:'Curry Palace',plan:'Enterprise',mrr:'$799',start:'Jun 2023',next:'Jun 2025',status:'active'},
-    {name:'Old Town Bistro',plan:'Starter',mrr:'$99',start:'Dec 2024',next:'—',status:'cancelled'},
-  ];
-  const subs = [...realSubs, ...demoSubs.filter(d => !realSubs.find(r => r.name === d.name))];
-  const planCol = {Starter:'pill-purple',Pro:'pill-cyan',Enterprise:'pill-gold'};
-  const stCol = {active:'pill-green',trial:'pill-gold',cancelled:'pill-red'};
-  document.getElementById('subsTbody').innerHTML = subs.map(s=>`
+async function renderSubscriptions() {
+  const tbody = document.getElementById('subsTbody');
+  tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:24px;color:var(--text2)">⏳ Loading subscriptions…</td></tr>';
+  let subs = [];
+  try { subs = await adminApi('GET', '/admin/subscriptions'); } catch(e) {
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:24px;color:#EF4444">Failed to load: ${e.message}</td></tr>`;
+    return;
+  }
+  if (!subs.length) {
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:24px;color:var(--text2)">No subscriptions yet.</td></tr>';
+    return;
+  }
+  const planCol = {Starter:'pill-purple', Pro:'pill-cyan', Enterprise:'pill-gold'};
+  const stCol   = {active:'pill-green', trial:'pill-gold', expired:'pill-red', cancelled:'pill-red'};
+  tbody.innerHTML = subs.map(s=>`
     <tr>
-      <td style="font-weight:600">${s.name}</td>
+      <td><span style="font-weight:600">${s.name}</span><br><span class="caption">${s.email||''}</span></td>
       <td><span class="pill ${planCol[s.plan]||'pill-purple'}" style="font-size:.7rem">${s.plan}</span></td>
       <td style="font-weight:600;color:var(--gold)">${s.mrr}</td>
       <td class="caption">${s.start}</td>
       <td class="caption">${s.next}</td>
       <td><span class="pill ${stCol[s.status]||'pill-purple'}" style="font-size:.7rem">${s.status}</span></td>
-      <td><div style="display:flex;gap:6px">
-        <button class="btn btn-secondary btn-sm" onclick="APP.showToast('Edit subscription for ${s.name}','info')">Edit</button>
-        <button class="btn btn-ghost btn-sm" onclick="APP.showToast('Renewal sent to ${s.name}','success')">Renew</button>
-      </div></td>
+      <td><button class="btn btn-ghost btn-sm" onclick="APP.showToast('Renewal email sent','success')">Renew</button></td>
     </tr>`).join('');
+
+  // Update KPI tiles with real counts
+  const total  = subs.length;
+  const active = subs.filter(s=>s.status==='active');
+  const trial  = subs.filter(s=>s.status==='trial');
+  const PLAN_MRR_NUM = {Starter:99,Pro:199,Enterprise:499};
+  const totalMRR = active.reduce((sum,s)=>sum+(PLAN_MRR_NUM[s.plan]||99),0);
+  const proCount = active.filter(s=>s.plan==='Pro').length;
+  const starterCount = active.filter(s=>s.plan==='Starter').length;
+  const entCount = active.filter(s=>s.plan==='Enterprise').length;
+
+  const kpiEls = document.querySelectorAll('#page-subscriptions .kpi-val');
+  if (kpiEls[0]) kpiEls[0].textContent = '$' + totalMRR.toLocaleString();
+  if (kpiEls[1]) kpiEls[1].textContent = proCount;
+  if (kpiEls[2]) kpiEls[2].textContent = starterCount;
+  if (kpiEls[3]) kpiEls[3].textContent = entCount;
 }
 
 /* ── USERS ── */
@@ -1137,7 +1165,7 @@ renderVideosPanel('all');
   if (badge) badge.textContent = cnt;
 })();
 </script>
-<script src="js/theme.js"></script>
+<script src="/js/theme.js"></script>
 <script>if("serviceWorker"in navigator){navigator.serviceWorker.register("/service-worker.js").then(()=>console.log("SW registered")).catch(e=>console.warn("SW error",e));}</script>
 </body>
 </html>

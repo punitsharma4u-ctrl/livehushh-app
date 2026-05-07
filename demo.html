@@ -5,7 +5,7 @@
 <title>Request Demo — LiveHushh</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/styles.css?v=4">
+<link rel="stylesheet" href="/css/styles.css?v=4">
 <style>
 /* ── Layout ── */
 .demo-wrap{display:grid;grid-template-columns:1fr 1fr;gap:80px;align-items:start;padding:120px 0 100px}
@@ -516,7 +516,7 @@ async function submitDemo(){
     if(!res.ok) throw new Error(data.error || 'Failed');
   } catch(err) {
     if(bookBtn){ bookBtn.innerHTML=origText; bookBtn.disabled=false; }
-    alert('Could not send booking. Please email us at info@mydineview.com');
+    alert('Could not send booking. Please email us at hello@livehushh.com');
     return;
   }
 
@@ -550,6 +550,6 @@ async function submitDemo(){
   `;
 }
 </script>
-<script src="js/theme.js"></script>
+<script src="/js/theme.js"></script>
 </body>
 </html>

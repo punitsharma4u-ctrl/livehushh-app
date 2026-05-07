@@ -8,7 +8,19 @@
     "androidScheme": "https",
     "allowNavigation": [
       "www.livehushh.com",
-      "livehushh.com"
+      "livehushh.com",
+      "*.livehushh.com",
+      "*.youtube.com",
+      "*.youtu.be",
+      "youtu.be",
+      "*.vimeo.com",
+      "player.vimeo.com",
+      "img.youtube.com",
+      "i.ytimg.com",
+      "cdn.jsdelivr.net",
+      "*.amazonaws.com",
+      "*.cloudfront.net",
+      "execute-api.us-east-1.amazonaws.com"
     ]
   },
   "plugins": {
@@ -26,11 +38,17 @@
     "contentInset": "automatic",
     "allowsLinkPreview": false,
     "backgroundColor": "#06061A",
-    "overrideUserAgent": "LiveHushh/1.0 iOS"
+    "overrideUserAgent": "LiveHushh/1.0 iOS",
+    "allowsInlineMediaPlayback": true,
+    "mediaTypesRequiringUserActionForPlayback": [],
+    "scrollEnabled": true,
+    "limitsNavigationsToAppBoundDomains": false
   },
   "android": {
     "allowMixedContent": true,
     "backgroundColor": "#06061A",
-    "overrideUserAgent": "LiveHushh/1.0 Android"
+    "overrideUserAgent": "LiveHushh/1.0 Android",
+    "webContentsDebuggingEnabled": false,
+    "allowFileAccess": true
   }
 }

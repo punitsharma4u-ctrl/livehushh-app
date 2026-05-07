@@ -217,9 +217,77 @@ exports.handler = async (event) => {
       if (role !== 'admin') return resp(403, { error: 'Admin only' });
       const users = await db.collection('users').find({})
         .sort({ updatedAt: -1 })
-        .project({ _id: 0, cognitoSub: 1, email: 1, name: 1, role: 1, planStatus: 1, createdAt: 1, updatedAt: 1 })
+        .project({ _id: 0, cognitoSub: 1, email: 1, name: 1, role: 1, planStatus: 1, activePlan: 1, selectedPlan: 1, trialEndsAt: 1, planActivatedAt: 1, planExpiresAt: 1, createdAt: 1, updatedAt: 1 })
         .toArray();
       return resp(200, users);
+    }
+
+    // ── GET /admin/subscriptions ──────────────────────────────────────────────
+    // Returns all owners who have an active plan or are on trial, joined with restaurant name
+    if (method === 'GET' && path.endsWith('/admin/subscriptions')) {
+      if (role !== 'admin') return resp(403, { error: 'Admin only' });
+      const owners = await db.collection('users').find({
+        role: 'owner',
+        planStatus: { $in: ['active', 'trial', 'expired'] }
+      }).sort({ updatedAt: -1 }).toArray();
+
+      // Bulk-fetch restaurants in one query
+      const ownerSubs = owners.map(o => o.cognitoSub).filter(Boolean);
+      const restaurants = await db.collection('restaurants').find(
+        { ownerSub: { $in: ownerSubs } },
+        { projection: { ownerSub: 1, name: 1 } }
+      ).toArray();
+      const restMap = {};
+      restaurants.forEach(r => { restMap[r.ownerSub] = r.name; });
+
+      const PLAN_MRR = { starter: 99, pro: 199, enterprise: 499 };
+      const subs = owners.map(o => {
+        const plan = o.activePlan || o.selectedPlan || 'starter';
+        const mrr  = PLAN_MRR[plan] || 99;
+        const fmt  = d => d ? new Date(d).toLocaleDateString('en-CA',{month:'short',year:'numeric'}) : '—';
+        return {
+          name:       restMap[o.cognitoSub] || o.name || o.email,
+          email:      o.email,
+          plan:       plan.charAt(0).toUpperCase() + plan.slice(1),
+          mrr:        `$${mrr}`,
+          start:      fmt(o.planActivatedAt || o.trialStartedAt || o.createdAt),
+          next:       fmt(o.planExpiresAt || o.trialEndsAt),
+          status:     o.planStatus,
+        };
+      });
+      return resp(200, subs);
+    }
+
+    // ── GET /admin/stats ──────────────────────────────────────────────────────
+    // Returns platform-wide KPI counts for the overview dashboard
+    if (method === 'GET' && path.endsWith('/admin/stats')) {
+      if (role !== 'admin') return resp(403, { error: 'Admin only' });
+      const [totalRestaurants, totalUsers, activeOwners, liveSessions] = await Promise.all([
+        db.collection('restaurants').countDocuments({}),
+        db.collection('users').countDocuments({}),
+        db.collection('users').countDocuments({ role: 'owner', planStatus: { $in: ['active', 'trial'] } }),
+        db.collection('liveSessions').countDocuments({ status: 'live' }),
+      ]);
+      // MRR = sum of all active plan owners
+      const PLAN_MRR = { starter: 99, pro: 199, enterprise: 499 };
+      const activeOwnerDocs = await db.collection('users').find(
+        { role: 'owner', planStatus: 'active' },
+        { projection: { activePlan: 1 } }
+      ).toArray();
+      const mrr = activeOwnerDocs.reduce((sum, o) => sum + (PLAN_MRR[o.activePlan] || 99), 0);
+
+      // Plan distribution
+      const planCounts = { starter: 0, pro: 0, enterprise: 0, trial: 0 };
+      const allOwners = await db.collection('users').find(
+        { role: 'owner' },
+        { projection: { planStatus: 1, activePlan: 1 } }
+      ).toArray();
+      allOwners.forEach(o => {
+        if (o.planStatus === 'trial') planCounts.trial++;
+        else if (o.planStatus === 'active') planCounts[o.activePlan] = (planCounts[o.activePlan] || 0) + 1;
+      });
+
+      return resp(200, { totalRestaurants, totalUsers, activeOwners, liveSessions, mrr, planCounts });
     }
 
     // ── GET /auth/profile ───────────────────────────────────────────────────
@@ -529,10 +597,18 @@ exports.handler = async (event) => {
 
     // ── GET /videos ─────────────────────────────────────────────────────────
     if (method === 'GET' && path.endsWith('/videos')) {
-      const filter = role === 'admin'  ? {} :
-                     role === 'owner'  ? { ownerSub: userId } :
-                     { status: 'approved' };
-      const videos = await db.collection('videos').find(filter).sort({ uploadedAt: -1 }).toArray();
+      const restaurantId = (event.queryStringParameters || {}).restaurantId;
+      let filter;
+      if (role === 'admin') {
+        filter = {};
+      } else if (role === 'owner') {
+        filter = { ownerSub: userId };
+      } else {
+        // Customers: show approved videos, optionally filtered by restaurant
+        filter = { status: 'approved' };
+        if (restaurantId) filter.restaurantId = restaurantId;
+      }
+      const videos = await db.collection('videos').find(filter).sort({ uploadedAt: -1 }).limit(50).toArray();
       return resp(200, videos);
     }
 
@@ -540,7 +616,18 @@ exports.handler = async (event) => {
     if (method === 'POST' && path.endsWith('/videos')) {
       if (role !== 'owner') return resp(403, { error: 'Owners only' });
       const body = parseBody(event);
-      const doc  = { ...body, ownerSub: userId, status: 'pending', uploadedAt: new Date() };
+      // Attach restaurant name for display in customer app
+      const rest = await db.collection('restaurants').findOne({ ownerSub: userId }, { projection: { name: 1, city: 1, cuisine: 1 } });
+      const doc  = {
+        ...body,
+        ownerSub: userId,
+        restaurantName: rest ? rest.name : (body.restaurantName || ''),
+        restaurantCity: rest ? rest.city  : (body.restaurantCity || ''),
+        restaurantCuisine: rest ? rest.cuisine : (body.restaurantCuisine || ''),
+        restaurantId: rest ? rest._id.toString() : (body.restaurantId || null),
+        status: 'approved',   // auto-approve for MVP — admin can reject if needed
+        uploadedAt: new Date()
+      };
       const result = await db.collection('videos').insertOne(doc);
       return resp(201, { ok: true, id: result.insertedId });
     }
@@ -554,6 +641,16 @@ exports.handler = async (event) => {
         { _id: new ObjectId(id) },
         { $set: { status, reviewedAt: new Date() } }
       );
+      return resp(200, { ok: true });
+    }
+
+    // ── DELETE /videos/:id ──────────────────────────────────────────────────
+    if (method === 'DELETE' && /\/videos\/[^/]+$/.test(path)) {
+      const id = path.split('/').pop();
+      const video = await db.collection('videos').findOne({ _id: new ObjectId(id) });
+      if (!video) return resp(404, { error: 'Not found' });
+      if (role !== 'admin' && video.ownerSub !== userId) return resp(403, { error: 'Forbidden' });
+      await db.collection('videos').deleteOne({ _id: new ObjectId(id) });
       return resp(200, { ok: true });
     }
 

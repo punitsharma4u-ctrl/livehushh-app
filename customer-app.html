@@ -14,7 +14,7 @@
 <meta name="apple-mobile-web-app-title" content="LiveHushh">
 <link rel="apple-touch-icon" href="/icons/icon-192.png">
 <link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192.png">
-<link rel="stylesheet" href="css/styles.css?v=4">
+<link rel="stylesheet" href="/css/styles.css?v=4">
 <style>
 /* App shell */
 body{background:var(--bg);display:flex;flex-direction:column;min-height:100vh;overflow-x:hidden}
@@ -166,11 +166,45 @@ body{background:var(--bg);display:flex;flex-direction:column;min-height:100vh;ov
 .wl-clock-lbl{font-size:.68rem;color:var(--text2);margin-top:2px}
 .wl-clock-sep{font-size:2.4rem;font-weight:900;color:var(--border);line-height:1.15;padding-bottom:8px}
 
+/* ── iPad & Tablet (768px – 1024px) ─────────────────────────────── */
+@media(min-width:768px) and (max-width:1024px){
+  .app-main{padding:28px 32px}
+  .restaurant-grid{grid-template-columns:repeat(2,1fr);gap:20px}
+  .menu-layout{grid-template-columns:1fr 340px;gap:24px}
+  .live-layout{grid-template-columns:1fr 300px}
+  .profile-layout{grid-template-columns:1fr 280px}
+  /* Show top tabs on iPad — hide bottom bar */
+  .app-nav .app-tabs{display:flex}
+  .mobile-bottom-nav{display:none!important}
+  /* Bigger tap targets for iPad */
+  .app-tab{padding:10px 22px;font-size:.88rem}
+  .btn{min-height:44px}
+  .resto-card .btn{min-height:40px}
+  /* Filter chips wrap better */
+  .filter-chips{flex-wrap:wrap}
+  /* Bottom sheet modals wider on iPad */
+  .checkout-drawer,.cart-drawer{max-width:560px;left:50%;transform:translateX(-50%);border-radius:20px 20px 0 0}
+}
+
+/* ── iPad Pro / Large Tablet (1024px+) ─────────────────────────── */
+@media(min-width:1025px){
+  .app-main{padding:32px 48px;max-width:1400px}
+  .restaurant-grid{grid-template-columns:repeat(3,1fr);gap:24px}
+  .menu-layout{grid-template-columns:1fr 380px;gap:32px}
+  .live-layout{grid-template-columns:1fr 360px}
+  .mobile-bottom-nav{display:none!important}
+  .app-nav .app-tabs{display:flex}
+  .btn{min-height:44px}
+}
+
+/* ── Landscape iPhone / small tablet ────────────────────────────── */
 @media(max-width:900px){
   .menu-layout,.live-layout,.profile-layout{grid-template-columns:1fr}
   .live-layout{height:auto}
   .live-video-wrap{height:300px}
 }
+
+/* ── Phone (≤640px) ─────────────────────────────────────────────── */
 @media(max-width:640px){
   /* Hide top nav tabs + cart on mobile — use bottom bar instead */
   .app-nav .app-tabs{display:none}
@@ -178,6 +212,17 @@ body{background:var(--bg);display:flex;flex-direction:column;min-height:100vh;ov
   .app-main{margin-bottom:72px;padding:16px 12px}
   /* Mobile bottom navigation bar */
   .mobile-bottom-nav{display:flex!important}
+  /* Ensure min tap target size per HIG */
+  .btn,.mob-tab,.chip,.app-tab{min-height:44px}
+  .chip{min-height:36px}
+  .resto-actions .btn{min-height:40px}
+}
+
+/* ── Universal safe-area support (notch / Dynamic Island / home bar) */
+@supports(padding: max(0px)){
+  .app-nav{padding-left:max(24px,env(safe-area-inset-left));padding-right:max(24px,env(safe-area-inset-right))}
+  .mobile-bottom-nav{padding-bottom:max(8px,env(safe-area-inset-bottom));height:calc(64px + env(safe-area-inset-bottom))}
+  .app-main{padding-left:max(12px,env(safe-area-inset-left));padding-right:max(12px,env(safe-area-inset-right))}
 }
 .mobile-bottom-nav{
   display:none;
@@ -300,10 +345,25 @@ body{background:var(--bg);display:flex;flex-direction:column;min-height:100vh;ov
     <!-- Live now banner -->
     <div style="background:rgba(239,68,68,0.07);border:1px solid rgba(239,68,68,0.2);border-radius:var(--r-xl);padding:14px 20px;display:flex;align-items:center;gap:12px;margin-bottom:24px">
       <div class="live-badge">Live</div>
-      <span style="font-size:.9rem;font-weight:600">5 restaurants are streaming live right now — <a href="#" style="color:var(--purple-l)" onclick="setFilter('live',document.querySelector('.chip:nth-child(2)'));return false">Watch Now →</a></span>
+      <span style="font-size:.9rem;font-weight:600">Restaurants are streaming live — <a href="#" style="color:var(--purple-l)" onclick="setFilter('live',document.querySelector('.chip:nth-child(2)'));return false">Watch Now →</a></span>
     </div>
 
     <div class="restaurant-grid" id="restaurantGrid"></div>
+  </div>
+
+  <!-- ════════════ VIDEO PLAYER PAGE ════════════ -->
+  <div id="page-videoPlayer" class="page">
+    <button class="btn btn-ghost btn-sm" onclick="showPage('browse')" style="margin-bottom:16px">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+      Back
+    </button>
+    <div id="videoPlayerContent" style="max-width:800px;margin:0 auto">
+      <div style="position:relative;padding-top:56.25%;background:#000;border-radius:var(--r-xl);overflow:hidden;margin-bottom:16px">
+        <iframe id="videoPlayerFrame" src="" style="position:absolute;inset:0;width:100%;height:100%;border:none" allowfullscreen allow="autoplay;encrypted-media"></iframe>
+        <video id="videoPlayerDirect" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:none" controls playsinline></video>
+      </div>
+      <div id="videoPlayerMeta"></div>
+    </div>
   </div>
 
   <!-- ════════════ MENU PAGE ════════════ -->
@@ -753,8 +813,8 @@ body{background:var(--bg);display:flex;flex-direction:column;min-height:100vh;ov
 <div id="toast-container"></div>
 
 <!-- Critical scripts load first (blocking) -->
-<script src="js/aws-config.js"></script>
-<script src="js/data.js?v=2"></script>
+<script src="/js/aws-config.js"></script>
+<script src="/js/data.js?v=2"></script>
 <!-- Heavy SDKs load async — page works without them, only needed for live video -->
 <script async src="https://player.live-video.net/1.24.0/amazon-ivs-player.min.js"></script>
 <script async src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.10.0/dist/tf.min.js"></script>
@@ -767,19 +827,18 @@ body{background:var(--bg);display:flex;flex-direction:column;min-height:100vh;ov
 const _API = (() => {
   const base  = ((window.LH_CONFIG || {}).api || {}).baseUrl || '';
   const ready = base && !base.startsWith('REPLACE');
-  // Public routes that work without authentication (guest browsing)
-  const PUBLIC_PATHS = ['/restaurants', '/deals', '/live/sessions'];
+  // Public routes — no auth required (guest browsing allowed per App Store 5.1.1)
+  const PUBLIC_PATHS = ['/restaurants', '/deals', '/live/sessions', '/videos', '/menu'];
   function token() {
     try { return (JSON.parse(localStorage.getItem('lh_session') || '{}')).idToken || ''; } catch { return ''; }
   }
   function isLoggedIn() { return !!token(); }
   async function get(path) {
     if (!ready) return null;
-    const isPublic = PUBLIC_PATHS.some(p => path.startsWith(p));
     const headers = {};
     const tok = token();
     if (tok) headers['Authorization'] = tok;
-    else if (!isPublic) return null; // non-public path, not logged in
+    // Always attempt public routes even without auth
     const r = await fetch(base + path, { headers });
     return r.ok ? r.json() : null;
   }
@@ -814,9 +873,9 @@ function _requireLogin(action) {
   modal.innerHTML = `<div style="background:#0f0f23;border:1px solid #333;border-radius:16px;padding:32px;max-width:360px;width:100%;text-align:center">
     <div style="font-size:2rem;margin-bottom:12px">🔒</div>
     <h3 style="font-family:'Inter',sans-serif;font-size:1.1rem;font-weight:700;margin-bottom:8px">Sign in to continue</h3>
-    <p style="color:#888;font-size:.88rem;margin-bottom:24px">Create a free account or sign in to place orders, join waitlists and unlock exclusive deals.</p>
+    <p style="color:#888;font-size:.88rem;margin-bottom:24px">Sign in or create a free account to place orders, join waitlists and unlock exclusive deals. Browsing menus is always free.</p>
     <a href="${authUrl}" class="btn btn-primary w-full" style="display:block;margin-bottom:10px;text-decoration:none">Sign In / Create Account</a>
-    <button onclick="this.closest('div').parentElement.remove()" style="background:none;border:none;color:#666;font-size:.85rem;cursor:pointer">Maybe later</button>
+    <button onclick="this.closest('div').parentElement.remove()" style="background:none;border:none;color:#666;font-size:.85rem;cursor:pointer">Continue browsing</button>
   </div>`;
   document.body.appendChild(modal);
   modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
@@ -895,7 +954,9 @@ function renderRestaurants(list) {
           </div>
           <div class="resto-actions">
             <button class="btn btn-primary btn-sm" style="flex:1" onclick="event.stopPropagation();openRestaurant('${r.id}')">View Menu</button>
-            ${isLive ? `<button class="btn btn-danger btn-sm" onclick="event.stopPropagation();openLive('${r.id}')">Watch Live</button>` : ''}
+            ${isLive
+              ? `<button class="btn btn-danger btn-sm" onclick="event.stopPropagation();openLive('${r.id}')"><span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#fff;animation:livePulse 1.2s infinite;margin-right:5px;vertical-align:middle"></span>Watch Live</button>`
+              : `<button class="btn btn-secondary btn-sm" id="vbtn-${r.id}" onclick="event.stopPropagation();openRestaurantVideos('${r.id}','${(r.name||'').replace(/'/g,"\\'")}',this)" style="display:none"><span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--red);animation:livePulse 1.2s infinite;margin-right:5px;vertical-align:middle"></span>Live Session</button>`}
           </div>
         </div>
       </div>`;
@@ -1062,6 +1123,119 @@ async function startViewerFaceBlur(videoEl) {
       });
     }, 250);
   } catch(e) { canvas.style.display = 'none'; }
+}
+
+/* ── RECENT VIDEOS / SESSIONS ─────────────────────────────────────────── */
+function getVideoEmbedUrl(url) {
+  try {
+    const u = new URL(url);
+    if (u.hostname.includes('youtube.com') || u.hostname.includes('youtu.be')) {
+      let id = u.searchParams.get('v');
+      if (!id && u.hostname === 'youtu.be') id = u.pathname.slice(1);
+      if (!id) { const m = url.match(/(?:embed|shorts)\/([^/?&#]+)/); id = m && m[1]; }
+      return id ? `https://www.youtube.com/embed/${id}?autoplay=1` : url;
+    }
+    if (u.hostname.includes('vimeo.com')) {
+      const id = u.pathname.split('/').filter(Boolean).pop();
+      return id ? `https://player.vimeo.com/video/${id}?autoplay=1` : url;
+    }
+  } catch {}
+  return url;
+}
+
+function getVideoThumb(v) {
+  if (v.thumbnail) return v.thumbnail;
+  try {
+    const u = new URL(v.url || '');
+    if (u.hostname.includes('youtube.com') || u.hostname.includes('youtu.be')) {
+      let id = u.searchParams.get('v');
+      if (!id && u.hostname === 'youtu.be') id = u.pathname.slice(1);
+      return id ? `https://img.youtube.com/vi/${id}/hqdefault.jpg` : '';
+    }
+  } catch {}
+  return '';
+}
+
+async function loadRecentVideos() {
+  try {
+    let videos = [];
+    if (_API.isLoggedIn && _API.isLoggedIn()) {
+      videos = await _API.get('/videos') || [];
+    }
+    if (!videos.length) {
+      videos = JSON.parse(localStorage.getItem('lh_videos') || '[]').filter(v => v.status === 'approved');
+    }
+    window._recentVideos = videos;
+    // Show "Live Session" button on restaurant cards that have videos
+    if (videos.length) {
+      const restIdsWithVideos = new Set(videos.map(v => String(v.restaurantId)).filter(Boolean));
+      restIdsWithVideos.forEach(rid => {
+        const btn = document.getElementById('vbtn-' + rid);
+        if (btn) btn.style.display = '';
+      });
+    }
+  } catch(e) { console.warn('loadRecentVideos failed', e); }
+}
+
+function playVideo(id) {
+  const videos = window._recentVideos || [];
+  const v = videos.find(x => String(x._id || x.id) === String(id)) || videos[0];
+  if (!v) return;
+  const frame   = document.getElementById('videoPlayerFrame');
+  const direct  = document.getElementById('videoPlayerDirect');
+  const metaEl  = document.getElementById('videoPlayerMeta');
+  const embedUrl = getVideoEmbedUrl(v.url || '');
+  const isEmbed  = v.url && (v.url.includes('youtube') || v.url.includes('youtu.be') || v.url.includes('vimeo'));
+
+  if (isEmbed) {
+    frame.src = embedUrl;
+    frame.style.display = 'block';
+    direct.style.display = 'none';
+  } else {
+    direct.src = v.url;
+    direct.style.display = 'block';
+    frame.src = '';
+    frame.style.display = 'none';
+    direct.play().catch(() => {});
+  }
+
+  const thumb = getVideoThumb(v);
+  metaEl.innerHTML = `
+    <div style="font-weight:700;font-size:1.1rem;margin-bottom:6px">${v.title || v.name || 'Video'}</div>
+    ${v.restaurantName ? `<div class="caption" style="margin-bottom:8px;font-size:.88rem">📍 ${v.restaurantName}${v.restaurantCity ? ', '+v.restaurantCity : ''}</div>` : ''}
+    ${v.description ? `<div style="font-size:.88rem;color:var(--text2);line-height:1.6;margin-top:10px">${v.description}</div>` : ''}
+    <div class="caption" style="margin-top:10px">${new Date(v.uploadedAt||Date.now()).toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'})}</div>`;
+  showPage('videoPlayer');
+}
+
+async function openRestaurantVideos(restaurantId, restaurantName, btnEl) {
+  if (btnEl) { btnEl.disabled = true; btnEl.textContent = '⏳'; }
+  try {
+    let videos = [];
+    if (_API.isLoggedIn && _API.isLoggedIn()) {
+      videos = await _API.get('/videos?restaurantId=' + restaurantId) || [];
+    }
+    if (!videos.length) {
+      const all = window._recentVideos || [];
+      videos = all.filter(v => String(v.restaurantId) === String(restaurantId));
+    }
+    if (btnEl) { btnEl.disabled = false; btnEl.innerHTML = '<span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--red);animation:livePulse 1.2s infinite;margin-right:5px;vertical-align:middle"></span>Live Session'; }
+    if (!videos.length) {
+      APP.showToast('No sessions recorded for this restaurant yet.', 'info', 3000);
+      return;
+    }
+    // Merge into global pool so playVideo can find them
+    window._recentVideos = window._recentVideos || [];
+    videos.forEach(v => {
+      if (!window._recentVideos.find(x => String(x._id||x.id) === String(v._id||v.id))) {
+        window._recentVideos.push(v);
+      }
+    });
+    playVideo(String(videos[0]._id || videos[0].id));
+  } catch(e) {
+    if (btnEl) { btnEl.disabled = false; btnEl.innerHTML = '<span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--red);animation:livePulse 1.2s infinite;margin-right:5px;vertical-align:middle"></span>Live Session'; }
+    APP.showToast('Could not load sessions. Try again.', 'error');
+  }
 }
 
 function renderMenuContent(r, deals) {
@@ -1969,6 +2143,9 @@ function pollDeals() {
   renderRestaurants(APP.restaurants);
   injectCuisineChips(APP.restaurants);
 
+  // Load recent videos / sessions
+  loadRecentVideos();
+
   // Poll for new restaurants every 60 seconds
   setInterval(async () => {
     const fresh = await _API.get('/restaurants').catch(() => null);
@@ -2073,7 +2250,7 @@ async function deleteAccount() {
   setTimeout(() => { location.href = 'auth.html'; }, 1500);
 }
 </script>
-<script src="js/theme.js"></script>
+<script src="/js/theme.js"></script>
 
 <!-- Mobile bottom navigation -->
 <nav class="mobile-bottom-nav" id="mobileBottomNav">

@@ -1045,6 +1045,13 @@ function _redirect(role, isNewSignup) {
   // becomes a sign-in card (Apple guideline 3.1.1: no new paid signups in app;
   // signing in for existing accounts is explicitly allowed)
   if (isApp) {
+    // Auto-expand diner card so "Browse restaurants" is immediately visible
+    // without requiring an extra tap — satisfies App Store 5.1.1(v) guest browsing
+    const dinerOpts = document.getElementById('ld-diner-options');
+    const dinerArr  = document.getElementById('ld-diner-arr');
+    if (dinerOpts) { dinerOpts.style.display = 'flex'; }
+    if (dinerArr)  { dinerArr.textContent = '↓'; }
+
     const ownerBtn = document.getElementById('ld-owner-btn');
     if (ownerBtn) {
       ownerBtn.setAttribute('onclick', "ldSignInAs('owner')");
