@@ -79,6 +79,7 @@ async function getDb() {
 // ─── helpers ────────────────────────────────────────────────────────────────
 
 function resp(statusCode, body) {
+  if (statusCode >= 500) console.error(`[${statusCode}]`, JSON.stringify(body));
   return {
     statusCode,
     headers: {
@@ -157,6 +158,8 @@ function normalizeRestaurant(r) {
     ownerName:   r.ownerName   || '',
     trialEndsAt: r.trialEndsAt || null,
     menu:        r.menu        || [],
+    isFull:      r.isFull      || false,
+    coverImage:  r.coverImage  || '',
   };
 }
 
