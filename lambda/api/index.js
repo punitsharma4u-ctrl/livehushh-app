@@ -38,6 +38,12 @@ const { SESClient, SendEmailCommand } = require('@aws-sdk/client-ses');
 const sesClient = new SESClient({ region: 'us-east-1' });
 const { IvsClient, CreateChannelCommand, GetChannelCommand } = require('@aws-sdk/client-ivs');
 const ivsClient = new IvsClient({ region: 'us-east-1' });
+const { S3Client, PutObjectCommand } = require('@aws-sdk/client-s3');
+const s3Client = new S3Client({ region: 'us-east-1' });
+const S3_BUCKET = process.env.S3_BUCKET || '';
+
+const { TextractClient, DetectDocumentTextCommand } = require('@aws-sdk/client-textract');
+const textractClient = new TextractClient({ region: 'us-east-1' });
 const SES_FROM  = process.env.SES_FROM_EMAIL || 'punitsharma4u@gmail.com';
 
 // VAPID keys — generate with: npx web-push generate-vapid-keys
@@ -369,6 +375,37 @@ exports.handler = async (event) => {
       });
     }
 
+    // ── GET /owner/analytics ────────────────────────────────────────────────
+    if (method === 'GET' && path.endsWith('/owner/analytics')) {
+      if (!userId) return resp(401, { error: 'Unauthorized' });
+      const [rest, videosCount, ordersArr, dealsCount] = await Promise.allSettled([
+        db.collection('restaurants').findOne({ ownerSub: userId }),
+        db.collection('videos').countDocuments({ ownerSub: userId }),
+        db.collection('orders').find({ restaurantOwnerSub: userId }).sort({ createdAt: -1 }).limit(50).toArray(),
+        db.collection('deals').countDocuments({ ownerSub: userId }),
+      ]);
+      const restaurant = rest.status === 'fulfilled' ? rest.value : null;
+      const videos = videosCount.status === 'fulfilled' ? videosCount.value : 0;
+      const orders = ordersArr.status === 'fulfilled' ? ordersArr.value : [];
+      const deals = dealsCount.status === 'fulfilled' ? dealsCount.value : 0;
+      const menuCount = restaurant?.menu?.reduce((s, c) => s + (c.items?.length || 0), 0) || 0;
+      const totalOrders = orders.length;
+      const totalRevenue = orders.reduce((sum, o) => sum + (o.total || 0), 0);
+      const views = restaurant?.profileViews || 0;
+      const waitlistCount = restaurant ? await db.collection('waitlist').countDocuments({ restaurantId: restaurant._id.toString() }) : 0;
+      return resp(200, {
+        views,
+        menuItems: menuCount,
+        videoCount: videos,
+        deals,
+        orders: totalOrders,
+        revenue: totalRevenue,
+        waitlist: waitlistCount,
+        rating: restaurant?.rating || 4.5,
+        isLive: restaurant?.isLive || false,
+      });
+    }
+
     // ── POST /owner/subscribe ───────────────────────────────────────────────
     // In production: call this from a Stripe webhook after payment confirmation.
     // For MVP demo: call directly from the UI.
@@ -387,6 +424,64 @@ exports.handler = async (event) => {
         { $set: { isLive: true, planStatus: 'active', activePlan: planType, updatedAt: now } }
       );
       return resp(200, { ok: true, planType, planExpiresAt });
+    }
+
+    // ── POST /upload ────────────────────────────────────────────────────────
+    if (method === 'POST' && path.endsWith('/upload')) {
+      if (!userId) return resp(401, { error: 'Unauthorized' });
+      if (!S3_BUCKET) {
+        return resp(503, { error: 'Image storage not configured. Please set S3_BUCKET environment variable in Lambda.' });
+      }
+      const body = parseBody(event);
+      const { base64, filename = 'image.jpg', contentType = 'image/jpeg' } = body;
+      if (!base64) return resp(400, { error: 'base64 image data required' });
+      try {
+        const buffer = Buffer.from(base64, 'base64');
+        const key = `livehushh/uploads/${userId}/${Date.now()}-${filename.replace(/[^a-zA-Z0-9._-]/g, '')}`;
+        await s3Client.send(new PutObjectCommand({
+          Bucket: S3_BUCKET,
+          Key: key,
+          Body: buffer,
+          ContentType: contentType,
+        }));
+        const url = `https://${S3_BUCKET}.s3.amazonaws.com/${key}`;
+        return resp(200, { url, key });
+      } catch (e) {
+        console.error('S3 upload error:', e);
+        return resp(500, { error: 'Upload failed: ' + e.message });
+      }
+    }
+
+    // ── POST /ocr ────────────────────────────────────────────────────────────
+    if (method === 'POST' && path.endsWith('/ocr')) {
+      if (!userId) return resp(401, { error: 'Unauthorized' });
+      const body = parseBody(event);
+      const { image } = body;
+      if (!image) return resp(400, { error: 'image (base64) required' });
+      try {
+        const buffer = Buffer.from(image, 'base64');
+        const result = await textractClient.send(new DetectDocumentTextCommand({
+          Document: { Bytes: buffer },
+        }));
+        const text = (result.Blocks || [])
+          .filter(b => b.BlockType === 'LINE' && b.Text)
+          .map(b => b.Text)
+          .join('\n');
+        return resp(200, { text, blockCount: result.Blocks?.length || 0 });
+      } catch (e) {
+        console.error('Textract OCR error:', e);
+        return resp(500, { error: 'OCR failed: ' + e.message });
+      }
+    }
+
+    // ── GET /restaurants/:id ────────────────────────────────────────────────
+    if (method === 'GET' && /\/restaurants\/[^/]+$/.test(path)) {
+      const rid = path.split('/').pop();
+      let query;
+      try { query = { _id: new ObjectId(rid) }; } catch { query = { id: rid }; }
+      const rest = await db.collection('restaurants').findOne(query);
+      if (!rest) return resp(404, { error: 'Restaurant not found' });
+      return resp(200, normalizeRestaurant(rest));
     }
 
     // ── GET /restaurants ────────────────────────────────────────────────────
@@ -430,6 +525,16 @@ exports.handler = async (event) => {
         { upsert: true }
       );
       return resp(200, { ok: true, upserted: result.upsertedCount > 0 });
+    }
+
+    // ── GET /orders/:id ─────────────────────────────────────────────────────
+    if (method === 'GET' && /\/orders\/[^/]+$/.test(path) && !path.endsWith('/orders/payment-intent')) {
+      const oid = path.split('/').pop();
+      let query;
+      try { query = { _id: new ObjectId(oid) }; } catch { query = { id: oid }; }
+      const order = await db.collection('orders').findOne(query);
+      if (!order) return resp(404, { error: 'Order not found' });
+      return resp(200, order);
     }
 
     // ── GET /orders ─────────────────────────────────────────────────────────
@@ -528,13 +633,13 @@ exports.handler = async (event) => {
       // Auto-email order confirmation to customer
       const restName    = doc.restaurantName || 'the restaurant';
       const orderType   = doc.orderType === 'delivery' ? 'Delivery' : 'Dine-In';
-      const totalDisplay = doc.total ? `$${(doc.total / 100).toFixed(2)}` : '';
+      const totalDisplay = doc.total ? `$${parseFloat(doc.total || 0).toFixed(2)}` : '';
       const confirmSubject = `✅ Order Confirmed — ${restName}`;
       const confirmHtml = `<div style="font-family:sans-serif;max-width:520px;margin:auto;background:#06061A;color:#e0e0e0;padding:28px;border-radius:12px">
         <h2 style="color:#E8540A;margin-top:0">Order Confirmed! 🎉</h2>
         <p>Hi ${doc.customerName || 'there'},</p>
         <p>Your <strong>${orderType}</strong> order at <strong>${restName}</strong> has been placed successfully${totalDisplay ? ' for <strong>' + totalDisplay + '</strong>' : ''}.</p>
-        ${doc.items && doc.items.length ? `<table style="width:100%;border-collapse:collapse;margin:16px 0">${doc.items.map(i=>`<tr><td style="padding:6px 0;border-bottom:1px solid #333">${i.name} × ${i.qty}</td><td style="text-align:right;padding:6px 0;border-bottom:1px solid #333">$${((i.price*i.qty)/100).toFixed(2)}</td></tr>`).join('')}</table>` : ''}
+        ${doc.items && doc.items.length ? `<table style="width:100%;border-collapse:collapse;margin:16px 0">${doc.items.map(i=>`<tr><td style="padding:6px 0;border-bottom:1px solid #333">${i.name} × ${i.qty}</td><td style="text-align:right;padding:6px 0;border-bottom:1px solid #333">$${(parseFloat(i.price||0)*parseInt(i.qty||1)).toFixed(2)}</td></tr>`).join('')}</table>` : ''}
         ${doc.orderType === 'delivery' ? `<p>📍 Delivering to: ${doc.deliveryAddress}</p>` : `<p>🍽️ Table for ${doc.tableSize || 1}</p>`}
         <p style="color:#888;font-size:12px;margin-top:24px">— LiveHushh · You're receiving this because you placed an order</p>
       </div>`;
@@ -894,14 +999,17 @@ exports.handler = async (event) => {
     if (method === 'GET' && path.endsWith('/deals')) {
       if (role === 'owner') {
         const deals = await db.collection('deals').find({ ownerSub: userId }).sort({ createdAt: -1 }).toArray();
-        return resp(200, deals);
+        return resp(200, deals.map(d => ({ ...d, isActive: d.active !== false })));
       }
       // Customer: fetch active deals for a specific restaurant
       const restaurantId = event.queryStringParameters?.restaurantId;
-      const filter = { active: true };
+      const filter = {
+        active: true,
+        $or: [{ expiresAt: null }, { expiresAt: { $exists: false } }, { expiresAt: { $gt: new Date() } }],
+      };
       if (restaurantId) filter.restaurantId = restaurantId;
       const deals = await db.collection('deals').find(filter).sort({ createdAt: -1 }).toArray();
-      return resp(200, deals);
+      return resp(200, deals.map(d => ({ ...d, isActive: d.active !== false })));
     }
 
     // ── POST /deals ─────────────────────────────────────────────────────────
@@ -911,11 +1019,16 @@ exports.handler = async (event) => {
       // Get the owner's restaurant ID
       const rest = await db.collection('restaurants').findOne({ ownerSub: userId }, { projection: { _id: 1, name: 1 } });
       const doc = {
-        ...body,
+        title: body.title,
+        description: body.description || '',
+        discountPercent: body.discountPercent || 0,
+        validUntil: body.validUntil || '',
+        expiresAt: body.validForHours ? new Date(Date.now() + body.validForHours * 3600 * 1000) : null,
+        validForHours: body.validForHours || null,
         ownerSub: userId,
         restaurantId: rest ? rest._id.toString() : null,
         restaurantName: rest ? rest.name : '',
-        active: true,
+        active: body.isActive !== undefined ? !!body.isActive : true,
         views: 0,
         createdAt: new Date(),
       };
@@ -928,9 +1041,11 @@ exports.handler = async (event) => {
       if (role !== 'owner') return resp(403, { error: 'Owners only' });
       const id = path.split('/').pop();
       const body = parseBody(event);
+      const updateBody = { ...body };
+      if ('isActive' in updateBody) { updateBody.active = updateBody.isActive; delete updateBody.isActive; }
       await db.collection('deals').updateOne(
         { _id: new ObjectId(id), ownerSub: userId },
-        { $set: { ...body, updatedAt: new Date() } }
+        { $set: { ...updateBody, updatedAt: new Date() } }
       );
       return resp(200, { ok: true });
     }
@@ -941,6 +1056,45 @@ exports.handler = async (event) => {
       const id = path.split('/').pop();
       await db.collection('deals').deleteOne({ _id: new ObjectId(id), ownerSub: userId });
       return resp(200, { ok: true });
+    }
+
+    // ── PATCH /restaurants (owner sets isFull, hours, etc.) ─────────────────
+    if (method === 'PATCH' && path.endsWith('/restaurants')) {
+      if (role !== 'owner') return resp(403, { error: 'Owners only' });
+      const body = parseBody(event);
+      await db.collection('restaurants').updateOne(
+        { ownerSub: userId },
+        { $set: { ...body, updatedAt: new Date() } }
+      );
+      return resp(200, { ok: true });
+    }
+
+    // ── POST /reservations ───────────────────────────────────────────────────
+    if (method === 'POST' && path.endsWith('/reservations')) {
+      const body = parseBody(event);
+      const doc = {
+        ...body,
+        customerSub: userId || null,
+        customerEmail: claims.email || null,
+        status: 'confirmed',
+        createdAt: new Date(),
+      };
+      const result = await db.collection('reservations').insertOne(doc);
+      return resp(201, { ok: true, id: result.insertedId, confirmationCode: String(result.insertedId).slice(-6).toUpperCase() });
+    }
+
+    // ── GET /reservations ────────────────────────────────────────────────────
+    if (method === 'GET' && path.endsWith('/reservations')) {
+      if (role === 'owner') {
+        const rest = await db.collection('restaurants').findOne({ ownerSub: userId }, { projection: { _id: 1 } });
+        const rid = rest?._id?.toString();
+        const list = await db.collection('reservations').find({ restaurantId: rid }).sort({ createdAt: -1 }).toArray();
+        return resp(200, list);
+      }
+      const restaurantId = event.queryStringParameters?.restaurantId;
+      const filter = restaurantId ? { restaurantId } : {};
+      const list = await db.collection('reservations').find(filter).sort({ createdAt: -1 }).toArray();
+      return resp(200, list);
     }
 
     return resp(404, { error: 'Not found' });
