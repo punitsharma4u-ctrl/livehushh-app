@@ -158,9 +158,10 @@ function normalizeRestaurant(r) {
     ownerName:   r.ownerName   || '',
     trialEndsAt: r.trialEndsAt || null,
     menu:        r.menu        || [],
-    isFull:      r.isFull      || false,
-    coverImage:  r.coverImage  || '',
-    playbackUrl: r.playbackUrl || r.ivsPlaybackUrl || '',
+    isFull:       r.isFull      || false,
+    coverImage:   r.coverImage  || '',
+    playbackUrl:  r.playbackUrl || r.ivsPlaybackUrl || '',
+    deliveryFee:  r.deliveryFee != null ? parseFloat(r.deliveryFee) : null,
   };
 }
 
@@ -636,93 +637,34 @@ exports.handler = async (event) => {
         status: 'placed',
         createdAt: new Date(),
       };
-      const result = await db.collection('orders').insertOne(doc);
-
-      // ── Dispatch Shipday driver for delivery orders ───────────────────────
-      let trackingUrl = '';
-      if (doc.orderType === 'delivery' && process.env.SHIPDAY_API_KEY) {
-        try {
-          const now      = new Date();
-          const dateStr  = `${now.getMonth()+1}/${now.getDate()}/${now.getFullYear()}`;
-          const fmtTime  = d => d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
-          const pickupAt   = new Date(now.getTime() + 20 * 60000);
-          const deliverAt  = new Date(now.getTime() + 45 * 60000);
-          const shipdayPayload = {
-            orderNumber: result.insertedId.toString(),
-            customerName: doc.customerName || doc.customerEmail?.split('@')[0] || 'Customer',
-            customerAddress: doc.deliveryAddress || '',
-            customerEmail: doc.customerEmail || '',
-            customerPhoneNumber: doc.customerPhone || '',
-            restaurantName: doc.restaurantName || 'LiveHushh Restaurant',
-            restaurantAddress: restaurantAddress || doc.restaurantAddress || '',
-            expectedDeliveryDate: dateStr,
-            expectedPickupTime: fmtTime(pickupAt),
-            expectedDeliveryTime: fmtTime(deliverAt),
-            orderItem: (doc.items || []).map(i => ({
-              name: i.name || '',
-              unitPrice: parseFloat(i.price || 0),
-              quantity: parseInt(i.qty || 1),
-              addons: '',
-              details: '',
-            })),
-            tips: 0,
-            tax: parseFloat(doc.tax || 0),
-            deliveryFee: parseFloat(doc.deliveryFee || 0),
-            discount: parseFloat(doc.discountAmount || 0),
-            totalOrderCost: parseFloat(doc.total || 0),
-            orderSource: 'LiveHushh',
-          };
-          const sdRes = await fetch('https://api.shipday.com/orders', {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${process.env.SHIPDAY_API_KEY}`,
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(shipdayPayload),
-          });
-          if (sdRes.ok) {
-            const sdData = await sdRes.json();
-            const shipdayOrderId = sdData?.orderId || sdData?.id || '';
-            trackingUrl = sdData?.trackingLink || sdData?.tracking_link ||
-              (shipdayOrderId ? `https://tracking.shipday.com/${shipdayOrderId}` : '');
-            await db.collection('orders').updateOne(
-              { _id: result.insertedId },
-              { $set: { shipdayOrderId, trackingUrl } }
-            );
-            console.log('Shipday order created:', shipdayOrderId, 'tracking:', trackingUrl);
-          } else {
-            const errText = await sdRes.text();
-            console.error('Shipday API error:', sdRes.status, errText);
-          }
-        } catch (sdErr) {
-          console.error('Shipday dispatch failed (non-fatal):', sdErr.message);
-        }
-      }
+      // ── Generate tracking number ─────────────────────────────────────────
+      const trackingNumber = 'LH-' + Math.random().toString(36).substring(2, 8).toUpperCase();
+      await db.collection('orders').updateOne(
+        { _id: result.insertedId },
+        { $set: { trackingNumber } }
+      );
 
       // Auto-email order confirmation to customer
-      const restName    = doc.restaurantName || 'the restaurant';
-      const orderType   = doc.orderType === 'delivery' ? 'Delivery' : 'Dine-In';
+      const restName     = doc.restaurantName || 'the restaurant';
+      const orderTypeStr = doc.orderType === 'delivery' ? 'Delivery' : doc.orderType === 'pickup' ? 'Pickup' : 'Dine-In';
       const totalDisplay = doc.total ? `$${parseFloat(doc.total || 0).toFixed(2)}` : '';
       const confirmSubject = `✅ Order Confirmed — ${restName}`;
       const confirmHtml = `<div style="font-family:sans-serif;max-width:520px;margin:auto;background:#06061A;color:#e0e0e0;padding:28px;border-radius:12px">
         <h2 style="color:#E8540A;margin-top:0">Order Confirmed! 🎉</h2>
         <p>Hi ${doc.customerName || 'there'},</p>
-        <p>Your <strong>${orderType}</strong> order at <strong>${restName}</strong> has been placed successfully${totalDisplay ? ' for <strong>' + totalDisplay + '</strong>' : ''}.</p>
+        <p>Your <strong>${orderTypeStr}</strong> order at <strong>${restName}</strong> has been placed successfully${totalDisplay ? ' for <strong>' + totalDisplay + '</strong>' : ''}.</p>
         ${doc.items && doc.items.length ? `<table style="width:100%;border-collapse:collapse;margin:16px 0">${doc.items.map(i=>`<tr><td style="padding:6px 0;border-bottom:1px solid #333">${i.name} × ${i.qty}</td><td style="text-align:right;padding:6px 0;border-bottom:1px solid #333">$${(parseFloat(i.price||0)*parseInt(i.qty||1)).toFixed(2)}</td></tr>`).join('')}</table>` : ''}
-        ${doc.orderType === 'delivery' ? `<p>📍 Delivering to: ${doc.deliveryAddress}</p>` : `<p>🍽️ Table for ${doc.tableSize || 1}</p>`}
+        ${doc.orderType === 'delivery' ? `<p>📍 Delivering to: ${doc.deliveryAddress}</p>` : doc.orderType === 'pickup' ? '<p>🚗 Pickup order — we\'ll have it ready for you!</p>' : `<p>🍽️ Dine-In order</p>`}
+        <div style="background:#1a1a3a;border-radius:8px;padding:16px;margin:16px 0;text-align:center">
+          <p style="margin:0;color:#aaa;font-size:12px">YOUR TRACKING NUMBER</p>
+          <p style="margin:4px 0 0;color:#E8540A;font-size:28px;font-weight:800;letter-spacing:4px">${trackingNumber}</p>
+          <p style="margin:4px 0 0;color:#aaa;font-size:11px">Use this to track your order status</p>
+        </div>
         <p style="color:#888;font-size:12px;margin-top:24px">— LiveHushh · You're receiving this because you placed an order</p>
       </div>`;
-      // Add Shipday tracking link to confirmation email for delivery orders
-      const trackingLine = trackingUrl
-        ? `<p>🛵 <strong>Track your driver live:</strong> <a href="${trackingUrl}" style="color:#E8540A">${trackingUrl}</a></p>`
-        : '';
-      const confirmHtmlFinal = confirmHtml.replace(
-        '<p style="color:#888;font-size:12px;margin-top:24px">',
-        `${trackingLine}<p style="color:#888;font-size:12px;margin-top:24px">`
-      );
-      await sendEmail(doc.customerEmail, confirmSubject, confirmHtmlFinal);
+      await sendEmail(doc.customerEmail, confirmSubject, confirmHtml);
 
-      return resp(201, { ok: true, id: result.insertedId, trackingUrl });
+      return resp(201, { ok: true, id: result.insertedId, trackingNumber });
     }
 
     // ── GET /waitlist ───────────────────────────────────────────────────────
