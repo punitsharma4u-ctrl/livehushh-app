@@ -160,6 +160,7 @@ function normalizeRestaurant(r) {
     menu:        r.menu        || [],
     isFull:      r.isFull      || false,
     coverImage:  r.coverImage  || '',
+    playbackUrl: r.playbackUrl || r.ivsPlaybackUrl || '',
   };
 }
 
@@ -684,7 +685,7 @@ exports.handler = async (event) => {
     // ── PATCH /orders/:id ───────────────────────────────────────────────────
     if (method === 'PATCH' && /\/orders\/[^/]+$/.test(path)) {
       const id = path.split('/').pop();
-      const { status } = parseBody(event);
+      const { status, orderType: patchOrderType } = parseBody(event);
       let query;
       try { query = { _id: new ObjectId(id) }; } catch { query = { id }; }
       // Owner can update their own orders, customer can cancel their own
@@ -693,6 +694,40 @@ exports.handler = async (event) => {
       } else {
         await db.collection('orders').updateOne({ ...query, customerSub: userId }, { $set: { status, updatedAt: new Date() } });
       }
+
+      // Send status update email to customer
+      try {
+        const updatedOrder = await db.collection('orders').findOne(query);
+        if (updatedOrder?.customerEmail) {
+          const ot = patchOrderType || updatedOrder.orderType || 'dine-in';
+          const statusLabels = {
+            placed:     'received and confirmed',
+            preparing:  'being prepared',
+            ready:      ot === 'pickup' ? 'ready for pickup' : ot === 'delivery' ? 'out for delivery' : 'ready to serve',
+            delivered:  ot === 'pickup' ? 'picked up' : ot === 'delivery' ? 'delivered' : 'completed',
+          };
+          const statusMsg = statusLabels[status] || status;
+          const orderItems = (updatedOrder.items || []).map(i => `${i.qty}× ${i.name}`).join(', ');
+          const emailHtml = `
+            <div style="font-family:sans-serif;max-width:500px;margin:auto;background:#1a1a1a;color:#eee;padding:32px;border-radius:12px">
+              <h2 style="color:#e8540a;margin-bottom:8px">Order Update 📦</h2>
+              <p style="font-size:16px">Your order at <strong>${updatedOrder.restaurantName || 'the restaurant'}</strong> is now <strong>${statusMsg}</strong>.</p>
+              ${orderItems ? `<p style="color:#aaa;font-size:14px">Items: ${orderItems}</p>` : ''}
+              ${ot === 'delivery' && status === 'ready' ? '<p style="color:#10b981;font-size:14px">🛵 Your delivery is on the way!</p>' : ''}
+              ${ot === 'pickup' && status === 'ready' ? '<p style="color:#10b981;font-size:14px">🚗 Please come pick up your order!</p>' : ''}
+              <p style="color:#888;font-size:12px;margin-top:24px">— LiveHushh · You're receiving this because you placed an order</p>
+            </div>`;
+          await sendEmail(
+            updatedOrder.customerEmail,
+            `Your order at ${updatedOrder.restaurantName || 'LiveHushh'} is ${statusMsg}`,
+            emailHtml
+          );
+        }
+      } catch (emailErr) {
+        console.error('Order status email failed:', emailErr);
+        // Don't fail the request if email fails
+      }
+
       return resp(200, { ok: true });
     }
 
@@ -916,10 +951,11 @@ exports.handler = async (event) => {
         { $set: session },
         { upsert: true }
       );
-      // Mark restaurant as live
+      // Mark restaurant as live and save playback URL so customers can watch
+      const livePlaybackUrl = body.playbackUrl || rest.ivsPlaybackUrl || '';
       await db.collection('restaurants').updateOne(
         { ownerSub: userId },
-        { $set: { isLive: true, liveViewers: 0, liveStartedAt: new Date() } }
+        { $set: { isLive: true, liveViewers: 0, liveStartedAt: new Date(), playbackUrl: livePlaybackUrl } }
       );
 
       // Send push notifications to subscribers within 20 miles (~32 km)
