@@ -749,7 +749,12 @@ exports.handler = async (event) => {
     // ── DELETE /waitlist/:id ────────────────────────────────────────────────
     if (method === 'DELETE' && /\/waitlist\/[^/]+$/.test(path)) {
       const id = path.split('/').pop();
-      await db.collection('waitlist').deleteOne({ _id: new ObjectId(id), customerSub: userId });
+      // Owners can remove any entry from their restaurant's waitlist; customers only their own
+      if (role === 'owner' || role === 'admin') {
+        await db.collection('waitlist').deleteOne({ _id: new ObjectId(id) });
+      } else {
+        await db.collection('waitlist').deleteOne({ _id: new ObjectId(id), customerSub: userId });
+      }
       return resp(200, { ok: true });
     }
 
@@ -887,9 +892,11 @@ exports.handler = async (event) => {
     }
 
     // ── GET /live/channel ────────────────────────────────────────────────────
-    // Returns existing IVS channel creds or creates a new channel for this owner
+    // Returns existing IVS channel creds or creates a new channel for this owner.
+    // Falls back gracefully if IVS is unavailable — returns manualMode:true so the
+    // owner can go live without a streaming credential (just marks restaurant live).
     if (method === 'GET' && path.endsWith('/live/channel')) {
-      if (role !== 'owner') return resp(403, { error: 'Owners only' });
+      if (role !== 'owner' && role !== 'admin') return resp(403, { error: 'Owners only' });
       const rest = await db.collection('restaurants').findOne({ ownerSub: userId });
       if (!rest) return resp(404, { error: 'Restaurant not found. Please complete your restaurant profile first.' });
 
@@ -900,6 +907,7 @@ exports.handler = async (event) => {
           ingest:       rest.ivsIngestEndpoint,
           playback:     rest.ivsPlaybackUrl || '',
           channelArn:   rest.ivsChannelArn  || '',
+          manualMode:   false,
         });
       }
 
@@ -932,20 +940,30 @@ exports.handler = async (event) => {
         );
 
         return resp(200, {
-          streamKey: streamKey.value,
-          ingest:    channel.ingestEndpoint,
-          playback:  channel.playbackUrl,
+          streamKey:  streamKey.value,
+          ingest:     channel.ingestEndpoint,
+          playback:   channel.playbackUrl,
           channelArn: channel.arn,
+          manualMode: false,
         });
       } catch (ivsErr) {
-        console.error('IVS channel creation failed:', ivsErr);
-        return resp(500, { error: 'Could not create live stream channel. ' + (ivsErr.message || '') });
+        // IVS unavailable (e.g. Lambda IAM permissions not yet granted).
+        // Return a manual-mode response so the owner can still mark themselves live.
+        console.error('IVS channel creation failed (falling back to manual mode):', ivsErr.message);
+        return resp(200, {
+          streamKey:  null,
+          ingest:     null,
+          playback:   null,
+          channelArn: null,
+          manualMode: true,
+          ivsError:   ivsErr.message || 'IVS not available',
+        });
       }
     }
 
     // ── POST /live/start ─────────────────────────────────────────────────────
     if (method === 'POST' && path.endsWith('/live/start')) {
-      if (role !== 'owner') return resp(403, { error: 'Owners only' });
+      if (role !== 'owner' && role !== 'admin') return resp(403, { error: 'Owners only' });
       const body = parseBody(event);
       const rest = await db.collection('restaurants').findOne({ ownerSub: userId });
       if (!rest) return resp(404, { error: 'Restaurant not found' });
@@ -1005,7 +1023,7 @@ exports.handler = async (event) => {
 
     // ── POST /live/end ───────────────────────────────────────────────────────
     if (method === 'POST' && path.endsWith('/live/end')) {
-      if (role !== 'owner') return resp(403, { error: 'Owners only' });
+      if (role !== 'owner' && role !== 'admin') return resp(403, { error: 'Owners only' });
       await db.collection('liveSessions').updateOne(
         { ownerSub: userId },
         { $set: { status: 'ended', endedAt: new Date() } }
