@@ -217,8 +217,8 @@ select.input{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xml
       <!-- STARTER -->
       <div class="plan-card" id="plan-starter" onclick="selectPlan('starter')">
         <div class="plan-name">Starter</div>
-        <div class="plan-price">$29<span>/mo</span></div>
-        <div class="plan-trial">Included in 14-day trial</div>
+        <div class="plan-price">$99<span>/mo</span></div>
+        <div class="plan-trial" id="trial-starter">Included in 14-day trial</div>
         <div class="plan-features">
           <div class="plan-feature yes">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
@@ -251,8 +251,8 @@ select.input{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xml
       <div class="plan-card selected" id="plan-pro" onclick="selectPlan('pro')">
         <div class="plan-badge">Most Popular</div>
         <div class="plan-name">Pro</div>
-        <div class="plan-price">$79<span>/mo</span></div>
-        <div class="plan-trial">Included in 14-day trial ✓</div>
+        <div class="plan-price">$199<span>/mo</span></div>
+        <div class="plan-trial" id="trial-pro">Included in 14-day trial ✓</div>
         <div class="plan-features">
           <div class="plan-feature yes">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
@@ -284,8 +284,8 @@ select.input{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xml
       <!-- ENTERPRISE -->
       <div class="plan-card" id="plan-enterprise" onclick="selectPlan('enterprise')">
         <div class="plan-name">Enterprise</div>
-        <div class="plan-price">$199<span>/mo</span></div>
-        <div class="plan-trial">Included in 14-day trial</div>
+        <div class="plan-price">$499<span>/mo</span></div>
+        <div class="plan-trial" id="trial-enterprise">Included in 14-day trial</div>
         <div class="plan-features">
           <div class="plan-feature yes">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
@@ -406,6 +406,12 @@ const CFG      = window.LH_CONFIG || {};
 const API_BASE = (CFG.api || {}).baseUrl || '';
 const API_READY = API_BASE && !API_BASE.startsWith('REPLACE');
 
+// ── URL params ─────────────────────────────────────────
+const _params     = new URLSearchParams(location.search);
+const _sourceApp  = _params.get('source') === 'app';
+const _planParam  = _params.get('plan') || 'pro';
+const _emailParam = _params.get('email') || '';
+
 // ── Auth check ──────────────────────────────────────────
 let SESSION = {};
 try { SESSION = JSON.parse(localStorage.getItem('lh_session') || '{}'); } catch(e) {}
@@ -414,17 +420,21 @@ if (!SESSION.idToken || SESSION.role !== 'owner') {
 }
 document.getElementById('ob-user-name').textContent = SESSION.name || SESSION.email || '';
 
-// ── Native app detection ────────────────────────────────
-const _isNativeApp = !!(window.Capacitor) || navigator.userAgent.includes('LiveHushh');
-
 // ── State ──────────────────────────────────────────────
 let currentStep  = 1;
-let selectedPlan = 'pro';
+let selectedPlan = _planParam;
+
+// ── Plan selection ──────────────────────────────────────
+function selectPlan(plan) {
+  selectedPlan = plan;
+  ['starter','pro','enterprise'].forEach(p => {
+    document.getElementById('plan-' + p).classList.toggle('selected', p === plan);
+  });
+}
 
 // ── Step navigation ─────────────────────────────────────
 function goStep(n) {
-  if (n === 2) {
-    // Validate step 1
+  if (!_sourceApp && n === 2) {
     const form = document.getElementById('restaurantForm');
     if (!form.checkValidity()) { form.reportValidity(); return; }
   }
@@ -441,23 +451,74 @@ function goStep(n) {
 function updateStepIndicator(active) {
   for (let i = 1; i <= 3; i++) {
     const el = document.getElementById('si-' + i);
+    if (!el) continue;
     el.classList.remove('active', 'done');
-    if (i < active)  el.classList.add('done');
+    if (i < active)   el.classList.add('done');
     if (i === active) el.classList.add('active');
   }
 }
 
-// ── Plan selection ──────────────────────────────────────
-function selectPlan(plan) {
-  selectedPlan = plan;
-  ['starter','pro','enterprise'].forEach(p => {
-    document.getElementById('plan-' + p).classList.toggle('selected', p === plan);
-  });
-}
-
 // ── Populate review step ────────────────────────────────
-const PLAN_LABELS = { starter: 'Starter — $29/mo', pro: 'Pro — $79/mo', enterprise: 'Enterprise — $199/mo' };
+const PLAN_LABELS = { starter: 'Starter — $99/mo', pro: 'Pro — $199/mo', enterprise: 'Enterprise — $499/mo' };
 function populateReview() {
+  const isApp = _sourceApp;
+
+  if (isApp) {
+    // App flow: show payment UI instead of trial review
+    document.getElementById('step3').innerHTML = `
+      <div class="ob-heading">
+        <h2>Subscribe to ${PLAN_LABELS[selectedPlan]}</h2>
+        <p>Secure checkout — cancel anytime</p>
+      </div>
+      <div class="ob-card">
+        <div class="review-row">
+          <span class="review-label">Plan</span>
+          <span class="review-value">${PLAN_LABELS[selectedPlan]}</span>
+        </div>
+        <div class="review-row">
+          <span class="review-label">Account</span>
+          <span class="review-value">${_emailParam || SESSION.email || '—'}</span>
+        </div>
+        <div class="review-row">
+          <span class="review-label">Billed</span>
+          <span class="review-value">Monthly · Cancel anytime</span>
+        </div>
+      </div>
+
+      <div id="pay-step" class="ob-card">
+        <div style="font-weight:700;font-size:.72rem;text-transform:uppercase;letter-spacing:.06em;margin-bottom:16px;color:var(--text2)">Payment Details</div>
+        <div class="form-group" style="margin-bottom:14px">
+          <label class="form-label">Cardholder Name</label>
+          <input class="input" id="pay_name" type="text" placeholder="Name on card" autocomplete="cc-name">
+        </div>
+        <div class="form-group" style="margin-bottom:14px">
+          <label class="form-label">Card Number</label>
+          <input class="input" id="pay_card" type="text" inputmode="numeric" placeholder="•••• •••• •••• ••••" maxlength="19" oninput="formatCard(this)" autocomplete="cc-number">
+        </div>
+        <div class="form-row-2" style="margin-bottom:0">
+          <div class="form-group">
+            <label class="form-label">Expiry</label>
+            <input class="input" id="pay_exp" type="text" placeholder="MM / YY" maxlength="7" oninput="formatExp(this)" autocomplete="cc-exp">
+          </div>
+          <div class="form-group">
+            <label class="form-label">CVV</label>
+            <input class="input" id="pay_cvv" type="text" inputmode="numeric" placeholder="•••" maxlength="4" autocomplete="cc-csc">
+          </div>
+        </div>
+      </div>
+
+      <div id="pay-error" style="display:none;background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.25);border-radius:var(--r);padding:12px 16px;font-size:.85rem;color:#EF4444;margin-bottom:16px"></div>
+
+      <div class="ob-nav-btns">
+        <button class="btn btn-ghost" onclick="goStep(2)">← Back</button>
+        <button class="btn btn-primary" id="payBtn" onclick="submitPayment()" style="min-width:200px">
+          🔒 Subscribe — ${PLAN_LABELS[selectedPlan]}
+        </button>
+      </div>`;
+    return;
+  }
+
+  // New user (not from app): original trial review
   document.getElementById('rv_name').textContent    = v('r_name')    || '—';
   document.getElementById('rv_cuisine').textContent = v('r_cuisine') || '—';
   document.getElementById('rv_city').textContent    = v('r_city')    || '—';
@@ -471,17 +532,74 @@ function populateReview() {
 }
 function v(id) { return (document.getElementById(id) || {}).value || ''; }
 
-// ── Show payment note in native app ────────────────────
-if (_isNativeApp) {
-  document.addEventListener('DOMContentLoaded', function() {
-    const note = document.getElementById('app-payment-note');
-    if (note) note.style.display = 'block';
-    const btn = document.getElementById('goLiveBtn');
-    if (btn) btn.textContent = '🚀 Start Free Trial';
-  });
+// ── Card input formatters ──────────────────────────────
+function formatCard(el) {
+  let val = el.value.replace(/\D/g, '').slice(0, 16);
+  el.value = val.replace(/(.{4})/g, '$1 ').trim();
+}
+function formatExp(el) {
+  let val = el.value.replace(/\D/g, '').slice(0, 4);
+  if (val.length >= 3) val = val.slice(0,2) + ' / ' + val.slice(2);
+  el.value = val;
 }
 
-// ── Start trial (submit) ────────────────────────────────
+// ── Payment submission ─────────────────────────────────
+async function submitPayment() {
+  const btn   = document.getElementById('payBtn');
+  const errEl = document.getElementById('pay-error');
+  const name  = (document.getElementById('pay_name') || {}).value || '';
+  const card  = (document.getElementById('pay_card') || {}).value || '';
+  const exp   = (document.getElementById('pay_exp')  || {}).value || '';
+  const cvv   = (document.getElementById('pay_cvv')  || {}).value || '';
+
+  if (!name.trim()) { showPayErr('Please enter the cardholder name.'); return; }
+  if (card.replace(/\s/g,'').length < 15) { showPayErr('Please enter a valid card number.'); return; }
+  if (!exp.includes('/') || exp.length < 7) { showPayErr('Please enter a valid expiry date (MM / YY).'); return; }
+  if (cvv.length < 3) { showPayErr('Please enter a valid CVV.'); return; }
+
+  errEl.style.display = 'none';
+  btn.textContent = '⏳ Processing…';
+  btn.disabled = true;
+
+  try {
+    // Call backend to start subscription
+    if (API_READY) {
+      const res = await fetch(API_BASE + '/owner/subscribe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': SESSION.idToken },
+        body: JSON.stringify({ planType: selectedPlan, email: _emailParam || SESSION.email }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Payment failed. Please try again.');
+    }
+    // Update session
+    const session = { ...SESSION, planStatus: 'active', planType: selectedPlan };
+    localStorage.setItem('lh_session', JSON.stringify(session));
+    showPaySuccess();
+  } catch(e) {
+    showPayErr(e.message || 'Payment failed. Please try again.');
+    btn.textContent = `🔒 Subscribe — ${PLAN_LABELS[selectedPlan]}`;
+    btn.disabled = false;
+  }
+}
+
+function showPayErr(msg) {
+  const errEl = document.getElementById('pay-error');
+  if (errEl) { errEl.textContent = msg; errEl.style.display = 'block'; }
+}
+
+function showPaySuccess() {
+  document.getElementById('step3').innerHTML = `
+    <div style="text-align:center;padding:60px 20px">
+      <div style="width:80px;height:80px;border-radius:50%;background:rgba(16,185,129,0.15);display:flex;align-items:center;justify-content:center;margin:0 auto 24px;font-size:2.5rem">🎉</div>
+      <h2 style="font-family:Inter,sans-serif;font-size:2rem;font-weight:800;margin-bottom:12px">Subscribed!</h2>
+      <p style="color:var(--text2);margin-bottom:8px">Your <strong style="color:var(--text)">${PLAN_LABELS[selectedPlan]}</strong> plan is now active.</p>
+      <p style="color:var(--text2);margin-bottom:32px;font-size:.9rem">Return to the LiveHushh app to manage your restaurant.</p>
+      <button onclick="window.close()" class="btn btn-primary" style="min-width:220px">← Back to App</button>
+    </div>`;
+}
+
+// ── Start trial (submit) — new users only ───────────────
 async function startTrial() {
   const btn = document.getElementById('goLiveBtn');
   const errEl = document.getElementById('ob-error');
@@ -504,7 +622,6 @@ async function startTrial() {
   };
 
   if (!API_READY) {
-    // Dev fallback — save to session and go to dashboard
     const session = { ...SESSION, restaurant: restaurant.name, onboarded: true, planStatus: 'trial' };
     localStorage.setItem('lh_session', JSON.stringify(session));
     showSuccess();
@@ -519,7 +636,6 @@ async function startTrial() {
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || 'Setup failed');
-    // Update local session
     const session = { ...SESSION, restaurant: restaurant.name, onboarded: true, planStatus: 'trial', trialEndsAt: data.trialEndsAt };
     localStorage.setItem('lh_session', JSON.stringify(session));
     showSuccess();
@@ -543,6 +659,41 @@ function showSuccess() {
       </a>
     </div>`;
 }
+
+// ── On load: app-mode setup ─────────────────────────────
+document.addEventListener('DOMContentLoaded', function() {
+  if (_sourceApp) {
+    // Hide step 1 (restaurant already created), skip to step 2
+    document.getElementById('step1').style.display = 'none';
+
+    // Update step indicator: only show 2 steps from app
+    const si1 = document.getElementById('si-1');
+    if (si1) si1.style.display = 'none';
+
+    // Jump to step 2
+    currentStep = 1; // trick goStep to think we're on 1 so it hides correctly
+    // Actually just show step 2 directly:
+    document.getElementById('step1').style.display = 'none';
+    document.getElementById('step2').style.display = 'block';
+    currentStep = 2;
+    updateStepIndicator(2);
+
+    // Hide trial boxes & text (existing restaurant, no trial)
+    ['trial-starter','trial-pro','trial-enterprise'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.style.display = 'none';
+    });
+    const trialBox = document.querySelector('.trial-box');
+    if (trialBox) trialBox.style.display = 'none';
+    const heading = document.querySelector('#step2 .ob-heading p');
+    if (heading) heading.textContent = 'Choose the plan that fits your restaurant. Cancel anytime.';
+    const h2 = document.querySelector('#step2 .ob-heading h2');
+    if (h2) h2.textContent = 'Choose your plan';
+
+    // Pre-select plan from URL
+    selectPlan(_planParam);
+  }
+});
 </script>
 <script src="/js/theme.js"></script>
 </body>
