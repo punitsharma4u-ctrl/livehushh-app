@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Choose Your Plan — LiveHushh</title>
+<link rel="stylesheet" href="/css/styles.css?v=4">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);min-height:100vh;font-family:'Inter',sans-serif;color:var(--text);overflow-x:hidden}
+
+/* Nav */
+.bl-nav{height:56px;background:rgba(6,6,26,0.95);border-bottom:1px solid var(--border2);display:flex;align-items:center;justify-content:space-between;padding:0 24px;backdrop-filter:blur(16px);position:sticky;top:0;z-index:100}
+.bl-nav-email{font-size:.8rem;color:var(--text2)}
+
+/* Wrap */
+.bl-wrap{max-width:800px;margin:0 auto;padding:32px 20px 80px}
+.bl-heading{text-align:center;margin-bottom:32px}
+.bl-heading h1{font-size:1.8rem;font-weight:800;margin-bottom:8px}
+.bl-heading p{color:var(--text2);font-size:.95rem}
+
+/* Toggle */
+.bl-toggle{display:flex;justify-content:center;margin-bottom:28px;gap:0}
+.bl-toggle-btn{padding:8px 24px;font-size:.85rem;font-weight:600;border:1.5px solid var(--border2);background:transparent;color:var(--text2);cursor:pointer;transition:all .2s}
+.bl-toggle-btn:first-child{border-radius:var(--r) 0 0 var(--r)}
+.bl-toggle-btn:last-child{border-radius:0 var(--r) var(--r) 0;border-left:none}
+.bl-toggle-btn.active{background:var(--grad);border-color:transparent;color:#fff}
+
+/* Plan grid */
+.bl-plans{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:32px}
+@media(max-width:680px){.bl-plans{grid-template-columns:1fr}}
+
+.bl-plan{border:2px solid var(--border2);border-radius:var(--r-xl);padding:24px;cursor:pointer;transition:all .25s;background:var(--bg-card);position:relative;overflow:hidden}
+.bl-plan:hover{border-color:var(--border3);transform:translateY(-2px)}
+.bl-plan.selected{border-color:var(--purple);background:rgba(232,84,10,0.07);box-shadow:0 0 0 3px rgba(232,84,10,0.15)}
+.bl-plan-badge{position:absolute;top:0;right:0;background:var(--grad);color:#fff;font-size:.62rem;font-weight:700;padding:4px 12px;border-radius:0 var(--r-xl) 0 var(--r);letter-spacing:.06em;text-transform:uppercase}
+.bl-plan-name{font-size:1rem;font-weight:800;margin-bottom:8px}
+.bl-plan-price{font-size:2.2rem;font-weight:800;line-height:1;margin-bottom:4px}
+.bl-plan-price span{font-size:.85rem;font-weight:400;color:var(--text2)}
+.bl-plan-sub{font-size:.75rem;color:var(--text2);margin-bottom:16px}
+.bl-plan-feature{display:flex;align-items:flex-start;gap:8px;font-size:.82rem;color:var(--text2);margin-bottom:7px}
+.bl-plan-feature.yes{color:var(--text)}
+.bl-plan-feature svg{flex-shrink:0;margin-top:1px}
+
+/* Payment card */
+.bl-card{background:var(--bg-card);border:1px solid var(--border2);border-radius:var(--r-2xl);padding:28px;margin-bottom:20px}
+.bl-card-title{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text2);margin-bottom:18px}
+
+/* Summary */
+.bl-summary-row{display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--border2)}
+.bl-summary-row:last-child{border-bottom:none}
+.bl-summary-label{font-size:.85rem;color:var(--text2)}
+.bl-summary-value{font-size:.9rem;font-weight:600}
+.bl-total-row{display:flex;justify-content:space-between;align-items:center;padding:16px 0 0}
+.bl-total-label{font-size:1rem;font-weight:700}
+.bl-total-value{font-size:1.3rem;font-weight:800;color:var(--purple-l)}
+
+/* Form */
+.bl-form-group{margin-bottom:16px}
+.bl-form-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px}
+@media(max-width:480px){.bl-form-row{grid-template-columns:1fr}}
+.bl-label{display:block;font-size:.78rem;font-weight:600;color:var(--text2);margin-bottom:6px}
+.bl-input{width:100%;background:rgba(255,255,255,0.04);border:1.5px solid var(--border2);border-radius:var(--r);padding:12px 14px;color:var(--text);font-size:.95rem;font-family:inherit;outline:none;transition:border-color .2s}
+.bl-input:focus{border-color:var(--purple)}
+.bl-input::placeholder{color:var(--text3)}
+
+/* Card number row */
+.bl-card-icons{display:flex;gap:8px;margin-bottom:8px}
+.bl-card-icon{width:36px;height:24px;border-radius:4px;background:var(--border2);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--text2)}
+
+/* Submit */
+.bl-submit{width:100%;padding:16px;border-radius:var(--r-xl);font-size:1rem;font-weight:700;letter-spacing:.02em;border:none;cursor:pointer;background:var(--grad);color:#fff;transition:opacity .2s;display:flex;align-items:center;justify-content:center;gap:10px}
+.bl-submit:disabled{opacity:.6;cursor:not-allowed}
+.bl-secure-note{display:flex;align-items:center;justify-content:center;gap:6px;font-size:.75rem;color:var(--text2);margin-top:12px}
+
+/* Error */
+.bl-error{background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.25);border-radius:var(--r);padding:12px 16px;font-size:.85rem;color:#EF4444;margin-bottom:16px;display:none}
+
+/* Success */
+.bl-success{text-align:center;padding:60px 20px}
+.bl-success-icon{width:80px;height:80px;border-radius:50%;background:rgba(16,185,129,0.15);display:flex;align-items:center;justify-content:center;margin:0 auto 24px;font-size:2.5rem}
+.bl-success h2{font-size:2rem;font-weight:800;margin-bottom:12px}
+.bl-success p{color:var(--text2);margin-bottom:8px;font-size:.95rem}
+.bl-back-btn{display:inline-flex;align-items:center;gap:8px;margin-top:28px;padding:14px 32px;border-radius:var(--r-xl);background:var(--grad);color:#fff;font-weight:700;font-size:.95rem;border:none;cursor:pointer}
+
+/* Screen states */
+#screenPlans{display:block}
+#screenPayment{display:none}
+#screenSuccess{display:none}
+</style>
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#E8540A">
+</head>
+<body>
+
+<nav class="bl-nav">
+  <a href="#" onclick="return false;" style="text-decoration:none">
+    <span class="lh-logo-live" style="font-family:'Syne',sans-serif;font-weight:900;font-size:1.1rem;color:#fff">live</span><span style="font-family:'Syne',sans-serif;font-weight:900;font-size:1.1rem;color:var(--purple-l)">hushh.</span>
+  </a>
+  <div class="bl-nav-email" id="navEmail"></div>
+</nav>
+
+<!-- ══ SCREEN 1: PLAN SELECTION ══ -->
+<div id="screenPlans">
+  <div class="bl-wrap">
+    <div class="bl-heading">
+      <h1>Choose Your Plan</h1>
+      <p>Full access from day one. Cancel anytime.</p>
+    </div>
+
+    <div class="bl-plans">
+
+      <!-- STARTER -->
+      <div class="bl-plan" id="card-starter" onclick="selectPlan('starter')">
+        <div class="bl-plan-name">Starter</div>
+        <div class="bl-plan-price">$99<span>/mo</span></div>
+        <div class="bl-plan-sub">Perfect to get started</div>
+        <div class="bl-plan-feature yes">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+          Restaurant listing
+        </div>
+        <div class="bl-plan-feature yes">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+          Menu management
+        </div>
+        <div class="bl-plan-feature yes">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+          Online orders
+        </div>
+        <div class="bl-plan-feature yes">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+          Table reservations
+        </div>
+        <div class="bl-plan-feature yes">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+          Waitlist management
+        </div>
+        <div class="bl-plan-feature">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#475569" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          Live streaming
+        </div>
+        <div class="bl-plan-feature">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#475569" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          Media &amp; videos
+        </div>
+      </div>
+
+      <!-- PRO -->
+      <div class="bl-plan selected" id="card-pro" onclick="selectPlan('pro')">
+        <div class="bl-plan-badge">Most Popular</div>
+        <div class="bl-plan-name">Pro</div>
+        <div class="bl-plan-price">$199<span>/mo</span></div>
+        <div class="bl-plan-sub">Best for growing restaurants</div>
+        <div class="bl-plan-feature yes">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+          Everything in Starter
+        </div>
+        <div class="bl-plan-feature yes">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+          Live streaming studio
+        </div>
+        <div class="bl-plan-feature yes">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+          Face blur technology
+        </div>
+        <div class="bl-plan-feature yes">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+          Media &amp; video gallery
+        </div>
+        <div class="bl-plan-feature yes">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+          Advanced analytics
+        </div>
+        <div class="bl-plan-feature yes">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+          Push notifications
+        </div>
+      </div>
+
+      <!-- ENTERPRISE -->
+      <div class="bl-plan" id="card-enterprise" onclick="selectPlan('enterprise')">
+        <div class="bl-plan-name">Enterprise</div>
+        <div class="bl-plan-price">$499<span>/mo</span></div>
+        <div class="bl-plan-sub">For multi-location chains</div>
+        <div class="bl-plan-feature yes">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+          Everything in Pro
+        </div>
+        <div class="bl-plan-feature yes">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+          Multiple locations
+        </div>
+        <div class="bl-plan-feature yes">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+          Custom branding
+        </div>
+        <div class="bl-plan-feature yes">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+          API access
+        </div>
+        <div class="bl-plan-feature yes">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+          Dedicated account manager
+        </div>
+        <div class="bl-plan-feature yes">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+          White-glove onboarding
+        </div>
+      </div>
+
+    </div>
+
+    <div style="text-align:center">
+      <button class="bl-submit" onclick="goToPayment()" style="max-width:320px;margin:0 auto">
+        Continue to Payment →
+      </button>
+      <p style="font-size:.75rem;color:var(--text2);margin-top:12px">No contracts · Cancel anytime · Billed monthly</p>
+    </div>
+  </div>
+</div>
+
+<!-- ══ SCREEN 2: PAYMENT ══ -->
+<div id="screenPayment">
+  <div class="bl-wrap">
+    <div class="bl-heading">
+      <h1>Secure Checkout</h1>
+      <p>Your subscription starts immediately after payment</p>
+    </div>
+
+    <!-- Order Summary -->
+    <div class="bl-card">
+      <div class="bl-card-title">Order Summary</div>
+      <div class="bl-summary-row">
+        <span class="bl-summary-label">Plan</span>
+        <span class="bl-summary-value" id="sumPlan">—</span>
+      </div>
+      <div class="bl-summary-row">
+        <span class="bl-summary-label">Account</span>
+        <span class="bl-summary-value" id="sumEmail">—</span>
+      </div>
+      <div class="bl-summary-row">
+        <span class="bl-summary-label">Billing cycle</span>
+        <span class="bl-summary-value">Monthly · renews automatically</span>
+      </div>
+      <div class="bl-total-row">
+        <span class="bl-total-label">Total today</span>
+        <span class="bl-total-value" id="sumTotal">—</span>
+      </div>
+    </div>
+
+    <!-- Payment Form -->
+    <div class="bl-card">
+      <div class="bl-card-title">Payment Details</div>
+
+      <div class="bl-card-icons">
+        <div class="bl-card-icon">VISA</div>
+        <div class="bl-card-icon">MC</div>
+        <div class="bl-card-icon">AMEX</div>
+      </div>
+
+      <div class="bl-form-group">
+        <label class="bl-label">Cardholder Name</label>
+        <input class="bl-input" id="pay_name" type="text" placeholder="Full name on card" autocomplete="cc-name">
+      </div>
+      <div class="bl-form-group">
+        <label class="bl-label">Card Number</label>
+        <input class="bl-input" id="pay_card" type="text" inputmode="numeric" placeholder="1234 5678 9012 3456" maxlength="19" oninput="fmtCard(this)" autocomplete="cc-number">
+      </div>
+      <div class="bl-form-row">
+        <div>
+          <label class="bl-label">Expiry Date</label>
+          <input class="bl-input" id="pay_exp" type="text" placeholder="MM / YY" maxlength="7" oninput="fmtExp(this)" autocomplete="cc-exp">
+        </div>
+        <div>
+          <label class="bl-label">CVV</label>
+          <input class="bl-input" id="pay_cvv" type="text" inputmode="numeric" placeholder="123" maxlength="4" autocomplete="cc-csc">
+        </div>
+      </div>
+      <div class="bl-form-group" style="margin-bottom:0">
+        <label class="bl-label">Billing ZIP / Postal Code</label>
+        <input class="bl-input" id="pay_zip" type="text" inputmode="numeric" placeholder="10001" maxlength="10" autocomplete="postal-code">
+      </div>
+    </div>
+
+    <div class="bl-error" id="payError"></div>
+
+    <button class="bl-submit" id="payBtn" onclick="submitPayment()">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      <span id="payBtnLabel">Subscribe Now</span>
+    </button>
+    <div class="bl-secure-note">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      256-bit SSL encryption · PCI DSS compliant
+    </div>
+
+    <div style="text-align:center;margin-top:16px">
+      <button onclick="goBack()" style="background:none;border:none;color:var(--text2);font-size:.85rem;cursor:pointer;text-decoration:underline">← Change plan</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ SCREEN 3: SUCCESS ══ -->
+<div id="screenSuccess">
+  <div class="bl-wrap">
+    <div class="bl-success">
+      <div class="bl-success-icon">🎉</div>
+      <h2>You're subscribed!</h2>
+      <p>Your <strong id="successPlan">—</strong> plan is now active.</p>
+      <p style="font-size:.85rem;margin-top:4px">A confirmation email has been sent to <span id="successEmail">you</span>.</p>
+      <button class="bl-back-btn" onclick="returnToApp()">← Return to App</button>
+    </div>
+  </div>
+</div>
+
+<script src="/js/aws-config.js"></script>
+<script>
+const CFG      = window.LH_CONFIG || {};
+const API_BASE = (CFG.api || {}).baseUrl || '';
+const API_READY = API_BASE && !API_BASE.startsWith('REPLACE');
+
+// URL params
+const _params  = new URLSearchParams(location.search);
+const _plan    = _params.get('plan') || 'pro';
+const _email   = _params.get('email') || '';
+
+// State
+let selectedPlan = _plan;
+
+const PLANS = {
+  starter:    { name: 'Starter',    price: 99,  label: 'Starter — $99/mo' },
+  pro:        { name: 'Pro',        price: 199, label: 'Pro — $199/mo' },
+  enterprise: { name: 'Enterprise', price: 499, label: 'Enterprise — $499/mo' },
+};
+
+// Init
+(function init() {
+  document.getElementById('navEmail').textContent = _email;
+  selectPlan(_plan);
+})();
+
+function selectPlan(plan) {
+  if (!PLANS[plan]) plan = 'pro';
+  selectedPlan = plan;
+  ['starter','pro','enterprise'].forEach(p => {
+    document.getElementById('card-' + p).classList.toggle('selected', p === plan);
+  });
+}
+
+function goToPayment() {
+  const p = PLANS[selectedPlan];
+  document.getElementById('sumPlan').textContent  = p.label;
+  document.getElementById('sumEmail').textContent = _email || 'Your account';
+  document.getElementById('sumTotal').textContent = `$${p.price}.00/mo`;
+  document.getElementById('payBtnLabel').textContent = `Subscribe — $${p.price}/mo`;
+
+  document.getElementById('screenPlans').style.display   = 'none';
+  document.getElementById('screenPayment').style.display = 'block';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function goBack() {
+  document.getElementById('screenPayment').style.display = 'none';
+  document.getElementById('screenPlans').style.display   = 'block';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// Card input formatters
+function fmtCard(el) {
+  let v = el.value.replace(/\D/g, '').slice(0, 16);
+  el.value = v.replace(/(.{4})/g, '$1 ').trim();
+}
+function fmtExp(el) {
+  let v = el.value.replace(/\D/g, '').slice(0, 4);
+  if (v.length >= 3) v = v.slice(0,2) + ' / ' + v.slice(2);
+  el.value = v;
+}
+
+function showErr(msg) {
+  const el = document.getElementById('payError');
+  el.textContent = msg;
+  el.style.display = 'block';
+  el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+function hideErr() {
+  document.getElementById('payError').style.display = 'none';
+}
+
+async function submitPayment() {
+  hideErr();
+  const name = (document.getElementById('pay_name').value || '').trim();
+  const card = (document.getElementById('pay_card').value || '').replace(/\s/g, '');
+  const exp  = (document.getElementById('pay_exp').value  || '').trim();
+  const cvv  = (document.getElementById('pay_cvv').value  || '').trim();
+  const zip  = (document.getElementById('pay_zip').value  || '').trim();
+
+  if (!name)              { showErr('Please enter the cardholder name.'); return; }
+  if (card.length < 15)   { showErr('Please enter a valid card number (15–16 digits).'); return; }
+  if (!exp.includes('/')) { showErr('Please enter a valid expiry date (MM / YY).'); return; }
+  if (cvv.length < 3)     { showErr('Please enter a valid CVV (3–4 digits).'); return; }
+  if (!zip)               { showErr('Please enter your billing ZIP or postal code.'); return; }
+
+  const btn   = document.getElementById('payBtn');
+  const label = document.getElementById('payBtnLabel');
+  btn.disabled = true;
+  label.textContent = '⏳ Processing…';
+
+  try {
+    // Attempt backend subscription call
+    let session = {};
+    try { session = JSON.parse(localStorage.getItem('lh_session') || '{}'); } catch(e) {}
+
+    if (API_READY && session.idToken) {
+      const res = await fetch(API_BASE + '/owner/subscribe', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': session.idToken,
+        },
+        body: JSON.stringify({ planType: selectedPlan, email: _email || session.email }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Payment failed. Please try again.');
+      // Update cached session
+      session.planStatus = 'active';
+      session.planType   = selectedPlan;
+      localStorage.setItem('lh_session', JSON.stringify(session));
+    }
+
+    showSuccess();
+  } catch(e) {
+    showErr(e.message || 'Payment failed. Please try again or contact support@livehushh.com');
+    btn.disabled = false;
+    label.textContent = `Subscribe — $${PLANS[selectedPlan].price}/mo`;
+  }
+}
+
+function showSuccess() {
+  document.getElementById('screenPayment').style.display = 'none';
+  document.getElementById('screenSuccess').style.display = 'block';
+  document.getElementById('successPlan').textContent  = PLANS[selectedPlan].label;
+  document.getElementById('successEmail').textContent = _email || 'you';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function returnToApp() {
+  // Try to close the in-app browser (works in expo-web-browser)
+  if (window.opener) {
+    window.close();
+  } else {
+    // Fallback: deep link back or show message
+    try { window.close(); } catch(e) {}
+    document.querySelector('.bl-back-btn').textContent = '✅ You can close this tab';
+    document.querySelector('.bl-back-btn').style.cursor = 'default';
+  }
+}
+</script>
+<script src="/js/theme.js"></script>
+</body>
+</html>
