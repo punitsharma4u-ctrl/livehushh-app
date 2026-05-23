@@ -522,14 +522,64 @@ exports.handler = async (event) => {
 
     // ── POST /restaurants ───────────────────────────────────────────────────
     if (method === 'POST' && path.endsWith('/restaurants')) {
-      if (role !== 'owner') return resp(403, { error: 'Owners only' });
+      if (role !== 'owner' && role !== 'admin') return resp(403, { error: 'Owners only' });
       const body = parseBody(event);
+      // Auto-geocode address → lat/lng using Nominatim (free, no API key)
+      // Only geocode if address/city changed and we don't already have coords
+      let { latitude, longitude } = body;
+      if ((latitude == null || longitude == null) && (body.address || body.city)) {
+        try {
+          const q = encodeURIComponent([body.address, body.city].filter(Boolean).join(', '));
+          const geoRes = await fetch(
+            `https://nominatim.openstreetmap.org/search?q=${q}&format=json&limit=1`,
+            { headers: { 'User-Agent': 'LiveHushhApp/1.0' } }
+          );
+          const geoData = await geoRes.json();
+          if (geoData && geoData[0]) {
+            latitude  = parseFloat(geoData[0].lat);
+            longitude = parseFloat(geoData[0].lon);
+            console.log(`[GEO] ${body.name} geocoded to ${latitude}, ${longitude}`);
+          }
+        } catch (geoErr) {
+          console.warn('[GEO] Geocoding failed:', geoErr.message);
+        }
+      }
+      const saveData = { ...body, ownerSub: userId, updatedAt: new Date() };
+      if (latitude != null)  saveData.latitude  = latitude;
+      if (longitude != null) saveData.longitude = longitude;
       const result = await db.collection('restaurants').updateOne(
         { ownerSub: userId },
-        { $set: { ...body, ownerSub: userId, updatedAt: new Date() } },
+        { $set: saveData },
         { upsert: true }
       );
-      return resp(200, { ok: true, upserted: result.upsertedCount > 0 });
+      return resp(200, { ok: true, upserted: result.upsertedCount > 0, latitude, longitude });
+    }
+
+    // ── POST /restaurants/:id/rate ──────────────────────────────────────────
+    if (method === 'POST' && /\/restaurants\/[^/]+\/rate$/.test(path)) {
+      const rid = path.split('/').slice(-2)[0];
+      const { rating } = parseBody(event);
+      if (!rating || rating < 1 || rating > 5) return resp(400, { error: 'Rating must be 1–5' });
+      // Store individual rating, compute new average
+      let query;
+      try { query = { _id: new ObjectId(rid) }; } catch { query = { id: rid }; }
+      const rest = await db.collection('restaurants').findOne(query, { projection: { rating: 1, ratingCount: 1 } });
+      if (!rest) return resp(404, { error: 'Restaurant not found' });
+      const oldCount = rest.ratingCount || 1;
+      const oldRating = rest.rating || 4.5;
+      const newCount = oldCount + 1;
+      const newRating = parseFloat(((oldRating * oldCount + rating) / newCount).toFixed(2));
+      await db.collection('restaurants').updateOne(
+        query,
+        { $set: { rating: newRating, ratingCount: newCount } }
+      );
+      // Store individual rating for dedup later
+      await db.collection('ratings').updateOne(
+        { restaurantId: rid, customerSub: userId },
+        { $set: { restaurantId: rid, customerSub: userId, rating, createdAt: new Date() } },
+        { upsert: true }
+      );
+      return resp(200, { ok: true, newRating, newCount });
     }
 
     // ── GET /orders/:id ─────────────────────────────────────────────────────
@@ -637,7 +687,8 @@ exports.handler = async (event) => {
         status: 'placed',
         createdAt: new Date(),
       };
-      // ── Generate tracking number ─────────────────────────────────────────
+      // ── Insert order, then attach tracking number ─────────────────────────
+      const result = await db.collection('orders').insertOne(doc);
       const trackingNumber = 'LH-' + Math.random().toString(36).substring(2, 8).toUpperCase();
       await db.collection('orders').updateOne(
         { _id: result.insertedId },
@@ -665,6 +716,26 @@ exports.handler = async (event) => {
       await sendEmail(doc.customerEmail, confirmSubject, confirmHtml);
 
       return resp(201, { ok: true, id: result.insertedId, trackingNumber });
+    }
+
+    // ── GET /waitlist/mine ──────────────────────────────────────────────────
+    // Returns the customer's own active waitlist entry (so they can track their position)
+    if (method === 'GET' && path.endsWith('/waitlist/mine')) {
+      if (!userId) return resp(401, { error: 'Unauthorized' });
+      const entry = await db.collection('waitlist').findOne(
+        { customerSub: userId },
+        { sort: { joinedAt: -1 } }
+      );
+      if (!entry) return resp(200, null);
+      // Calculate position in queue
+      const position = await db.collection('waitlist').countDocuments({
+        restaurantId: entry.restaurantId,
+        joinedAt: { $lte: entry.joinedAt },
+      });
+      const total = await db.collection('waitlist').countDocuments({
+        restaurantId: entry.restaurantId,
+      });
+      return resp(200, { ...entry, position, total, _id: entry._id.toString() });
     }
 
     // ── GET /waitlist ───────────────────────────────────────────────────────
@@ -743,6 +814,21 @@ exports.handler = async (event) => {
         // Don't fail the request if email fails
       }
 
+      return resp(200, { ok: true });
+    }
+
+    // ── PATCH /waitlist/:id — update status (seated / waiting / removed) ───────
+    if (method === 'PATCH' && /\/waitlist\/[^/]+$/.test(path)) {
+      const id = path.split('/').pop();
+      const { status } = parseBody(event);
+      if (role === 'owner' || role === 'admin') {
+        await db.collection('waitlist').updateOne(
+          { _id: new ObjectId(id) },
+          { $set: { status, updatedAt: new Date() } }
+        );
+      } else {
+        return resp(403, { error: 'Owners only' });
+      }
       return resp(200, { ok: true });
     }
 
@@ -897,8 +983,14 @@ exports.handler = async (event) => {
     // owner can go live without a streaming credential (just marks restaurant live).
     if (method === 'GET' && path.endsWith('/live/channel')) {
       if (role !== 'owner' && role !== 'admin') return resp(403, { error: 'Owners only' });
-      const rest = await db.collection('restaurants').findOne({ ownerSub: userId });
+      const rest = await db.collection('restaurants').findOne({
+        $or: [{ ownerSub: userId }, { ownerEmail: claims.email }]
+      });
       if (!rest) return resp(404, { error: 'Restaurant not found. Please complete your restaurant profile first.' });
+      // Link ownerSub if missing
+      if (!rest.ownerSub && userId) {
+        await db.collection('restaurants').updateOne({ _id: rest._id }, { $set: { ownerSub: userId } });
+      }
 
       // Return existing credentials if already provisioned
       if (rest.ivsStreamKey && rest.ivsIngestEndpoint) {
@@ -965,8 +1057,13 @@ exports.handler = async (event) => {
     if (method === 'POST' && path.endsWith('/live/start')) {
       if (role !== 'owner' && role !== 'admin') return resp(403, { error: 'Owners only' });
       const body = parseBody(event);
-      const rest = await db.collection('restaurants').findOne({ ownerSub: userId });
+      const rest = await db.collection('restaurants').findOne({
+        $or: [{ ownerSub: userId }, { ownerEmail: claims.email }]
+      });
       if (!rest) return resp(404, { error: 'Restaurant not found' });
+      if (!rest.ownerSub && userId) {
+        await db.collection('restaurants').updateOne({ _id: rest._id }, { $set: { ownerSub: userId } });
+      }
 
       const session = {
         restaurantId:   rest._id.toString(),
@@ -1024,12 +1121,13 @@ exports.handler = async (event) => {
     // ── POST /live/end ───────────────────────────────────────────────────────
     if (method === 'POST' && path.endsWith('/live/end')) {
       if (role !== 'owner' && role !== 'admin') return resp(403, { error: 'Owners only' });
+      const restQuery = { $or: [{ ownerSub: userId }, { ownerEmail: claims.email }] };
       await db.collection('liveSessions').updateOne(
         { ownerSub: userId },
         { $set: { status: 'ended', endedAt: new Date() } }
       );
       await db.collection('restaurants').updateOne(
-        { ownerSub: userId },
+        restQuery,
         { $set: { isLive: false, liveViewers: 0 } }
       );
       return resp(200, { ok: true });
@@ -1042,6 +1140,112 @@ exports.handler = async (event) => {
         .sort({ startedAt: -1 })
         .toArray();
       return resp(200, sessions);
+    }
+
+    // ── GET /live/chat?restaurantId=xxx ──────────────────────────────────────
+    if (method === 'GET' && path.endsWith('/live/chat')) {
+      const restaurantId = qs.restaurantId;
+      if (!restaurantId) return resp(400, { error: 'restaurantId required' });
+      const messages = await db.collection('liveChat')
+        .find({ restaurantId })
+        .sort({ createdAt: -1 })
+        .limit(60)
+        .toArray();
+      return resp(200, messages.reverse());
+    }
+
+    // ── POST /live/chat ──────────────────────────────────────────────────────
+    if (method === 'POST' && path.endsWith('/live/chat')) {
+      const body = parseBody(event);
+      const { restaurantId, message, senderName } = body || {};
+      if (!restaurantId || !message) return resp(400, { error: 'restaurantId and message required' });
+      const doc = {
+        restaurantId,
+        message: String(message).slice(0, 300),
+        senderName: senderName || 'Guest',
+        senderId: userId || null,
+        createdAt: new Date(),
+      };
+      await db.collection('liveChat').insertOne(doc);
+      // Auto-expire: keep only last 200 messages per restaurant
+      const count = await db.collection('liveChat').countDocuments({ restaurantId });
+      if (count > 200) {
+        const oldest = await db.collection('liveChat')
+          .find({ restaurantId }).sort({ createdAt: 1 }).limit(count - 200).toArray();
+        const ids = oldest.map(m => m._id);
+        await db.collection('liveChat').deleteMany({ _id: { $in: ids } });
+      }
+      return resp(200, { ok: true, id: doc._id });
+    }
+
+    // ── POST /live/viewer ────────────────────────────────────────────────────
+    if (method === 'POST' && path.endsWith('/live/viewer')) {
+      const body = parseBody(event);
+      const { restaurantId, action } = body || {};
+      if (!restaurantId) return resp(400, { error: 'restaurantId required' });
+      const delta = action === 'leave' ? -1 : 1;
+      await db.collection('restaurants').updateOne(
+        { $or: [{ _id: restaurantId }, { _id: { $oid: restaurantId } }] },
+        { $inc: { liveViewers: delta } }
+      );
+      return resp(200, { ok: true });
+    }
+
+    // ── POST /push/token ─────────────────────────────────────────────────────
+    // Store an Expo push token so we can send native push notifications
+    if (method === 'POST' && path.endsWith('/push/token')) {
+      const body = parseBody(event);
+      const { token, platform } = body;
+      if (!token || !token.startsWith('ExponentPushToken')) return resp(400, { error: 'valid Expo push token required' });
+      const role = claims?.['custom:role'] || 'customer';
+      await db.collection('expoPushTokens').updateOne(
+        { token },
+        { $set: { token, platform: platform || 'unknown', userId: userId || null, role, updatedAt: new Date() } },
+        { upsert: true }
+      );
+      return resp(200, { ok: true });
+    }
+
+    // ── POST /live/notify-customers ──────────────────────────────────────────
+    // Called by owner app when going live — sends Expo push to all customer tokens
+    if (method === 'POST' && path.endsWith('/live/notify-customers')) {
+      const body = parseBody(event);
+      const { restaurantName, message } = body;
+      // Fetch all customer Expo push tokens
+      const tokens = await db.collection('expoPushTokens')
+        .find({ role: { $ne: 'owner' } })
+        .toArray();
+      if (tokens.length === 0) return resp(200, { ok: true, sent: 0 });
+
+      const pushTitle = `🔴 ${restaurantName || 'A restaurant'} is LIVE!`;
+      const pushBody  = message || `${restaurantName} just went live. Tap to watch and see today's specials!`;
+
+      // Expo Push API accepts batches of up to 100
+      const chunks = [];
+      for (let i = 0; i < tokens.length; i += 100) chunks.push(tokens.slice(i, i + 100));
+
+      let sent = 0;
+      for (const chunk of chunks) {
+        const messages = chunk.map(t => ({
+          to:    t.token,
+          sound: 'default',
+          title: pushTitle,
+          body:  pushBody,
+          data:  { type: 'restaurant_live', restaurantName },
+          badge: 1,
+        }));
+        try {
+          await fetch('https://exp.host/--/api/v2/push/send', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'Accept-Encoding': 'gzip, deflate' },
+            body: JSON.stringify(messages),
+          });
+          sent += chunk.length;
+        } catch (pushErr) {
+          console.error('Expo push batch error:', pushErr.message);
+        }
+      }
+      return resp(200, { ok: true, sent });
     }
 
     // ── POST /push/subscribe ─────────────────────────────────────────────────
