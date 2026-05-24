@@ -1,0 +1,90 @@
+name: Deploy — Lambda + Webapp
+
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+jobs:
+  deploy-lambda:
+    name: Deploy Lambda API
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install Lambda dependencies
+        working-directory: lambda/api
+        run: npm install --omit=dev
+
+      - name: Zip Lambda
+        working-directory: lambda/api
+        run: zip -r ../../lambda-deploy.zip . -x "*.zip"
+
+      - name: Deploy to AWS Lambda
+        env:
+          AWS_ACCESS_KEY_ID:     ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION:    us-east-1
+        run: |
+          aws lambda update-function-code \
+            --function-name livehushhapi-prod \
+            --zip-file fileb://lambda-deploy.zip \
+            --query "LastModified" \
+            --output text
+          echo "Lambda deployed!"
+
+  deploy-webapp:
+    name: Deploy Webapp to Amplify
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build site zip (all web files)
+        run: |
+          zip -r site-deploy.zip \
+            *.html \
+            manifest.json \
+            manifest.webmanifest \
+            service-worker.js \
+            sw.js \
+            assets/ \
+            css/ \
+            js/ \
+            icons/ \
+            -x "*.DS_Store" "node_modules/*"
+          echo "Zip size: $(du -sh site-deploy.zip | cut -f1)"
+
+      - name: Deploy to AWS Amplify
+        env:
+          AWS_ACCESS_KEY_ID:     ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION:    us-east-1
+        run: |
+          # Create a deployment and get the upload URL
+          RESULT=$(aws amplify create-deployment \
+            --app-id d3iamhxu58jkl0 \
+            --branch-name prod \
+            --output json)
+
+          JOB_ID=$(echo $RESULT | python3 -c "import sys,json; print(json.load(sys.stdin)['jobId'])")
+          UPLOAD_URL=$(echo $RESULT | python3 -c "import sys,json; print(json.load(sys.stdin)['zipUploadUrl'])")
+
+          echo "Job ID: $JOB_ID"
+
+          # Upload the zip
+          curl -T site-deploy.zip "$UPLOAD_URL" -s -o /dev/null -w "Upload status: %{http_code}\n"
+
+          # Start the deployment
+          aws amplify start-deployment \
+            --app-id d3iamhxu58jkl0 \
+            --branch-name prod \
+            --job-id "$JOB_ID" \
+            --query "jobSummary.status" \
+            --output text
+
+          echo "Webapp deployed to livehushh.com!"
