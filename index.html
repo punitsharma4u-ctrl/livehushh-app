@@ -796,6 +796,57 @@
   </div>
 </footer>
 
+<!-- Data Deletion page — served via SPA catch-all when /data-deletion is visited -->
+<script>
+(function() {
+  const p = window.location.pathname.replace(/\/$/, '');
+  if (p === '/data-deletion' || p === '/data-deletion.html') {
+    document.title = 'Data Deletion Request — LiveHushh';
+    document.body.innerHTML = `
+      <nav class="nav" style="position:sticky;top:0;z-index:50">
+        <a href="/" class="logo">Live<span>Hushh</span></a>
+        <a href="/" class="btn btn-ghost" style="margin-left:auto">← Back to Home</a>
+      </nav>
+      <div style="max-width:640px;margin:80px auto;padding:0 24px 80px">
+        <div style="display:inline-flex;align-items:center;gap:8px;background:rgba(232,84,10,0.12);border:1px solid rgba(232,84,10,0.3);border-radius:20px;padding:6px 16px;font-size:.8rem;font-weight:700;color:#E8540A;margin-bottom:24px">🔒 Privacy &amp; Data</div>
+        <h1 style="font-size:clamp(1.8rem,4vw,2.6rem);font-weight:900;line-height:1.15;margin-bottom:16px">Data Deletion Request</h1>
+        <p style="color:var(--text2);line-height:1.75;margin-bottom:20px">You have the right to request deletion of your LiveHushh account and all associated personal data. We will process your request within <strong style="color:var(--text)">30 days</strong> and confirm via email once complete.</p>
+        <div style="background:var(--card);border:1.5px solid var(--border2);border-radius:20px;padding:32px;margin:36px 0">
+          <h2 style="font-size:1.1rem;font-weight:800;margin-bottom:20px">📧 How to Request Deletion</h2>
+          <div style="display:flex;flex-direction:column;gap:16px;margin-bottom:28px">
+            <div style="display:flex;gap:16px;align-items:flex-start">
+              <div style="width:32px;height:32px;border-radius:50%;background:rgba(232,84,10,0.15);border:1.5px solid rgba(232,84,10,0.35);color:#E8540A;font-weight:800;font-size:.85rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px">1</div>
+              <div style="font-size:.95rem;color:var(--text2);line-height:1.6">Click the button below to email our privacy team at <strong style="color:var(--text)">info@livehushh.com</strong></div>
+            </div>
+            <div style="display:flex;gap:16px;align-items:flex-start">
+              <div style="width:32px;height:32px;border-radius:50%;background:rgba(232,84,10,0.15);border:1.5px solid rgba(232,84,10,0.35);color:#E8540A;font-weight:800;font-size:.85rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px">2</div>
+              <div style="font-size:.95rem;color:var(--text2);line-height:1.6">Include your <strong style="color:var(--text)">registered email address</strong> and what you'd like deleted (account, order history, or all data)</div>
+            </div>
+            <div style="display:flex;gap:16px;align-items:flex-start">
+              <div style="width:32px;height:32px;border-radius:50%;background:rgba(232,84,10,0.15);border:1.5px solid rgba(232,84,10,0.35);color:#E8540A;font-weight:800;font-size:.85rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px">3</div>
+              <div style="font-size:.95rem;color:var(--text2);line-height:1.6">We'll confirm within <strong style="color:var(--text)">2 business days</strong> and complete deletion within <strong style="color:var(--text)">30 days</strong></div>
+            </div>
+          </div>
+          <a style="display:inline-flex;align-items:center;gap:10px;background:#E8540A;color:#fff;font-weight:800;font-size:1rem;padding:16px 32px;border-radius:14px;text-decoration:none" href="mailto:info@livehushh.com?subject=Data%20Deletion%20Request&body=Hi%2C%0A%0AI%20would%20like%20to%20request%20deletion%20of%20my%20LiveHushh%20data.%0A%0ARegistered%20email%3A%20%5Byour%20email%20here%5D%0ADelete%3A%20%5BAccount%20%2F%20Order%20history%20%2F%20All%20data%5D%0A%0AThank%20you.">
+            ✉ Send Deletion Request
+          </a>
+          <p style="margin-top:20px;font-size:.82rem;color:var(--text2)">Or email us directly at <a href="mailto:info@livehushh.com" style="color:#E8540A;text-decoration:none">info@livehushh.com</a> with subject <em>"Data Deletion Request"</em></p>
+        </div>
+        <hr style="border:none;border-top:1px solid var(--border2);margin:32px 0">
+        <h2 style="font-size:1.1rem;font-weight:800;margin-bottom:16px">What data can be deleted?</h2>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:28px">
+          <div style="background:rgba(255,255,255,0.04);border:1px solid var(--border2);border-radius:12px;padding:14px 16px"><div style="font-size:.75rem;color:var(--text2);margin-bottom:4px">Account &amp; Profile</div><div style="font-size:.9rem;font-weight:700">✓ Deletable</div></div>
+          <div style="background:rgba(255,255,255,0.04);border:1px solid var(--border2);border-radius:12px;padding:14px 16px"><div style="font-size:.75rem;color:var(--text2);margin-bottom:4px">Order History</div><div style="font-size:.9rem;font-weight:700">✓ Deletable</div></div>
+          <div style="background:rgba(255,255,255,0.04);border:1px solid var(--border2);border-radius:12px;padding:14px 16px"><div style="font-size:.75rem;color:var(--text2);margin-bottom:4px">Payment Records</div><div style="font-size:.9rem;font-weight:700">✓ Deletable</div></div>
+          <div style="background:rgba(255,255,255,0.04);border:1px solid var(--border2);border-radius:12px;padding:14px 16px"><div style="font-size:.75rem;color:var(--text2);margin-bottom:4px">All Personal Data</div><div style="font-size:.9rem;font-weight:700">✓ Deletable</div></div>
+        </div>
+        <p style="font-size:.85rem;color:var(--text2);line-height:1.7">Some transaction records may be retained for legal or tax compliance purposes for up to 7 years as required by law. All other personal data will be permanently deleted.</p>
+      </div>
+      <footer class="footer"><div class="footer-inner"><div class="footer-brand"><div class="logo">Live<span>Hushh</span></div><p style="color:var(--text2);font-size:.85rem;margin-top:8px">© 2025 LiveHushh. All rights reserved.</p></div><div style="display:flex;gap:24px;font-size:.85rem"><a href="/contact.html" style="color:var(--text2);text-decoration:none">Contact</a><a href="mailto:info@livehushh.com" style="color:var(--text2);text-decoration:none">info@livehushh.com</a></div></div></footer>`;
+  }
+})();
+</script>
+
 <script src="/js/data.js?v=2"></script>
 <script>
 const nav = document.getElementById('nav');
