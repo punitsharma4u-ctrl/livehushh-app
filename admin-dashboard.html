@@ -578,6 +578,7 @@ body{background:var(--bg);display:flex;min-height:100vh;overflow-x:hidden}
 
 <div id="toast-container" style="position:fixed;bottom:24px;right:24px;z-index:9999;display:flex;flex-direction:column;gap:8px"></div>
 
+<script src="/js/aws-config.js?v=2"></script>
 <script src="/js/data.js?v=2"></script>
 <script>
 function showPage(name, el) {
@@ -725,15 +726,13 @@ async function initOverview() {
     kpiEls[4].textContent = (stats.ordersThisMonth || 0).toLocaleString();
   }
 
-  // Revenue bar chart — use real data if available, else placeholder months
-  const months = ['Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec','Jan','Feb'];
-  const revenue = [42,51,58,64,70,78,84,95,108,128,154,184];
-  const maxR = Math.max(...revenue);
-  document.getElementById('overviewChart').innerHTML = revenue.map((r,i)=>`
-    <div class="bar-wrap">
-      <div class="bar" style="height:${(r/maxR)*100}px;background:${i<9?'var(--grad)':'var(--grad-cyan)'};opacity:${i<9?1:.6}"></div>
-      <div class="bar-label">${months[i]}</div>
-    </div>`).join('');
+  // Revenue — show real MRR from stats
+  const mrr = stats ? (stats.mrr || 0) : 0;
+  document.getElementById('overviewChart').innerHTML = `
+    <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:90px;width:100%;gap:4px">
+      <div style="font-size:2rem;font-weight:800;background:var(--grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent">$${mrr.toLocaleString()}</div>
+      <div style="font-size:.75rem;color:var(--text2)">Monthly Recurring Revenue</div>
+    </div>`;
   document.getElementById('overviewLabels').innerHTML = '';
 
   // Real plan distribution
@@ -1092,24 +1091,21 @@ async function initAnalytics() {
     </div>`).join('')
   : '<div class="caption" style="padding:20px 0">No order data yet.</div>';
 
-  // DAU / live session charts — placeholder (no per-day aggregation API yet)
-  const dau = [84,92,88,96,104,98,112,118,108,124,132,128,142,156];
-  const maxD = Math.max(...dau);
-  document.getElementById('dauChart').innerHTML = dau.map((v,i)=>`
-    <div class="bar-wrap">
-      <div class="bar" style="height:${(v/maxD)*80}px;background:var(--grad)"></div>
-      <div class="bar-label">${i+1}</div>
-    </div>`).join('');
+  // Active users (real from stats)
+  const totalUsers = stats ? (stats.totalUsers || 0) : 0;
+  document.getElementById('dauChart').innerHTML = `
+    <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:80px;width:100%;gap:4px">
+      <div style="font-size:1.8rem;font-weight:800;color:var(--text)">${totalUsers.toLocaleString()}</div>
+      <div style="font-size:.72rem;color:var(--text2)">Total Registered Users</div>
+    </div>`;
 
-  // Live sessions per day — use total session counts from restStats if available
+  // Live sessions (real from stats)
   const totalSessions = restStats.reduce((s,r)=>s+(r.liveSessionCount||0),0);
-  const sess = [220,280,260,310,340,290,380,420,360,440,480,450,520,totalSessions||560];
-  const maxS = Math.max(...sess);
-  document.getElementById('sessChart').innerHTML = sess.map((v,i)=>`
-    <div class="bar-wrap">
-      <div class="bar" style="height:${(v/maxS)*80}px;background:var(--grad-cyan)${i===sess.length-1?';opacity:1':''}" title="${i===sess.length-1?'Today (actual)':''}"></div>
-      <div class="bar-label">${i+1}</div>
-    </div>`).join('');
+  document.getElementById('sessChart').innerHTML = `
+    <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:80px;width:100%;gap:4px">
+      <div style="font-size:1.8rem;font-weight:800;color:var(--cyan)">${totalSessions.toLocaleString()}</div>
+      <div style="font-size:.72rem;color:var(--text2)">Total Live Sessions</div>
+    </div>`;
 }
 
 /* ── VIDEO MANAGEMENT ── */
