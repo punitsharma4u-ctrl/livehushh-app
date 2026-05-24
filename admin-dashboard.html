@@ -265,10 +265,18 @@ body{background:var(--bg);display:flex;min-height:100vh;overflow-x:hidden}
       <div class="card-box" style="padding:0;overflow:hidden">
         <table class="data-table" id="restaurantTable">
           <thead>
-            <tr><th>#</th><th>Restaurant</th><th>City</th><th>Plan</th><th>Live Sessions</th><th>MRR</th><th>Status</th><th>Actions</th></tr>
+            <tr><th>#</th><th>Restaurant</th><th>City</th><th>Plan</th><th>Orders</th><th>Order Types</th><th>Live Sessions</th><th>Revenue</th><th>Status</th><th>Actions</th></tr>
           </thead>
           <tbody id="restaurantTbody"></tbody>
         </table>
+      </div>
+
+      <!-- Restaurant Detail Modal -->
+      <div id="restDetailModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);backdrop-filter:blur(4px);z-index:300;align-items:center;justify-content:center;padding:20px">
+        <div style="background:var(--bg2);border:1px solid var(--border2);border-radius:20px;padding:28px;max-width:560px;width:100%;position:relative;max-height:80vh;overflow-y:auto">
+          <button onclick="document.getElementById('restDetailModal').style.display='none'" style="position:absolute;top:14px;right:14px;background:none;border:none;color:var(--text2);font-size:1.1rem;cursor:pointer">✕</button>
+          <div id="restDetailContent"></div>
+        </div>
       </div>
     </div>
 
@@ -698,23 +706,26 @@ function showToast(msg, type='info') {
 
 /* ── OVERVIEW ── */
 async function initOverview() {
-  // Fetch real stats from API
-  let stats = null;
-  try { stats = await adminApi('GET', '/admin/stats'); } catch(e) {}
+  // Fetch real stats and restaurant detail stats in parallel
+  let stats = null, restStats = [];
+  try {
+    [stats, restStats] = await Promise.all([
+      adminApi('GET', '/admin/stats').catch(() => null),
+      adminApi('GET', '/admin/restaurant-stats').catch(() => []),
+    ]);
+  } catch(e) {}
 
   // Update KPI tiles with real data
-  if (stats) {
-    const kpiMap = {
-      0: stats.totalRestaurants,
-      1: '$' + stats.mrr.toLocaleString(),
-      2: stats.totalUsers,
-      3: stats.liveSessions,
-    };
-    document.querySelectorAll('#page-overview .kpi-val').forEach((el, i) => {
-      if (kpiMap[i] !== undefined) el.textContent = kpiMap[i];
-    });
+  const kpiEls = document.querySelectorAll('#page-overview .kpi-val');
+  if (stats && kpiEls.length >= 5) {
+    kpiEls[0].textContent = stats.totalRestaurants ?? '—';
+    kpiEls[1].textContent = '$' + (stats.mrr || 0).toLocaleString();
+    kpiEls[2].textContent = (stats.totalUsers || 0).toLocaleString();
+    kpiEls[3].textContent = stats.liveSessions ?? '—';
+    kpiEls[4].textContent = (stats.ordersThisMonth || 0).toLocaleString();
   }
 
+  // Revenue bar chart — use real data if available, else placeholder months
   const months = ['Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec','Jan','Feb'];
   const revenue = [42,51,58,64,70,78,84,95,108,128,154,184];
   const maxR = Math.max(...revenue);
@@ -743,79 +754,168 @@ async function initOverview() {
     </div>`;
   }).join('');
 
-  // Recent subscriptions as activity feed
+  // Recent subscriptions as activity feed (from admin/subscriptions)
   let subs = [];
   try { subs = await adminApi('GET', '/admin/subscriptions'); } catch(e){}
   const stColors = {active:'var(--green)', trial:'var(--gold)', expired:'var(--red)'};
   const actHtml = subs.slice(0,6).map(s=>`
     <div class="activity-item">
       <div class="act-dot" style="background:${stColors[s.status]||'var(--text2)'}"></div>
-      <div><div class="act-text">${s.name} — ${s.plan} plan (${s.status})</div><div class="act-time">${s.email}</div></div>
+      <div>
+        <div class="act-text">${escH(s.name)} — ${s.plan} plan (${s.status})</div>
+        <div class="act-time">${escH(s.email||'')}</div>
+      </div>
     </div>`).join('') || '<div class="caption" style="padding:16px 0">No subscription activity yet.</div>';
   document.getElementById('activityFeed').innerHTML = actHtml;
 
-  // Real restaurants as top performers
-  let rests = [];
-  try { rests = await adminApi('GET', '/restaurants'); } catch(e) {}
+  // Top performers — sorted by total orders from restaurant-stats
   const colors = ['var(--purple-l)','var(--pink)','var(--cyan)','var(--gold)','var(--green)'];
-  document.getElementById('topPerformers').innerHTML = rests.slice(0,5).map((r,i)=>`
+  const sorted = [...restStats].sort((a,b) => (b.totalOrders||0) - (a.totalOrders||0));
+  document.getElementById('topPerformers').innerHTML = sorted.slice(0,5).map((r,i)=>`
     <div style="display:flex;align-items:center;gap:10px">
       <div style="width:24px;height:24px;border-radius:6px;background:rgba(255,255,255,0.06);display:flex;align-items:center;justify-content:center;font-size:.72rem;font-weight:700;color:var(--text2)">${i+1}</div>
-      <div style="flex:1"><div style="font-size:.82rem;font-weight:600;color:${colors[i]}">${r.name}</div><div class="caption">${r.city||'—'} · ${r.isLive?'🔴 Live':'offline'}</div></div>
-      <div style="font-weight:700;font-size:.85rem;color:var(--text2)">${r.planStatus||'trial'}</div>
+      <div style="flex:1">
+        <div style="font-size:.82rem;font-weight:600;color:${colors[i]}">${escH(r.name)}</div>
+        <div class="caption">${escH(r.city||'—')} · ${r.isLive?'🔴 Live':'offline'} · ${r.totalOrders||0} orders</div>
+      </div>
+      <div style="font-weight:700;font-size:.85rem;color:var(--text2)">${(r.plan||'trial').charAt(0).toUpperCase()+(r.plan||'trial').slice(1)}</div>
     </div>`).join('') || '<div class="caption">No restaurants yet.</div>';
 }
 
 /* ── RESTAURANTS ── */
-let _cachedRestaurants = [];
+let _cachedRestaurantStats = [];
 async function renderRestaurants(filter='') {
   const tbody = document.getElementById('restaurantTbody');
-  if (!_cachedRestaurants.length) {
-    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:24px;color:var(--text2)">⏳ Loading restaurants…</td></tr>';
+  if (!_cachedRestaurantStats.length) {
+    tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;padding:24px;color:var(--text2)">⏳ Loading restaurants…</td></tr>';
     try {
-      _cachedRestaurants = await adminApi('GET', '/restaurants');
+      // Try detailed stats endpoint first; fall back to basic list
+      try {
+        _cachedRestaurantStats = await adminApi('GET', '/admin/restaurant-stats');
+      } catch(e) {
+        const basic = await adminApi('GET', '/restaurants');
+        _cachedRestaurantStats = basic.map(r => ({
+          id: r._id || r.id,
+          name: r.name, city: r.city, cuisine: r.cuisine || r.cuisine_type,
+          plan: r.activePlan || r.planStatus || 'trial',
+          isLive: r.isLive || false,
+          joinedAt: r.updatedAt,
+          totalOrders: 0, revenue: 0,
+          orderTypes: { 'dine-in':0, pickup:0, delivery:0 },
+          liveSessionCount: 0, totalViewers: 0,
+          ownerEmail: r.ownerEmail || '—',
+        }));
+      }
     } catch(e) {
-      tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:24px;color:#EF4444">Failed to load: ${e.message}</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="10" style="text-align:center;padding:24px;color:#EF4444">Failed to load: ${e.message}</td></tr>`;
       return;
     }
   }
-  const PLAN_MRR = { starter:'$99', pro:'$199', enterprise:'$499' };
-  const rows = filter
-    ? _cachedRestaurants.filter(r =>
-        (r.name||'').toLowerCase().includes(filter.toLowerCase()) ||
-        (r.city||'').toLowerCase().includes(filter.toLowerCase()))
-    : _cachedRestaurants;
 
-  const planCol = {Starter:'pill-purple', starter:'pill-purple', Pro:'pill-cyan', pro:'pill-cyan', Enterprise:'pill-gold', enterprise:'pill-gold'};
-  tbody.innerHTML = rows.length ? rows.map((r,i)=>{
-    const plan = r.activePlan || r.planStatus || 'trial';
+  const rows = filter
+    ? _cachedRestaurantStats.filter(r =>
+        (r.name||'').toLowerCase().includes(filter.toLowerCase()) ||
+        (r.city||'').toLowerCase().includes(filter.toLowerCase()) ||
+        (r.cuisine||'').toLowerCase().includes(filter.toLowerCase()) ||
+        (r.plan||'').toLowerCase().includes(filter.toLowerCase()))
+    : _cachedRestaurantStats;
+
+  const planCol = { starter:'pill-purple', pro:'pill-cyan', enterprise:'pill-gold', trial:'pill-gold' };
+  tbody.innerHTML = rows.length ? rows.map((r,i) => {
+    const plan = (r.plan || 'trial').toLowerCase();
     const planLabel = plan.charAt(0).toUpperCase() + plan.slice(1);
-    const mrr = PLAN_MRR[plan] || (r.planStatus === 'trial' ? 'Trial' : '—');
-    const status = r.planStatus || 'unknown';
-    const sCol = status==='active'?'pill-green':status==='trial'?'pill-gold':'pill-red';
+    const sCol = plan==='trial'?'pill-gold':plan==='expired'||plan==='cancelled'?'pill-red':'pill-green';
+    const statusLabel = plan==='trial'?'Trial':plan==='expired'?'Expired':plan==='cancelled'?'Cancelled':'Active';
+    const ot = r.orderTypes || {};
+    const orderTypeStr = [
+      ot['dine-in'] ? `🍽 ${ot['dine-in']}` : '',
+      ot.pickup ? `🚗 ${ot.pickup}` : '',
+      ot.delivery ? `🛵 ${ot.delivery}` : '',
+    ].filter(Boolean).join(' ') || '—';
+    const joined = r.joinedAt ? new Date(r.joinedAt).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : '—';
+    const liveLabel = r.isLive
+      ? '<span style="color:var(--pink)">🔴 Live</span>'
+      : `${r.liveSessionCount||0} sessions`;
     return `<tr>
       <td style="color:var(--text2)">${i+1}</td>
-      <td><span style="font-weight:600">${r.name}</span><br><span class="caption">${r.cuisine||''}</span></td>
-      <td>${r.city||'—'}</td>
+      <td>
+        <span style="font-weight:600">${escH(r.name||'—')}</span><br>
+        <span class="caption">${escH(r.cuisine||'')} · joined ${joined}</span>
+      </td>
+      <td>${escH(r.city||'—')}</td>
       <td><span class="pill ${planCol[plan]||'pill-purple'}" style="font-size:.7rem">${planLabel}</span></td>
-      <td>${r.isLive?'<span style="color:var(--pink)">🔴 Live</span>':'—'}</td>
-      <td style="font-weight:600;color:var(--gold)">${mrr}</td>
-      <td><span class="pill ${sCol}" style="font-size:.7rem">${status}</span></td>
-      <td><button class="btn btn-secondary btn-sm" onclick="APP.showToast('${r.name}','info')">View</button></td>
+      <td style="font-weight:600">${r.totalOrders||0}</td>
+      <td class="caption" style="font-size:.75rem">${orderTypeStr}</td>
+      <td>${liveLabel}<br><span class="caption">${r.totalViewers||0} viewers</span></td>
+      <td style="font-weight:600;color:var(--gold)">${r.revenue ? '$'+r.revenue.toLocaleString() : '—'}</td>
+      <td><span class="pill ${sCol}" style="font-size:.7rem">${statusLabel}</span></td>
+      <td>
+        <button class="btn btn-secondary btn-sm" onclick="showRestDetail(${i})">Details</button>
+      </td>
     </tr>`;
-  }).join('') : '<tr><td colspan="8" style="text-align:center;padding:24px;color:var(--text2)">No restaurants found.</td></tr>';
+  }).join('') : '<tr><td colspan="10" style="text-align:center;padding:24px;color:var(--text2)">No restaurants found.</td></tr>';
 
   // Update sidebar badge with real count
-  document.querySelector('#page-restaurants .pill-cyan')?.setAttribute('data-count', rows.length);
   document.querySelectorAll('.nav-item').forEach(n=>{
     if (n.textContent.includes('Restaurants')) {
       const pill = n.querySelector('.pill');
-      if (pill) pill.textContent = _cachedRestaurants.length;
+      if (pill) pill.textContent = _cachedRestaurantStats.length;
     }
   });
 }
+
+function showRestDetail(idx) {
+  const r = _cachedRestaurantStats[idx];
+  if (!r) return;
+  const ot = r.orderTypes || {};
+  const total = r.totalOrders || 0;
+  const pct = (n) => total ? Math.round(n/total*100) : 0;
+  const joined = r.joinedAt ? new Date(r.joinedAt).toLocaleString('en-US',{month:'long',day:'numeric',year:'numeric',hour:'2-digit',minute:'2-digit'}) : '—';
+  document.getElementById('restDetailContent').innerHTML = `
+    <div style="margin-bottom:18px">
+      <div style="font-size:1.1rem;font-weight:800;margin-bottom:4px">${escH(r.name)}</div>
+      <div class="caption">${escH(r.cuisine||'')} · ${escH(r.city||'')} · ${escH(r.ownerEmail)}</div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px">
+      <div style="background:rgba(255,255,255,0.04);border-radius:10px;padding:14px">
+        <div class="caption" style="margin-bottom:4px">Total Orders</div>
+        <div style="font-size:1.4rem;font-weight:800;color:var(--cyan)">${total}</div>
+      </div>
+      <div style="background:rgba(255,255,255,0.04);border-radius:10px;padding:14px">
+        <div class="caption" style="margin-bottom:4px">Revenue Generated</div>
+        <div style="font-size:1.4rem;font-weight:800;color:var(--gold)">${r.revenue ? '$'+r.revenue.toLocaleString() : '—'}</div>
+      </div>
+      <div style="background:rgba(255,255,255,0.04);border-radius:10px;padding:14px">
+        <div class="caption" style="margin-bottom:4px">Live Sessions</div>
+        <div style="font-size:1.4rem;font-weight:800;color:var(--pink)">${r.liveSessionCount||0}</div>
+      </div>
+      <div style="background:rgba(255,255,255,0.04);border-radius:10px;padding:14px">
+        <div class="caption" style="margin-bottom:4px">Total Viewers</div>
+        <div style="font-size:1.4rem;font-weight:800;color:var(--purple-l)">${r.totalViewers||0}</div>
+      </div>
+    </div>
+    <div style="margin-bottom:16px">
+      <div style="font-weight:700;font-size:.88rem;margin-bottom:10px">Order Type Breakdown</div>
+      ${[
+        { label: '🍽 Dine-in', key: 'dine-in', color: 'var(--grad)' },
+        { label: '🚗 Pickup',  key: 'pickup',  color: 'var(--grad-gold)' },
+        { label: '🛵 Delivery',key: 'delivery',color: 'var(--grad-cyan)' },
+      ].map(t => `
+        <div class="prog-item">
+          <div class="prog-header"><span>${t.label}</span><span style="color:var(--text2)">${ot[t.key]||0} orders · ${pct(ot[t.key]||0)}%</span></div>
+          <div class="prog-bar"><div class="prog-fill" style="width:${Math.max(pct(ot[t.key]||0),2)}%;background:${t.color}"></div></div>
+        </div>`).join('')}
+    </div>
+    <div style="font-size:.78rem;color:var(--text2);border-top:1px solid var(--border2);padding-top:10px">
+      <div>Plan: <strong style="color:var(--text)">${(r.plan||'trial').charAt(0).toUpperCase()+(r.plan||'trial').slice(1)}</strong></div>
+      <div style="margin-top:4px">Joined: ${joined}</div>
+      <div style="margin-top:4px">Status: ${r.isLive ? '<span style="color:var(--pink)">🔴 Currently Live</span>' : 'Offline'}</div>
+    </div>`;
+  document.getElementById('restDetailModal').style.display = 'flex';
+}
+
 function filterRestaurantTable(v) { renderRestaurants(v); }
-function addRestaurant(e) { e.preventDefault(); document.getElementById('addRestModal').classList.add('hidden'); APP.showToast('Restaurant added successfully','success'); _cachedRestaurants=[]; renderRestaurants(); }
+function addRestaurant(e) { e.preventDefault(); document.getElementById('addRestModal').classList.add('hidden'); APP.showToast('Restaurant added successfully','success'); _cachedRestaurantStats=[]; renderRestaurants(); }
 
 /* ── SUBSCRIPTIONS ── */
 async function renderSubscriptions() {
@@ -953,34 +1053,46 @@ function initForecast() {
 }
 
 /* ── ANALYTICS ── */
-function initAnalytics() {
-  const cities = [
-    {name:'Toronto',users:'320K',pct:100,color:'var(--grad)'},
-    {name:'Vancouver',users:'248K',pct:77,color:'var(--grad-r)'},
-    {name:'Calgary',users:'196K',pct:61,color:'var(--grad-cyan)'},
-    {name:'Ottawa',users:'142K',pct:44,color:'var(--grad-gold)'},
-    {name:'Montreal',users:'118K',pct:37,color:'rgba(16,185,129,.8)'},
-    {name:'Edmonton',users:'84K',pct:26,color:'rgba(236,72,153,.8)'},
-  ];
-  document.getElementById('cityData').innerHTML = cities.map(c=>`
-    <div class="prog-item">
-      <div class="prog-header"><span>${c.name}</span><span style="color:var(--text2)">${c.users} users</span></div>
-      <div class="prog-bar"><div class="prog-fill" style="width:${c.pct}%;background:${c.color}"></div></div>
-    </div>`).join('');
+async function initAnalytics() {
+  // Fetch restaurant stats for real city & cuisine breakdowns
+  let restStats = [];
+  try { restStats = await adminApi('GET', '/admin/restaurant-stats'); } catch(e) {}
 
-  const cuisines = [
-    {name:'North Indian',orders:'18.4K',pct:100,color:'var(--grad)'},
-    {name:'Chinese',orders:'12.1K',pct:66,color:'var(--grad-r)'},
-    {name:'South Indian',orders:'8.6K',pct:47,color:'var(--grad-gold)'},
-    {name:'Italian',orders:'6.2K',pct:34,color:'var(--grad-cyan)'},
-    {name:'Continental',orders:'3.3K',pct:18,color:'rgba(16,185,129,.8)'},
-  ];
-  document.getElementById('cuisineData').innerHTML = cuisines.map(c=>`
+  // City breakdown — count restaurants and orders per city
+  const cityMap = {};
+  restStats.forEach(r => {
+    const c = r.city || 'Unknown';
+    if (!cityMap[c]) cityMap[c] = { restaurants: 0, orders: 0 };
+    cityMap[c].restaurants++;
+    cityMap[c].orders += r.totalOrders || 0;
+  });
+  const cityArr = Object.entries(cityMap).sort((a,b)=>b[1].orders-a[1].orders).slice(0,6);
+  const maxCO = Math.max(1, ...cityArr.map(([,v])=>v.orders));
+  const cityColors = ['var(--grad)','var(--grad-r)','var(--grad-cyan)','var(--grad-gold)','rgba(16,185,129,.8)','rgba(236,72,153,.8)'];
+  document.getElementById('cityData').innerHTML = cityArr.length ? cityArr.map(([name,v],i)=>`
     <div class="prog-item">
-      <div class="prog-header"><span>${c.name}</span><span style="color:var(--text2)">${c.orders} orders</span></div>
-      <div class="prog-bar"><div class="prog-fill" style="width:${c.pct}%;background:${c.color}"></div></div>
-    </div>`).join('');
+      <div class="prog-header"><span>${escH(name)}</span><span style="color:var(--text2)">${v.restaurants} resto · ${v.orders} orders</span></div>
+      <div class="prog-bar"><div class="prog-fill" style="width:${Math.max(Math.round(v.orders/maxCO*100),2)}%;background:${cityColors[i]}"></div></div>
+    </div>`).join('')
+  : '<div class="caption" style="padding:20px 0">No restaurant data yet.</div>';
 
+  // Cuisine breakdown — orders by cuisine
+  const cuisineMap = {};
+  restStats.forEach(r => {
+    const c = r.cuisine || 'Other';
+    if (!cuisineMap[c]) cuisineMap[c] = 0;
+    cuisineMap[c] += r.totalOrders || 0;
+  });
+  const cuisineArr = Object.entries(cuisineMap).sort((a,b)=>b[1]-a[1]).slice(0,6);
+  const maxCuO = Math.max(1, ...cuisineArr.map(([,v])=>v));
+  document.getElementById('cuisineData').innerHTML = cuisineArr.length ? cuisineArr.map(([name,count],i)=>`
+    <div class="prog-item">
+      <div class="prog-header"><span>${escH(name)}</span><span style="color:var(--text2)">${count} orders</span></div>
+      <div class="prog-bar"><div class="prog-fill" style="width:${Math.max(Math.round(count/maxCuO*100),2)}%;background:${cityColors[i]}"></div></div>
+    </div>`).join('')
+  : '<div class="caption" style="padding:20px 0">No order data yet.</div>';
+
+  // DAU / live session charts — placeholder (no per-day aggregation API yet)
   const dau = [84,92,88,96,104,98,112,118,108,124,132,128,142,156];
   const maxD = Math.max(...dau);
   document.getElementById('dauChart').innerHTML = dau.map((v,i)=>`
@@ -989,11 +1101,13 @@ function initAnalytics() {
       <div class="bar-label">${i+1}</div>
     </div>`).join('');
 
-  const sess = [220,280,260,310,340,290,380,420,360,440,480,450,520,560];
+  // Live sessions per day — use total session counts from restStats if available
+  const totalSessions = restStats.reduce((s,r)=>s+(r.liveSessionCount||0),0);
+  const sess = [220,280,260,310,340,290,380,420,360,440,480,450,520,totalSessions||560];
   const maxS = Math.max(...sess);
   document.getElementById('sessChart').innerHTML = sess.map((v,i)=>`
     <div class="bar-wrap">
-      <div class="bar" style="height:${(v/maxS)*80}px;background:var(--grad-cyan)"></div>
+      <div class="bar" style="height:${(v/maxS)*80}px;background:var(--grad-cyan)${i===sess.length-1?';opacity:1':''}" title="${i===sess.length-1?'Today (actual)':''}"></div>
       <div class="bar-label">${i+1}</div>
     </div>`).join('');
 }
@@ -1081,74 +1195,69 @@ function escH(s) {
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
-/* ── PENDING APPROVALS ──────────────────────────────────────────────────────── */
-function getPendingOwners() {
-  const users = JSON.parse(localStorage.getItem('lh_shared_users') || '[]');
-  return users.filter(u => u.role === 'Owner' && u.status === 'pending');
-}
-
-function renderPendingApprovals() {
-  const pending = getPendingOwners();
-  // Update badge
-  document.getElementById('pendingBadge').textContent = pending.length;
-
+/* ── PENDING APPROVALS (real MongoDB data) ──────────────────────────────────── */
+async function renderPendingApprovals() {
   const container = document.getElementById('pendingApprovalsList');
+  const badge = document.getElementById('pendingBadge');
   if (!container) return;
+  container.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text2)">⏳ Loading…</div>';
+
+  let pending = [];
+  try {
+    pending = await adminApi('GET', '/admin/pending');
+  } catch(e) {
+    container.innerHTML = `<div style="text-align:center;padding:40px;color:#EF4444">Failed to load: ${e.message}</div>`;
+    return;
+  }
+
+  if (badge) badge.textContent = pending.length || '';
+
   if (!pending.length) {
     container.innerHTML = '<div style="text-align:center;padding:60px 20px"><div style="font-size:2.5rem;margin-bottom:16px">✅</div><div style="font-weight:700;font-size:1.1rem;margin-bottom:8px">No pending approvals</div><div style="color:var(--text2);font-size:.875rem">All restaurant owners have been reviewed.</div></div>';
     return;
   }
-  container.innerHTML = pending.map((u, i) => `
+
+  container.innerHTML = pending.map(r => {
+    const joined = r.createdAt ? new Date(r.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'recently';
+    return `
     <div style="background:var(--bg-card);border:1px solid rgba(245,158,11,0.3);border-radius:var(--r-xl);padding:20px 24px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px">
       <div>
-        <div style="font-weight:700;font-size:1rem">${escH(u.name)}</div>
-        <div style="font-size:.82rem;color:var(--text2);margin-top:2px">${escH(u.email)}</div>
-        ${u.restaurantName && u.restaurantName !== '—' ? `<div style="font-size:.82rem;margin-top:4px"><span style="color:var(--text3)">Restaurant:</span> <strong>${escH(u.restaurantName)}</strong></div>` : ''}
-        <div style="font-size:.75rem;color:var(--text3);margin-top:4px">Signed up: ${u.joined || 'recently'}</div>
+        <div style="font-weight:700;font-size:1rem">${escH(r.name || '—')}</div>
+        <div style="font-size:.82rem;color:var(--text2);margin-top:2px">${escH(r.ownerEmail)}</div>
+        <div style="font-size:.82rem;margin-top:4px">
+          ${r.cuisine ? `<span style="color:var(--text3)">Cuisine:</span> <strong>${escH(r.cuisine)}</strong> &nbsp;` : ''}
+          ${r.city ? `<span style="color:var(--text3)">City:</span> <strong>${escH(r.city)}</strong>` : ''}
+        </div>
+        ${r.address ? `<div style="font-size:.75rem;color:var(--text3);margin-top:2px">${escH(r.address)}</div>` : ''}
+        <div style="font-size:.75rem;color:var(--text3);margin-top:4px">Signed up: ${joined}</div>
       </div>
       <div style="display:flex;gap:10px;flex-shrink:0">
-        <button class="btn btn-sm" style="background:rgba(16,185,129,0.12);border:1px solid rgba(16,185,129,0.35);color:#10B981" onclick="approveOwner('${escH(u.email)}','${escH(u.name)}')">✓ Approve</button>
-        <button class="btn btn-sm btn-ghost" style="color:var(--red)" onclick="rejectOwner('${escH(u.email)}','${escH(u.name)}')">✕ Reject</button>
+        <button class="btn btn-sm" style="background:rgba(16,185,129,0.12);border:1px solid rgba(16,185,129,0.35);color:#10B981" onclick="approveRestaurant('${escH(r.id)}','${escH(r.name)}')">✓ Approve</button>
+        <button class="btn btn-sm btn-ghost" style="color:var(--red)" onclick="rejectRestaurant('${escH(r.id)}','${escH(r.name)}')">✕ Reject</button>
       </div>
-    </div>`).join('');
+    </div>`;
+  }).join('');
 }
 
-function approveOwner(email, name) {
-  const users = JSON.parse(localStorage.getItem('lh_shared_users') || '[]');
-  const idx = users.findIndex(u => u.email === email);
-  if (idx < 0) { APP.showToast('User not found', 'error'); return; }
-
-  const trialStart = new Date().toISOString();
-  const trialEnd   = new Date(Date.now() + 60 * 24 * 3600 * 1000).toISOString(); // 60 days
-  users[idx] = { ...users[idx], status: 'trial', trialStart, trialEnd };
-  localStorage.setItem('lh_shared_users', JSON.stringify(users));
-
-  // Also update lh_users (local auth store) so owner session picks up new status
+async function approveRestaurant(id, name) {
+  if (!confirm(`Approve ${name}? They will receive a push notification and can start using LiveHushh.`)) return;
   try {
-    const localUsers = JSON.parse(localStorage.getItem('lh_users') || '[]');
-    const li = localUsers.findIndex(u => u.email === email);
-    if (li >= 0) { localUsers[li].approvalStatus = 'trial'; localUsers[li].trialStart = trialStart; localUsers[li].trialEnd = trialEnd; localStorage.setItem('lh_users', JSON.stringify(localUsers)); }
-  } catch(e) {}
-
-  APP.showToast(`✅ ${name} approved — 2-month free trial started`, 'success', 4000);
-  renderPendingApprovals();
-  renderUsers();
+    await adminApi('POST', '/admin/approve', { restaurantId: id, action: 'approve' });
+    showToast(`✅ ${name} approved! Owner notified via push.`, 'success');
+    renderPendingApprovals();
+    _cachedRestaurantStats = [];
+    renderRestaurants();
+  } catch(e) { showToast('Failed: ' + e.message, 'error'); }
 }
 
-function rejectOwner(email, name) {
-  if (!confirm(`Reject application from ${name}? This will remove their pending account.`)) return;
-  const users = JSON.parse(localStorage.getItem('lh_shared_users') || '[]');
-  const filtered = users.filter(u => u.email !== email);
-  localStorage.setItem('lh_shared_users', JSON.stringify(filtered));
-
+async function rejectRestaurant(id, name) {
+  const reason = prompt(`Reason for rejecting ${name} (optional — sent to owner):`);
+  if (reason === null) return; // cancelled
   try {
-    const localUsers = JSON.parse(localStorage.getItem('lh_users') || '[]');
-    localStorage.setItem('lh_users', JSON.stringify(localUsers.filter(u => u.email !== email)));
-  } catch(e) {}
-
-  APP.showToast(`${name}'s application has been rejected.`, 'info');
-  renderPendingApprovals();
-  renderUsers();
+    await adminApi('POST', '/admin/approve', { restaurantId: id, action: 'reject', reason: reason || undefined });
+    showToast(`${name} application rejected.`, 'info');
+    renderPendingApprovals();
+  } catch(e) { showToast('Failed: ' + e.message, 'error'); }
 }
 
 /* ── INIT ── */
@@ -1158,11 +1267,13 @@ loadRealRestaurants();
 renderSubscriptions();
 renderUsers();
 renderVideosPanel('all');
-// Show pending badge on load
-(function() {
-  const cnt = getPendingOwners().length;
-  const badge = document.getElementById('pendingBadge');
-  if (badge) badge.textContent = cnt;
+// Load pending badge count from real API on startup
+(async function() {
+  try {
+    const pending = await adminApi('GET', '/admin/pending');
+    const badge = document.getElementById('pendingBadge');
+    if (badge && pending.length) badge.textContent = pending.length;
+  } catch(e) {}
 })();
 </script>
 <script src="/js/theme.js"></script>

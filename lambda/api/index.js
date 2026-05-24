@@ -301,6 +301,86 @@ exports.handler = async (event) => {
       return resp(200, { totalRestaurants, totalUsers, activeOwners, liveSessions, mrr, planCounts });
     }
 
+    // ── GET /admin/restaurant-stats ───────────────────────────────────────────
+    // Per-restaurant stats for admin dashboard table
+    if (method === 'GET' && path.endsWith('/admin/restaurant-stats')) {
+      if (role !== 'admin') return resp(403, { error: 'Admin only' });
+      const restaurants = await db.collection('restaurants').find({}).toArray();
+      const stats = await Promise.all(restaurants.map(async (r) => {
+        const rid = r._id;
+        const orders = await db.collection('orders').find({ restaurantId: String(rid) }).toArray();
+        const totalOrders = orders.length;
+        const revenue = orders.reduce((sum, o) => sum + (o.total || 0), 0);
+        const orderTypes = { 'dine-in': 0, pickup: 0, delivery: 0 };
+        orders.forEach(o => { if (orderTypes[o.orderType] !== undefined) orderTypes[o.orderType]++; });
+        const liveSessions = await db.collection('liveSessions').countDocuments({ restaurantId: String(rid) });
+        const totalViewers = await db.collection('liveSessions').aggregate([
+          { $match: { restaurantId: String(rid) } },
+          { $group: { _id: null, total: { $sum: '$peakViewers' } } }
+        ]).toArray().then(r => r[0]?.total || 0).catch(() => 0);
+        return {
+          id: String(rid), name: r.name, city: r.city, cuisine: r.cuisine,
+          plan: r.activePlan || r.planStatus || 'trial',
+          isLive: r.isLive || false, joinedAt: r.createdAt || r.updatedAt,
+          ownerEmail: r.ownerEmail || '—',
+          approvalStatus: r.approvalStatus || 'approved',
+          totalOrders, revenue, orderTypes, liveSessionCount: liveSessions, totalViewers,
+        };
+      }));
+      return resp(200, stats);
+    }
+
+    // ── GET /admin/pending ────────────────────────────────────────────────────
+    // List restaurants pending admin approval
+    if (method === 'GET' && path.endsWith('/admin/pending')) {
+      if (role !== 'admin') return resp(403, { error: 'Admin only' });
+      const pending = await db.collection('restaurants').find({ approvalStatus: 'pending' }).toArray();
+      return resp(200, pending.map(r => ({
+        id: String(r._id), name: r.name, city: r.city, cuisine: r.cuisine,
+        ownerEmail: r.ownerEmail || '—', createdAt: r.createdAt,
+        phone: r.phone, address: r.address,
+      })));
+    }
+
+    // ── POST /admin/approve ───────────────────────────────────────────────────
+    // Approve or reject a restaurant; approved owners get push notification
+    if (method === 'POST' && path.endsWith('/admin/approve')) {
+      if (role !== 'admin') return resp(403, { error: 'Admin only' });
+      const { restaurantId, action, reason } = parseBody(event);
+      if (!restaurantId || !['approve', 'reject'].includes(action)) {
+        return resp(400, { error: 'restaurantId and action (approve|reject) required' });
+      }
+      const newStatus = action === 'approve' ? 'approved' : 'rejected';
+      const update = { approvalStatus: newStatus, approvedAt: new Date() };
+      if (reason) update.rejectionReason = reason;
+      await db.collection('restaurants').updateOne(
+        { _id: new ObjectId(restaurantId) },
+        { $set: update }
+      );
+      // Send push notification to owner if approved
+      if (action === 'approve') {
+        const rest = await db.collection('restaurants').findOne({ _id: new ObjectId(restaurantId) });
+        if (rest?.ownerSub) {
+          const ownerTokens = await db.collection('expoPushTokens')
+            .find({ userId: rest.ownerSub }).toArray();
+          if (ownerTokens.length > 0) {
+            const messages = ownerTokens.map(t => ({
+              to: t.token, sound: 'default',
+              title: '🎉 You\'re approved!',
+              body: `${rest.name} is now live on LiveHushh. Start exploring your dashboard!`,
+              data: { type: 'approval' },
+            }));
+            await fetch('https://exp.host/--/api/v2/push/send', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(messages),
+            }).catch(() => {});
+          }
+        }
+      }
+      return resp(200, { ok: true, status: newStatus });
+    }
+
     // ── GET /auth/profile ───────────────────────────────────────────────────
     if (method === 'GET' && path.endsWith('/auth/profile')) {
       if (!userId) return resp(401, { error: 'Unauthorized' });
@@ -508,8 +588,10 @@ exports.handler = async (event) => {
       }
 
       // Customer view (or owner browsing as customer): show all active/trial/legacy restaurants
+      // Exclude restaurants pending admin approval
       const now = new Date();
       const list = await db.collection('restaurants').find({
+        approvalStatus: { $ne: 'pending' },   // hide pending-approval restaurants from customers
         $or: [
           { planStatus: { $exists: false } },                     // legacy — always show
           { planStatus: null },                                    // explicitly null — always show
@@ -549,7 +631,11 @@ exports.handler = async (event) => {
       if (longitude != null) saveData.longitude = longitude;
       const result = await db.collection('restaurants').updateOne(
         { ownerSub: userId },
-        { $set: saveData },
+        {
+          $set: saveData,
+          // Only set approvalStatus on first insert — don't overwrite approved/rejected status
+          $setOnInsert: { approvalStatus: 'pending', createdAt: new Date() },
+        },
         { upsert: true }
       );
       return resp(200, { ok: true, upserted: result.upsertedCount > 0, latitude, longitude });
