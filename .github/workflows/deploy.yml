@@ -2,7 +2,7 @@ name: Deploy — Lambda + Webapp
 
 on:
   push:
-    branches: [master]
+    branches: [prod]
   workflow_dispatch:
 
 jobs:
