@@ -14,6 +14,17 @@ frontend:
   cache:
     paths:
       - node_modules/**/*
+redirects:
+  - source: /data-deletion
+    target: /data-deletion.html
+    status: '200'
+  - source: /privacy
+    target: /privacy.html
+    status: '200'
+  - source: /contact
+    target: /contact.html
+    status: '200'
+
 customHeaders:
   - pattern: '**/*.html'
     headers:
