@@ -90,6 +90,11 @@ body{background:var(--bg);display:flex;min-height:100vh;overflow-x:hidden}
 .modal{background:var(--bg2);border:1px solid var(--border2);border-radius:var(--r-2xl);padding:28px;max-width:460px;width:100%;position:relative}
 .modal-close{position:absolute;top:14px;right:14px;width:28px;height:28px;border-radius:50%;background:rgba(255,255,255,0.06);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text2)}
 
+/* User role filter buttons */
+.user-role-btn{background:rgba(255,255,255,0.05);border:1px solid var(--border2);border-radius:var(--r-full);padding:5px 14px;font-size:.75rem;font-weight:600;color:var(--text2);cursor:pointer;transition:all .2s}
+.user-role-btn:hover{border-color:var(--border);color:var(--text)}
+.user-role-btn.active{background:rgba(232,84,10,0.12);border-color:rgba(232,84,10,0.5);color:#E8540A}
+
 @media(max-width:1200px){.kpi-grid{grid-template-columns:repeat(3,1fr)}.col-3{grid-template-columns:1fr 1fr}}
 @media(max-width:900px){.kpi-grid,.col-2,.col-3,.col-12{grid-template-columns:1fr}.sidebar{transform:translateX(-100%)}.main{margin-left:0}}
 </style>
@@ -298,15 +303,23 @@ body{background:var(--bg);display:flex;min-height:100vh;overflow-x:hidden}
 
     <!-- ══ USERS ══ -->
     <div id="page-users" class="page">
-      <div class="kpi-grid" style="grid-template-columns:repeat(4,1fr)">
-        <div class="kpi c1"><div class="kpi-label">Total Users</div><div class="kpi-val g-text">1.24M</div><div class="kpi-trend trend-up">↑ 18%</div></div>
-        <div class="kpi c3"><div class="kpi-label">Active (30d)</div><div class="kpi-val" style="color:var(--green)">847K</div><div class="kpi-trend trend-up">↑ 22%</div></div>
-        <div class="kpi c4"><div class="kpi-label">New This Month</div><div class="kpi-val" style="color:var(--pink)">84.2K</div><div class="kpi-trend trend-up">↑ 31%</div></div>
-        <div class="kpi c2"><div class="kpi-label">Avg Sessions/User</div><div class="kpi-val g-text-gold">6.4</div><div class="kpi-trend trend-up">↑ 12%</div></div>
+      <div class="kpi-grid" style="grid-template-columns:repeat(3,1fr)">
+        <div class="kpi c1"><div class="kpi-label">Total Users</div><div class="kpi-val g-text" id="kpiTotalUsers">—</div></div>
+        <div class="kpi c2"><div class="kpi-label">Owners</div><div class="kpi-val" style="color:var(--gold)" id="kpiOwners">—</div></div>
+        <div class="kpi c3"><div class="kpi-label">Customers</div><div class="kpi-val" style="color:var(--green)" id="kpiCustomers">—</div></div>
       </div>
-      <div class="card-box" style="padding:0;overflow:hidden">
+      <div class="card-box" style="padding:14px 18px 0">
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:12px">
+          <span style="font-size:.8rem;color:var(--text2);font-weight:600">Filter by role:</span>
+          <button class="user-role-btn active" onclick="filterUsersByRole('all',this)">All</button>
+          <button class="user-role-btn" onclick="filterUsersByRole('owner',this)">Owners</button>
+          <button class="user-role-btn" onclick="filterUsersByRole('customer',this)">Customers</button>
+          <input id="userSearchInput" class="input" type="text" placeholder="Search name or email…" oninput="filterUsersBySearch(this.value)" style="max-width:220px;padding:5px 10px;font-size:.8rem;margin-left:auto">
+        </div>
+      </div>
+      <div class="card-box" style="padding:0;overflow:hidden;margin-top:0;border-top:none;border-radius:0 0 12px 12px">
         <table class="data-table">
-          <thead><tr><th>User</th><th>Role</th><th>City</th><th>Joined</th><th>Last Active</th><th>Orders</th><th>Status</th></tr></thead>
+          <thead><tr><th>User</th><th>Role</th><th>Plan</th><th>Joined</th><th>ID</th><th>Status</th></tr></thead>
           <tbody id="usersTbody"></tbody>
         </table>
       </div>
@@ -960,34 +973,68 @@ async function renderSubscriptions() {
 }
 
 /* ── USERS ── */
+var _allUsers = [];
+var _userRoleFilter = 'all';
+var _userSearchFilter = '';
+
 async function renderUsers() {
   const tbody = document.getElementById('usersTbody');
   tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:24px;color:var(--text2)">⏳ Loading users…</td></tr>';
   try {
     const users = await adminApi('GET', '/admin/users');
-    if (!users || !users.length) {
-      tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:24px;color:var(--text2)">No users found</td></tr>';
-      return;
-    }
-    const roleCol = { customer:'pill-purple', owner:'pill-gold', admin:'pill-cyan' };
-    tbody.innerHTML = users.map(u => {
-      const roleLbl = (u.role||'customer');
-      const joined = u.updatedAt ? new Date(u.updatedAt).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : '—';
-      return `<tr>
-        <td><span style="font-weight:600">${u.name||'—'}</span><br><span class="caption">${u.email||''}</span></td>
-        <td><span class="pill ${roleCol[roleLbl]||'pill-purple'}" style="font-size:.7rem;text-transform:capitalize">${roleLbl}</span></td>
-        <td class="caption">${u.planStatus||'—'}</td>
-        <td class="caption">${joined}</td>
-        <td class="caption">${u.cognitoSub ? u.cognitoSub.slice(0,8)+'…' : '—'}</td>
-        <td><span class="pill pill-green" style="font-size:.7rem">active</span></td>
-      </tr>`;
-    }).join('');
-    // Update total users KPI
-    const kpi = document.querySelector('#page-users .kpi-val');
-    if (kpi) kpi.textContent = users.length;
+    _allUsers = Array.isArray(users) ? users : [];
+    const owners    = _allUsers.filter(u => (u.role||'customer') === 'owner');
+    const customers = _allUsers.filter(u => (u.role||'customer') === 'customer');
+    const kpiTotal = document.getElementById('kpiTotalUsers');
+    const kpiOwn   = document.getElementById('kpiOwners');
+    const kpiCust  = document.getElementById('kpiCustomers');
+    if (kpiTotal) kpiTotal.textContent = _allUsers.length;
+    if (kpiOwn)   kpiOwn.textContent   = owners.length;
+    if (kpiCust)  kpiCust.textContent  = customers.length;
+    renderUsersTable();
   } catch(e) {
-    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:24px;color:#EF4444">Failed to load users</td></tr>';
+    document.getElementById('usersTbody').innerHTML =
+      '<tr><td colspan="6" style="text-align:center;padding:24px;color:#EF4444">Failed to load users</td></tr>';
   }
+}
+
+function renderUsersTable() {
+  const roleCol = { customer:'pill-purple', owner:'pill-gold', admin:'pill-cyan' };
+  const tbody = document.getElementById('usersTbody');
+  let list = _allUsers;
+  if (_userRoleFilter !== 'all') list = list.filter(u => (u.role||'customer') === _userRoleFilter);
+  if (_userSearchFilter) {
+    const q = _userSearchFilter.toLowerCase();
+    list = list.filter(u => (u.name||'').toLowerCase().includes(q) || (u.email||'').toLowerCase().includes(q));
+  }
+  if (!list.length) {
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:24px;color:var(--text2)">No users found</td></tr>';
+    return;
+  }
+  tbody.innerHTML = list.map(u => {
+    const roleLbl = (u.role||'customer');
+    const joined = u.updatedAt ? new Date(u.updatedAt).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : '—';
+    return `<tr>
+      <td><span style="font-weight:600">${escH(u.name||'—')}</span><br><span class="caption">${escH(u.email||'')}</span></td>
+      <td><span class="pill ${roleCol[roleLbl]||'pill-purple'}" style="font-size:.7rem;text-transform:capitalize">${roleLbl}</span></td>
+      <td class="caption">${escH(u.planStatus||'—')}</td>
+      <td class="caption">${joined}</td>
+      <td class="caption">${u.cognitoSub ? u.cognitoSub.slice(0,8)+'…' : '—'}</td>
+      <td><span class="pill pill-green" style="font-size:.7rem">active</span></td>
+    </tr>`;
+  }).join('');
+}
+
+function filterUsersByRole(role, btn) {
+  _userRoleFilter = role;
+  document.querySelectorAll('.user-role-btn').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  renderUsersTable();
+}
+
+function filterUsersBySearch(val) {
+  _userSearchFilter = val.trim();
+  renderUsersTable();
 }
 
 /* ── REVENUE ── */
