@@ -3,7 +3,7 @@ frontend:
   phases:
     preBuild:
       commands:
-        - npm ci || npm install
+        - npm install
     build:
       commands:
         - npm run build
@@ -14,19 +14,3 @@ frontend:
   cache:
     paths:
       - node_modules/**/*
-
-# SPA routing — every unknown path falls through to index.html so React Router can resolve it.
-redirects:
-  - source: '</^[^.]+$|\.(?!(css|gif|ico|jpg|js|png|txt|svg|woff|woff2|ttf|map|json|webmanifest)$)([^.]+$)/>'
-    target: /index.html
-    status: '200'
-
-customHeaders:
-  - pattern: '/index.html'
-    headers:
-      - key: Cache-Control
-        value: 'no-cache, no-store, must-revalidate'
-  - pattern: '/static/**'
-    headers:
-      - key: Cache-Control
-        value: 'public, max-age=31536000, immutable'
