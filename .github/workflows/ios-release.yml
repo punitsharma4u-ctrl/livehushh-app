@@ -23,8 +23,18 @@ jobs:
           node-version: "20"
           cache: "npm"
 
-      - name: Install npm dependencies
+      - name: Install npm dependencies (root)
         run: npm ci
+
+      - name: Install React app dependencies
+        run: |
+          cd livehushh-new
+          npm install
+
+      - name: Build React app
+        run: |
+          cd livehushh-new
+          CI=false npm run build
 
       - name: Sync Capacitor iOS project
         run: npx cap sync ios
