@@ -1,9 +1,9 @@
 {
   "appId": "com.livehushh.app",
   "appName": "LiveHushh",
-  "webDir": "www",
+  "webDir": "livehushh-new/build",
   "server": {
-    "url": "https://www.livehushh.com/auth.html",
+    "url": "https://redesign.d3iamhxu58jkl0.amplifyapp.com",
     "cleartext": false,
     "androidScheme": "https",
     "allowNavigation": [

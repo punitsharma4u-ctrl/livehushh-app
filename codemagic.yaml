@@ -20,12 +20,24 @@
       events:
         - push
       branch_patterns:
+        - pattern: redesign
+          include: true
         - pattern: master
           include: true
 
     scripts:
-      - name: Install Node dependencies
+      - name: Install Node dependencies (root)
         script: npm install
+
+      - name: Install React app dependencies
+        script: |
+          cd livehushh-new
+          npm install
+
+      - name: Build React app
+        script: |
+          cd livehushh-new
+          CI=false npm run build
 
       - name: Install Capacitor CLI
         script: npm install -g @capacitor/cli
