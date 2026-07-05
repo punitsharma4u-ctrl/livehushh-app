@@ -157,11 +157,13 @@ function normalizeRestaurant(r) {
     ownerSub:    r.ownerSub    || r.owner_id || null,
     ownerName:   r.ownerName   || '',
     trialEndsAt: r.trialEndsAt || null,
-    menu:        r.menu        || [],
-    isFull:       r.isFull      || false,
-    coverImage:   r.coverImage  || '',
-    playbackUrl:  r.playbackUrl || r.ivsPlaybackUrl || '',
-    deliveryFee:  r.deliveryFee != null ? parseFloat(r.deliveryFee) : null,
+    menu:           r.menu           || [],
+    tables:         r.tables         || [],
+    isFull:         r.isFull         || false,
+    coverImage:     r.coverImage     || '',
+    playbackUrl:    r.playbackUrl    || r.ivsPlaybackUrl || '',
+    deliveryFee:    r.deliveryFee    != null ? parseFloat(r.deliveryFee) : null,
+    approvalStatus: r.approvalStatus || 'approved',
   };
 }
 
@@ -805,23 +807,28 @@ exports.handler = async (event) => {
     }
 
     // ── GET /waitlist/mine ──────────────────────────────────────────────────
-    // Returns the customer's own active waitlist entry (so they can track their position)
+    // Returns ALL of this customer's waitlist entries (so they can track their position)
     if (method === 'GET' && path.endsWith('/waitlist/mine')) {
       if (!userId) return resp(401, { error: 'Unauthorized' });
-      const entry = await db.collection('waitlist').findOne(
-        { customerSub: userId },
-        { sort: { joinedAt: -1 } }
-      );
-      if (!entry) return resp(200, null);
-      // Calculate position in queue
-      const position = await db.collection('waitlist').countDocuments({
-        restaurantId: entry.restaurantId,
-        joinedAt: { $lte: entry.joinedAt },
-      });
-      const total = await db.collection('waitlist').countDocuments({
-        restaurantId: entry.restaurantId,
-      });
-      return resp(200, { ...entry, position, total, _id: entry._id.toString() });
+      const entries = await db.collection('waitlist')
+        .find({ customerSub: userId })
+        .sort({ joinedAt: -1 })
+        .toArray();
+      if (!entries.length) return resp(200, []);
+      // Enrich each entry with position in queue
+      const enriched = await Promise.all(entries.map(async entry => {
+        const position = await db.collection('waitlist').countDocuments({
+          restaurantId: entry.restaurantId,
+          status: { $in: ['waiting', 'notified'] },
+          joinedAt: { $lte: entry.joinedAt },
+        });
+        const total = await db.collection('waitlist').countDocuments({
+          restaurantId: entry.restaurantId,
+          status: { $in: ['waiting', 'notified'] },
+        });
+        return { ...entry, position, total, _id: entry._id.toString() };
+      }));
+      return resp(200, enriched);
     }
 
     // ── GET /waitlist ───────────────────────────────────────────────────────
@@ -1230,7 +1237,7 @@ exports.handler = async (event) => {
 
     // ── GET /live/chat?restaurantId=xxx ──────────────────────────────────────
     if (method === 'GET' && path.endsWith('/live/chat')) {
-      const restaurantId = qs.restaurantId;
+      const restaurantId = (event.queryStringParameters || {}).restaurantId;
       if (!restaurantId) return resp(400, { error: 'restaurantId required' });
       const messages = await db.collection('liveChat')
         .find({ restaurantId })
