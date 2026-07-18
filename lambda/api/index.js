@@ -773,6 +773,8 @@ exports.handler = async (event) => {
         customerEmail: claims.email,
         restaurantOwnerSub,
         status: 'placed',
+        // How much has been collected online so far (drives paid/partial/unpaid)
+        paidAmount: typeof body.paidAmount === 'number' ? body.paidAmount : 0,
         createdAt: new Date(),
       };
       // ── Insert order, then attach tracking number ─────────────────────────
@@ -864,19 +866,36 @@ exports.handler = async (event) => {
     // ── PATCH /orders/:id ───────────────────────────────────────────────────
     if (method === 'PATCH' && /\/orders\/[^/]+$/.test(path)) {
       const id = path.split('/').pop();
-      const { status, orderType: patchOrderType } = parseBody(event);
+      const { status, orderType: patchOrderType, additionalItems, additionalTotal, additionalPaid, tableNumber, paidAmount } = parseBody(event);
       let query;
       try { query = { _id: new ObjectId(id) }; } catch { query = { id }; }
-      // Owner can update their own orders, customer can cancel their own
-      if (role === 'owner') {
-        await db.collection('orders').updateOne(query, { $set: { status, updatedAt: new Date() } });
-      } else {
-        await db.collection('orders').updateOne({ ...query, customerSub: userId }, { $set: { status, updatedAt: new Date() } });
+
+      // Build update: only touch fields that were actually sent
+      const setFields = { updatedAt: new Date() };
+      if (status !== undefined) setFields.status = status;
+      if (tableNumber !== undefined) setFields.tableNumber = tableNumber;
+      if (typeof paidAmount === 'number') setFields.paidAmount = paidAmount;
+      const update = { $set: setFields };
+
+      // Add-items flow: append items and bump totals (paidAmount too when the
+      // customer paid for the added items online)
+      if (Array.isArray(additionalItems) && additionalItems.length) {
+        update.$push = { items: { $each: additionalItems } };
+        const addAmt = parseFloat(additionalTotal || 0) || 0;
+        update.$inc = { total: addAmt };
+        if (additionalPaid) update.$inc.paidAmount = addAmt;
       }
 
-      // Send status update email to customer
+      // Owner can update their own orders, customer can update their own
+      if (role === 'owner') {
+        await db.collection('orders').updateOne(query, update);
+      } else {
+        await db.collection('orders').updateOne({ ...query, customerSub: userId }, update);
+      }
+
+      // Send status update email to customer (only when the status changed)
       try {
-        const updatedOrder = await db.collection('orders').findOne(query);
+        const updatedOrder = status !== undefined ? await db.collection('orders').findOne(query) : null;
         if (updatedOrder?.customerEmail) {
           const ot = patchOrderType || updatedOrder.orderType || 'dine-in';
           const statusLabels = {
