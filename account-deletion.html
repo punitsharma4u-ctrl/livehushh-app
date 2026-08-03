@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Account Deletion — LiveHushh</title>
+<meta name="description" content="Request permanent deletion of your LiveHushh account.">
+<link rel="stylesheet" href="/css/styles.css?v=4">
+<style>
+.del-wrap{max-width:640px;margin:80px auto;padding:0 24px 80px}
+.del-badge{display:inline-flex;align-items:center;gap:8px;background:rgba(232,84,10,0.12);border:1px solid rgba(232,84,10,0.3);border-radius:20px;padding:6px 16px;font-size:.8rem;font-weight:700;color:#E8540A;margin-bottom:24px}
+.del-wrap h1{font-size:clamp(1.8rem,4vw,2.6rem);font-weight:900;line-height:1.15;margin-bottom:16px}
+.del-wrap p{color:var(--text2);line-height:1.75;margin-bottom:20px}
+.del-card{background:var(--card);border:1.5px solid var(--border2);border-radius:20px;padding:32px;margin:36px 0}
+.del-card h2{font-size:1.1rem;font-weight:800;margin-bottom:20px}
+.del-steps{display:flex;flex-direction:column;gap:16px;margin-bottom:28px}
+.del-step{display:flex;gap:16px;align-items:flex-start}
+.del-num{width:32px;height:32px;border-radius:50%;background:rgba(232,84,10,0.15);border:1.5px solid rgba(232,84,10,0.35);color:#E8540A;font-weight:800;font-size:.85rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px}
+.del-step-text{font-size:.95rem;color:var(--text2);line-height:1.6}
+.del-step-text strong{color:var(--text)}
+.del-btn{display:inline-flex;align-items:center;gap:10px;background:#E8540A;color:#fff;font-weight:800;font-size:1rem;padding:16px 32px;border-radius:14px;text-decoration:none;transition:opacity .2s}
+.del-btn:hover{opacity:.88}
+.del-btn svg{width:20px;height:20px;flex-shrink:0}
+.del-note{margin-top:20px;font-size:.82rem;color:var(--text2);line-height:1.6}
+.del-divider{border:none;border-top:1px solid var(--border2);margin:32px 0}
+.del-types{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:28px}
+.del-type{background:rgba(255,255,255,0.04);border:1px solid var(--border2);border-radius:12px;padding:14px 16px}
+.del-type-label{font-size:.75rem;color:var(--text2);margin-bottom:4px}
+.del-type-val{font-size:.9rem;font-weight:700}
+</style>
+</head>
+<body>
+<nav class="nav" style="position:sticky;top:0;z-index:50">
+  <a href="/" class="logo">Live<span>Hushh</span></a>
+  <a href="/" class="btn btn-ghost" style="margin-left:auto">← Back to Home</a>
+</nav>
+
+<div class="del-wrap">
+  <div class="del-badge">🔒 Privacy &amp; Data</div>
+  <h1>Account Deletion</h1>
+  <p>You can permanently delete your LiveHushh account at any time. Deleting your account removes your profile, saved preferences, and login access. We will process your request within <strong style="color:var(--text)">30 days</strong> and confirm via email once complete.</p>
+
+  <div class="del-card">
+    <h2>📧 How to Delete Your Account</h2>
+    <div class="del-steps">
+      <div class="del-step">
+        <div class="del-num">1</div>
+        <div class="del-step-text">Click the button below to open an email to our privacy team at <strong>info@livehushh.com</strong></div>
+      </div>
+      <div class="del-step">
+        <div class="del-num">2</div>
+        <div class="del-step-text">Include <strong>your registered email address</strong> and confirm you want your account permanently deleted</div>
+      </div>
+      <div class="del-step">
+        <div class="del-num">3</div>
+        <div class="del-step-text">We'll confirm receipt within <strong>2 business days</strong> and complete account deletion within <strong>30 days</strong></div>
+      </div>
+    </div>
+
+    <a class="del-btn" href="mailto:info@livehushh.com?subject=Account%20Deletion%20Request&body=Hi%2C%0A%0AI%20would%20like%20to%20permanently%20delete%20my%20LiveHushh%20account.%0A%0ARegistered%20email%3A%20%5Byour%20email%20here%5D%0A%0AThank%20you.">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+      Send Account Deletion Request
+    </a>
+
+    <p class="del-note">Or email us directly at <a href="mailto:info@livehushh.com" style="color:#E8540A;text-decoration:none">info@livehushh.com</a> with subject line <em>"Account Deletion Request"</em>. If you'd also like your order history and other data removed, see our <a href="/data-deletion.html" style="color:#E8540A;text-decoration:none">Data Deletion</a> page.</p>
+  </div>
+
+  <hr class="del-divider">
+
+  <h2 style="font-size:1.1rem;font-weight:800;margin-bottom:16px">What gets deleted?</h2>
+  <div class="del-types">
+    <div class="del-type"><div class="del-type-label">Login &amp; Profile</div><div class="del-type-val">✓ Deleted</div></div>
+    <div class="del-type"><div class="del-type-label">Saved Preferences</div><div class="del-type-val">✓ Deleted</div></div>
+    <div class="del-type"><div class="del-type-label">Push Notification Tokens</div><div class="del-type-val">✓ Deleted</div></div>
+    <div class="del-type"><div class="del-type-label">Order &amp; Payment History</div><div class="del-type-val">Retained per law</div></div>
+  </div>
+
+  <p style="font-size:.85rem;color:var(--text2);line-height:1.7">Some transaction records may be retained for legal or tax compliance purposes for up to 7 years, as required by law, even after account deletion. All other personal data tied to your account will be permanently deleted. To also remove retained order/transaction data, request full data deletion on our <a href="/data-deletion.html" style="color:#E8540A;text-decoration:none">Data Deletion</a> page.</p>
+</div>
+
+<footer class="footer">
+  <div class="footer-inner">
+    <div class="footer-brand">
+      <div class="logo">Live<span>Hushh</span></div>
+      <p style="color:var(--text2);font-size:.85rem;margin-top:8px">© 2025 LiveHushh. All rights reserved.</p>
+    </div>
+    <div style="display:flex;gap:24px;font-size:.85rem">
+      <a href="/contact.html" style="color:var(--text2);text-decoration:none">Contact</a>
+      <a href="mailto:info@livehushh.com" style="color:var(--text2);text-decoration:none">info@livehushh.com</a>
+    </div>
+  </div>
+</footer>
+</body>
+</html>
