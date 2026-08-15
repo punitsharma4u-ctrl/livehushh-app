@@ -657,6 +657,18 @@ exports.handler = async (event) => {
       return resp(200, { ok: true, id: result.insertedId.toString() });
     }
 
+    // ── DELETE /admin/restaurants/:id ───────────────────────────────────────
+    // Admin-only cleanup for directory listings created via the endpoint above.
+    if (method === 'DELETE' && /\/admin\/restaurants\/[^/]+$/.test(path)) {
+      if (role !== 'admin') return resp(403, { error: 'Admin only' });
+      const parts = path.split('/');
+      const id = parts[parts.length - 1];
+      let query;
+      try { query = { _id: new ObjectId(id) }; } catch { query = { id }; }
+      await db.collection('restaurants').deleteOne(query);
+      return resp(200, { ok: true });
+    }
+
     // ── POST /restaurants/:id/claim ─────────────────────────────────────────
     // A real restaurant owner claims an admin-created directory listing,
     // taking over ownership so they can add photos, menu, and go live.
