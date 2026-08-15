@@ -156,6 +156,11 @@ function normalizeRestaurant(r) {
     planStatus:  r.planStatus  || null,
     ownerSub:    r.ownerSub    || r.owner_id || null,
     ownerName:   r.ownerName   || '',
+    // Directory listings created by admin with no owner yet — customers can
+    // browse them, but photos/menu/live features stay locked until a real
+    // owner claims the listing via POST /restaurants/:id/claim.
+    claimed:     !!(r.ownerSub || r.owner_id),
+    isListing:   !!r.isListing,
     trialEndsAt: r.trialEndsAt || null,
     menu:           r.menu           || [],
     tables:         r.tables         || [],
@@ -602,6 +607,74 @@ exports.handler = async (event) => {
         ]
       }).toArray();
       return resp(200, list.map(normalizeRestaurant));
+    }
+
+    // ── POST /admin/restaurants/listing ─────────────────────────────────────
+    // Admin-only: create an unclaimed directory listing (name/address/cuisine
+    // only, no owner yet). Distinct from POST /restaurants below, which always
+    // upserts against the calling user's ownerSub — that would collapse every
+    // admin-created listing into a single document since they'd all share the
+    // admin API key's identity.
+    if (method === 'POST' && path.endsWith('/admin/restaurants/listing')) {
+      if (role !== 'admin') return resp(403, { error: 'Admin only' });
+      const body = parseBody(event);
+      if (!body.name) return resp(400, { error: 'name is required' });
+
+      let { latitude, longitude } = body;
+      if ((latitude == null || longitude == null) && (body.address || body.city)) {
+        try {
+          const q = encodeURIComponent([body.address, body.city].filter(Boolean).join(', '));
+          const geoRes = await fetch(
+            `https://nominatim.openstreetmap.org/search?q=${q}&format=json&limit=1`,
+            { headers: { 'User-Agent': 'LiveHushhApp/1.0' } }
+          );
+          const geoData = await geoRes.json();
+          if (geoData && geoData[0]) {
+            latitude  = parseFloat(geoData[0].lat);
+            longitude = parseFloat(geoData[0].lon);
+          }
+        } catch (geoErr) {
+          console.warn('[GEO] Listing geocode failed:', geoErr.message);
+        }
+      }
+
+      const doc = {
+        name:        body.name,
+        cuisine:     body.cuisine || 'Restaurant',
+        description: body.description || '',
+        city:        body.city || '',
+        address:     body.address || '',
+        priceRange:  body.priceRange || '$$',
+        placeholderIcon: body.placeholderIcon || '',
+        latitude:    latitude  != null ? latitude  : null,
+        longitude:   longitude != null ? longitude : null,
+        ownerSub:    null,
+        isListing:   true,
+        approvalStatus: 'approved',
+        createdAt:   new Date(),
+      };
+      const result = await db.collection('restaurants').insertOne(doc);
+      return resp(200, { ok: true, id: result.insertedId.toString() });
+    }
+
+    // ── POST /restaurants/:id/claim ─────────────────────────────────────────
+    // A real restaurant owner claims an admin-created directory listing,
+    // taking over ownership so they can add photos, menu, and go live.
+    if (method === 'POST' && /\/restaurants\/[^/]+\/claim$/.test(path)) {
+      if (role !== 'owner' && role !== 'admin') return resp(403, { error: 'Owners only' });
+      const parts = path.split('/');
+      const id = parts[parts.length - 2];
+      let query;
+      try { query = { _id: new ObjectId(id) }; } catch { query = { id }; }
+
+      const rest = await db.collection('restaurants').findOne(query);
+      if (!rest) return resp(404, { error: 'Listing not found' });
+      if (rest.ownerSub) return resp(409, { error: 'This listing has already been claimed' });
+
+      await db.collection('restaurants').updateOne(query, {
+        $set: { ownerSub: userId, isListing: false, approvalStatus: 'approved', claimedAt: new Date() },
+      });
+      return resp(200, { ok: true });
     }
 
     // ── POST /restaurants ───────────────────────────────────────────────────
